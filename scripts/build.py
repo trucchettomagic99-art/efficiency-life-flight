@@ -13,7 +13,7 @@ PUBLIC = ROOT / 'public'
 DIST   = ROOT / 'dist'
 
 # ── l'indirizzo pubblico del sito: cambialo quando avrai il tuo dominio ────
-SITE = 'https://efficiency-life-flight.pages.dev'
+SITE = 'https://efficiency-life.com'
 
 # ── monetizzazione: tre interruttori, tutti spenti finche' non li accendi ──
 #
