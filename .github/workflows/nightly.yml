@@ -1,9 +1,13 @@
 name: Aggiornamento indice
 
-# Lunedì, mercoledì e venerdì alle 03:20 UTC
-# (04:20 in Italia d'inverno, 05:20 d'estate):
+# Ogni notte alle 03:20 UTC (04:20 in Italia d'inverno, 05:20 d'estate):
 # interroga Travelpayouts, ricostruisce l'indice, ricompila il sito e committa.
-# Netlify vede il commit e pubblica da solo.
+# L'hosting vede il commit e pubblica da solo.
+#
+# La cadenza era stata ridotta a tre notti a settimana per non consumare i
+# crediti di build di Netlify. Su Cloudflare Pages il piano gratuito prevede
+# 500 build al mese contro le 30 che servono qui, quindi torna quotidiana:
+# un indice di tariffe aeree vecchio di due giorni e' un indice sbagliato.
 on:
   push:
     branches: [main]
@@ -14,7 +18,7 @@ on:
       - 'public/**'
       - 'netlify.toml'
   schedule:
-    - cron: '20 3 * * 1,3,5'
+    - cron: '20 3 * * *'
   workflow_dispatch:        # per lanciarlo a mano dal tab Actions
 
 permissions:
