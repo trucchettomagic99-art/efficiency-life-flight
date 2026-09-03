@@ -1384,7 +1384,7 @@ const PROSE = {
   footTag:'Il modulo voli di Efficiency Life. Scoperta di destinazioni basata sul rapporto distanza/prezzo.',
   adFree:'Spazio pubblicitario — non ancora attivo',
   ccYes:'Accetta', ccNo:'Rifiuta', ccOpen:'Preferenze cookie',
-  cookie:'<b>Un attimo di chiarezza.</b> Per finanziare il sito vorremmo mostrare pubblicità, e il circuito che la fornisce userebbe cookie per misurarne il rendimento. Se rifiuti, il sito funziona esattamente uguale: nessuna funzione viene tolta, semplicemente non caricheremo nulla di terze parti. La scelta resta nel tuo browser e la puoi cambiare quando vuoi dal piè di pagina. <a href="#privacy">Come trattiamo i dati</a>.',
+  cookie:'<b>Un attimo di chiarezza.</b> Il sito si mantiene con le prenotazioni che partono da qui: il circuito di affiliazione usa cookie per riconoscere che il viaggiatore è arrivato dal nostro motore, e se un giorno accenderemo la pubblicità userebbe i suoi per misurarne il rendimento. Se rifiuti, il sito funziona esattamente uguale — nessuna funzione viene tolta, i prezzi e i collegamenti restano tutti — semplicemente non caricheremo nulla di terze parti. La scelta resta nel tuo browser e la puoi cambiare quando vuoi dal piè di pagina. <a href="#privacy">Come trattiamo i dati</a>.',
   method:[
    ['01','Distanza per euro','Distanza ortodromica fra i due scali, raddoppiata per il ritorno, divisa per la tariffa. Un a/r di 4.300 km a 62 € vale 138 km/€: è il segnale principale, e pesa il 45% del punteggio.'],
    ['02','Minuti di volo per euro','Tempo di volo andata e ritorno dichiarato dalla fonte, diviso per la tariffa. Distingue un volo davvero lungo da una tratta breve che copre terreno in fretta. Pesa il 25%.'],
@@ -1409,7 +1409,7 @@ const PROSE = {
   footTag:'The flight module of Efficiency Life. Destination discovery driven by the distance-to-price ratio.',
   adFree:'Ad space — not active yet',
   ccYes:'Accept', ccNo:'Decline', ccOpen:'Cookie preferences',
-  cookie:'<b>One moment of clarity.</b> To fund the site we would like to show advertising, and the network that supplies it would use cookies to measure how it performs. If you decline, the site works exactly the same: nothing is taken away, we simply load nothing from third parties. Your choice stays in your browser and you can change it any time from the footer. <a href="#privacy">How we handle data</a>.',
+  cookie:'<b>One moment of clarity.</b> The site is funded by the bookings that start here: the affiliate network uses cookies to recognise that a traveller came from our engine, and if we ever switch advertising on, it would use its own to measure how it performs. If you decline, the site works exactly the same — nothing is taken away, every price and link stays — we simply load nothing from third parties. Your choice stays in your browser and you can change it any time from the footer. <a href="#privacy">How we handle data</a>.',
   method:[
    ['01','Distance per euro','Great-circle distance between the two airports, doubled for the round trip, divided by the fare. A 4,300 km return for €62 is 138 km/€ — the primary signal, worth 45% of the score.'],
    ['02','Flight minutes per euro','Round-trip block time as published by the source, divided by the fare. It separates a genuinely long flight from a short hop that merely covers ground fast. Worth 25%.'],
@@ -1542,6 +1542,21 @@ async function fetchLive(quiet){
    Quando c'e', lo script viene caricato SOLO dopo un si' esplicito. */
 const ADS = { client: '__ADS_CLIENT__', slot: '__ADS_SLOT__' };
 const ADS_ON = () => !!ADS.client && ADS.client !== '__ADS_' + 'CLIENT__';
+
+/* Travelpayouts Drive: lo script con cui il circuito verifica il sito e
+   misura le uscite affiliate. E' codice di terze parti come la pubblicita',
+   quindi passa dalla stessa porta: caricato solo dopo un si' esplicito.
+   L'indirizzo resta scritto nel sorgente della pagina anche prima del
+   consenso, cosi' chi controlla il codice lo trova. */
+const DRIVE_URL = '__TP_DRIVE_URL__';
+const DRIVE_ON  = () => !!DRIVE_URL && DRIVE_URL !== '__TP_' + 'DRIVE_URL__';
+const TRACK_ON  = () => ADS_ON() || DRIVE_ON();
+function loadDrive(){
+  if(!DRIVE_ON() || document.getElementById('tpdrive')) return;
+  const sc = document.createElement('script');
+  sc.id = 'tpdrive'; sc.async = true; sc.src = DRIVE_URL;
+  document.head.appendChild(sc);
+}
 const CC_KEY = 'elf-consent';
 function ccGet(){ try{ return localStorage.getItem(CC_KEY); }catch(_){ return null; } }
 function ccSet(v){ try{ localStorage.setItem(CC_KEY, v); }catch(_){} }
@@ -1566,15 +1581,15 @@ function ccRender(){
   $('#ccYes').textContent = p.ccYes;
   $('#ccNo').textContent  = p.ccNo;
   $('#ccOpen').textContent = p.ccOpen;
-  $('#ccOpen').hidden = !ADS_ON();
+  $('#ccOpen').hidden = !TRACK_ON();
 }
 function ccInit(){
-  if(!ADS_ON()) return;
+  if(!TRACK_ON()) return;
   const v = ccGet();
-  if(v === 'yes') loadAds();
+  if(v === 'yes'){ loadAds(); loadDrive(); }
   else if(v !== 'no') $('#cc').hidden = false;
 }
-$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; loadAds(); });
+$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; loadAds(); loadDrive(); });
 $('#ccNo').addEventListener('click',  () => { ccSet('no');  $('#cc').hidden = true; });
 $('#ccOpen').addEventListener('click', () => { $('#cc').hidden = false; });
 
