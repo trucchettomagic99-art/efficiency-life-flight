@@ -24,6 +24,13 @@ const json = (body, status = 200, extra = {}) =>
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'access-control-allow-origin': '*',
+      // Un errore non va MAI messo in cache. Se la fonte ha un singhiozzo di
+      // due secondi e quella risposta finisce sulla CDN, il disservizio dura
+      // sei ore invece che un istante — e solo per chi cerca da quell'unico
+      // aeroporto, che e' il tipo di guasto piu' difficile da accorgersene.
+      ...(status >= 400
+        ? { 'cache-control': 'no-store', 'netlify-cdn-cache-control': 'no-store' }
+        : {}),
       ...extra,
     },
   });
