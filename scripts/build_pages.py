@@ -303,6 +303,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 
 <footer><div class="wrap">
   <a href="{SITE}/">{esc(t['back'])}</a> · Travelpayouts / Aviasales · OurAirports
+  · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
 </div></footer>
 </body>
 </html>
