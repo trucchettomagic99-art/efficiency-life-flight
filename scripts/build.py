@@ -15,32 +15,51 @@ DIST   = ROOT / 'dist'
 # ── l'indirizzo pubblico del sito: cambialo quando avrai il tuo dominio ────
 SITE = 'https://efficiencylife-flight.netlify.app'
 
-# ── monetizzazione ────────────────────────────────────────────────────────
-# TP_MARKER  ID partner Travelpayouts. Vuoto = nessun link affiliato.
-# TP_LINK    formato di redirect, letto da un link vero generato dal pannello.
-#            I segnaposto {marker} {trs} {p} {campaign} {url} li riempie il sito.
-# TP_P_*     codice del singolo programma. Se manca, quel pulsante manda
-#            l'utente diretto invece che dal redirect.
-# ADS_CLIENT codice editore AdSense (ca-pub-...). Vuoto = nessuno script di
+# ── monetizzazione: tre interruttori, tutti spenti finche' non li accendi ──
+#
+# TP_MARKER  il tuo ID partner Travelpayouts (app.travelpayouts.com, in alto a
+#            destra sotto il nome account). Vuoto = nessun link affiliato: il
+#            sito resta uno strumento di ricerca e manda l'utente diretto.
+# TP_LINK    il formato di redirect, letto da un link vero generato dal
+#            pannello. I segnaposto {marker} {trs} {p} {campaign} {url}
+#            vengono riempiti dal sito.
+# TP_P_*     il codice del singolo programma. Se manca, quel pulsante manda
+#            l'utente diretto invece che dal redirect: il marker viaggia
+#            comunque come parametro sulla pagina di destinazione.
+# ADS_CLIENT il codice editore AdSense (ca-pub-...). Vuoto = nessuno script di
 #            terze parti entra nella pagina e il banner cookie non compare.
+# ADS_SLOT   l'identificatore dell'unita' pubblicitaria responsive.
 TP_MARKER    = '772942'          # ID partner
 TP_TRS       = '569809'          # progetto "Efficiencylife-flight"
 TP_CAMPAIGN  = '100'
 TP_LINK      = 'https://tp.media/r?campaign_id={campaign}&marker={marker}&p={p}&trs={trs}&u={url}'
-TP_P_FLIGHT  = '4114'            # Aviasales
+# 3.09.2026 — il redirect tp.media/r risponde "Forbidden" per questo account,
+# anche con un indirizzo generato dal pannello: i deep link non sono ancora
+# abilitati. Finche' restano vuoti, i pulsanti vanno diretti su Aviasales con
+# ?marker=772942 attaccato, che e' l'altra via di attribuzione. Rimetti '4114'
+# quando l'assistenza sblocca i deep link.
+TP_P_FLIGHT  = ''                # Aviasales (era 4114)
 TP_P_HOTEL   = ''                # codice programma alloggi, quando ce ne sara' uno
 # Hotellook ha chiuso il 20 ottobre 2025 e con lui l'unico motore alberghi del
 # circuito. Finche' questa riga e' vuota il pulsante alloggio non compare: un
 # pulsante che manda traffico senza incassare e' peggio di nessun pulsante.
+# Quando ti iscrivi a un programma della categoria "Hotels & Accommodation",
+# incolla qui il suo formato di ricerca con i segnaposto {city} {in} {out}
+# {cur} {marker}.
 TP_HOTEL_URL = ''
 
 # Attivita' ed esperienze — Klook. La sua ricerca accetta il nome della citta'
 # in chiaro, quindi un solo formato copre tutte le destinazioni.
-TP_P_ACT     = '4110'
-TP_C_ACT     = '137'
+TP_P_ACT     = ''                # Klook (era 4110): programma non ancora
+TP_C_ACT     = '137'             # approvato, e il redirect e' comunque bloccato
 TP_ACT_URL   = 'https://www.klook.com/search/result/?query={city}&search_scope=main_search'
-ADS_CLIENT   = ''
-ADS_SLOT     = ''
+# Travelpayouts Drive — lo script con cui il circuito verifica il sito. Vive
+# dietro il banner di consenso insieme alla pubblicita': si carica solo dopo un
+# si' esplicito. Svuota questa riga per toglierlo del tutto.
+TP_DRIVE_URL = 'https://emrldtp.com/NTY5ODA5.js?t=569809'
+
+ADS_CLIENT = ''
+ADS_SLOT   = ''
 
 
 DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
@@ -71,12 +90,13 @@ def main() -> int:
                .replace('__TP_HOTEL_URL__', TP_HOTEL_URL)
                .replace('__TP_P_ACT__', TP_P_ACT).replace('__TP_C_ACT__', TP_C_ACT)
                .replace('__TP_ACT_URL__', TP_ACT_URL)
+               .replace('__TP_DRIVE_URL__', TP_DRIVE_URL)
                .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
     for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__',
                '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
                '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
                '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
-               '__ADS_CLIENT__', '__ADS_SLOT__'):
+               '__TP_DRIVE_URL__', '__ADS_CLIENT__', '__ADS_SLOT__'):
         if ph in body:
             sys.exit(f'segnaposto {ph} non sostituito nel template.')
 
