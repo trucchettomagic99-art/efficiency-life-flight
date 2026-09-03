@@ -49,10 +49,10 @@
   <url><loc>https://efficiency-life.com/from/ams/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/kul/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/kul/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/crl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/crl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/ath/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/ath/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/crl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/crl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/pkx/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/pkx/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/can/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -87,12 +87,12 @@
   <url><loc>https://efficiency-life.com/from/sof/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/rmo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/rmo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/del/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/del/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/del/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/del/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/fra/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/fra/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/yyz/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -101,14 +101,14 @@
   <url><loc>https://efficiency-life.com/from/sin/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/agp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/agp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/cph/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/cph/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/beg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/beg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/evn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/evn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/ord/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/ord/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/cph/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/cph/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/tia/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/tia/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/mex/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -119,6 +119,8 @@
   <url><loc>https://efficiency-life.com/from/bts/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/gru/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/gru/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/dme/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/dme/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/sgn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/sgn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/mia/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -127,8 +129,6 @@
   <url><loc>https://efficiency-life.com/from/lin/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/nrt/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/nrt/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/dme/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/dme/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/osl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/osl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/tlv/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -203,22 +203,24 @@
   <url><loc>https://efficiency-life.com/from/han/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/zrh/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/zrh/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/kwi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/kwi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/szx/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/szx/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/atl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/atl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/kwi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/kwi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/alg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/alg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/trn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/trn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/pty/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/pty/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/mel/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/mel/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/jed/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -233,12 +235,12 @@
   <url><loc>https://efficiency-life.com/from/lim/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/tgd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/tgd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/edi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/edi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/blr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/blr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/psa/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/psa/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/auh/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -249,10 +251,10 @@
   <url><loc>https://efficiency-life.com/from/pfo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/kef/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/kef/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/msq/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/msq/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/bos/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/bos/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/bri/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/bri/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/cia/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -265,8 +267,6 @@
   <url><loc>https://efficiency-life.com/from/zag/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/bus/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/bus/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/msq/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/msq/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/tun/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/tun/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/nbo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -277,6 +277,8 @@
   <url><loc>https://efficiency-life.com/from/add/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/kix/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/kix/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/akl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/akl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/var/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/var/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/lux/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -289,8 +291,6 @@
   <url><loc>https://efficiency-life.com/from/cag/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/vrn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/vrn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/akl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/akl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/skp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/skp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/iad/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -319,14 +319,14 @@
   <url><loc>https://efficiency-life.com/from/dss/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/flr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/flr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/da/gmp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiency-life.com/from/gmp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/skd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/skd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/tll/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/tll/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/gig/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/gig/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/da/gmp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiency-life.com/from/gmp/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/clj/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/from/clj/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiency-life.com/da/los/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
