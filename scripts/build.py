@@ -33,12 +33,12 @@ TP_MARKER    = '772942'          # ID partner
 TP_TRS       = '569809'          # progetto "Efficiencylife-flight"
 TP_CAMPAIGN  = '100'
 TP_LINK      = 'https://tp.media/r?campaign_id={campaign}&marker={marker}&p={p}&trs={trs}&u={url}'
-# 3.09.2026 — il redirect tp.media/r risponde "Forbidden" per questo account,
-# anche con un indirizzo generato dal pannello: i deep link non sono ancora
-# abilitati. Finche' restano vuoti, i pulsanti vanno diretti su Aviasales con
-# ?marker=772942 attaccato, che e' l'altra via di attribuzione. Rimetti '4114'
-# quando l'assistenza sblocca i deep link.
-TP_P_FLIGHT  = ''                # Aviasales (era 4114)
+# 3.09.2026 — il redirect tp.media/r rispondeva "Forbidden" a qualunque link:
+# gli strumenti partner erano disattivati perche' mancavano i dati anagrafici
+# richiesti dalla normativa pubblicitaria. Compilati quelli, il redirect
+# funziona e i codici programma tornano al loro posto. Collaudato: la rotta
+# FCO-RAK atterra su aviasales.com con marker=772942 e identificativo di clic.
+TP_P_FLIGHT  = '4114'            # Aviasales
 TP_P_HOTEL   = ''                # codice programma alloggi, quando ce ne sara' uno
 # Hotellook ha chiuso il 20 ottobre 2025 e con lui l'unico motore alberghi del
 # circuito. Finche' questa riga e' vuota il pulsante alloggio non compare: un
@@ -50,8 +50,8 @@ TP_HOTEL_URL = ''
 
 # Attivita' ed esperienze — Klook. La sua ricerca accetta il nome della citta'
 # in chiaro, quindi un solo formato copre tutte le destinazioni.
-TP_P_ACT     = ''                # Klook (era 4110): programma non ancora
-TP_C_ACT     = '137'             # approvato, e il redirect e' comunque bloccato
+TP_P_ACT     = '4110'            # Klook — collaudato: la ricerca "Marrakech"
+TP_C_ACT     = '137'             # atterra con aff_pid=772942 attaccato
 TP_ACT_URL   = 'https://www.klook.com/search/result/?query={city}&search_scope=main_search'
 # Travelpayouts Drive — lo script con cui il circuito verifica il sito. Vive
 # dietro il banner di consenso insieme alla pubblicita': si carica solo dopo un
