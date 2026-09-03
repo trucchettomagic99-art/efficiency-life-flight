@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://efficiency-life-flight.pages.dev/sitemap.xml
+Sitemap: https://efficiency-life.com/sitemap.xml
