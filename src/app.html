@@ -331,9 +331,10 @@ section{scroll-margin-top:64px}
   color:var(--ink-2);font-size:13.5px;background:var(--deck)}
 .note b{color:var(--ink)}
 
-/* ── consenso pubblicitario ────────────────────────────────
-   Compare solo quando viene configurato un circuito pubblicitario.
-   Travelpayouts Drive e' dichiarato separatamente nella sezione privacy. */
+/* ── consenso ──────────────────────────────────────────────
+   Compare solo se c'e' davvero qualcosa da consentire, cioe' se
+   e' configurato un circuito pubblicitario. Finche' il sito non
+   traccia nessuno, chiedere il permesso sarebbe teatro. */
 .cc{position:fixed;inset-inline:0;bottom:0;z-index:200;background:var(--deck);
   border-top:1px solid var(--rule-hi);box-shadow:0 -18px 40px -28px rgba(0,0,0,.9)}
 .cc-in{display:flex;align-items:center;gap:clamp(14px,2.4vw,34px);padding:16px 0;flex-wrap:wrap}
@@ -1383,7 +1384,7 @@ const PROSE = {
   footTag:'Il modulo voli di Efficiency Life. Scoperta di destinazioni basata sul rapporto distanza/prezzo.',
   adFree:'Spazio pubblicitario — non ancora attivo',
   ccYes:'Accetta', ccNo:'Rifiuta', ccOpen:'Preferenze cookie',
-  cookie:'<b>Un attimo di chiarezza.</b> Questo consenso riguarda la pubblicità: se rifiuti, il sito funziona esattamente allo stesso modo ma non carica il circuito pubblicitario. La scelta resta nel tuo browser e puoi cambiarla quando vuoi dal piè di pagina. L’affiliazione Travelpayouts è descritta separatamente nella sezione <a href="#privacy">Come trattiamo i dati</a>.',
+  cookie:'<b>Un attimo di chiarezza.</b> Il sito si mantiene con le prenotazioni che partono da qui: il circuito di affiliazione usa cookie per riconoscere che il viaggiatore è arrivato dal nostro motore, e se un giorno accenderemo la pubblicità userebbe i suoi per misurarne il rendimento. Se rifiuti, il sito funziona esattamente uguale — nessuna funzione viene tolta, i prezzi e i collegamenti restano tutti — semplicemente non caricheremo nulla di terze parti. La scelta resta nel tuo browser e la puoi cambiare quando vuoi dal piè di pagina. <a href="#privacy">Come trattiamo i dati</a>.',
   method:[
    ['01','Distanza per euro','Distanza ortodromica fra i due scali, raddoppiata per il ritorno, divisa per la tariffa. Un a/r di 4.300 km a 62 € vale 138 km/€: è il segnale principale, e pesa il 45% del punteggio.'],
    ['02','Minuti di volo per euro','Tempo di volo andata e ritorno dichiarato dalla fonte, diviso per la tariffa. Distingue un volo davvero lungo da una tratta breve che copre terreno in fretta. Pesa il 25%.'],
@@ -1396,7 +1397,7 @@ const PROSE = {
   priv:[
    ['01','Nessun account','Non c\'è registrazione, non si raccolgono email, non si chiede nulla. Le uniche cose che restano nel tuo browser sono il tema, la lingua e la valuta che hai scelto.'],
    ['02','Non vendiamo biglietti','Efficiency Life Flight è uno strumento di ricerca. I pulsanti di verifica aprono Google Flights o Skyscanner: la prenotazione avviene lì, alle loro condizioni. Non trattiamo dati di pagamento perché non ne vediamo nessuno.'],
-   ['03','Link di affiliazione','I pulsanti <b>Prenota</b> e <b>Hotel</b>, quando sono presenti, contengono un codice affiliato: se prenoti, il sito riceve una commissione dall\'operatore. <b>Non cambia di un centesimo il prezzo che paghi</b> e non influenza la classifica, che dipende solo dai chilometri, dai minuti e dal prezzo. Il sito carica inoltre Travelpayouts Drive, che può misurare le uscite e trasformare i collegamenti compatibili in link affiliati. Il pulsante Google resta la controprova indipendente e non ci fa guadagnare niente.'],
+   ['03','Link di affiliazione','I pulsanti <b>Prenota</b> e <b>Hotel</b>, quando sono presenti, contengono un codice affiliato: se prenoti, il sito riceve una commissione dall\'operatore. <b>Non cambia di un centesimo il prezzo che paghi</b> e non influenza la classifica, che dipende solo dai chilometri, dai minuti e dal prezzo. Il pulsante Google resta lì apposta: è la controprova indipendente, e non ci fa guadagnare niente.'],
    ['04','Prezzi indicativi','Ogni tariffa è una rilevazione datata, non una disponibilità garantita. I prezzi cambiano più volte al giorno: usa questa classifica per decidere <b>dove</b> guardare, poi verifica sul sito dell\'operatore prima di prenotare.'],
   ],
  },
@@ -1408,7 +1409,7 @@ const PROSE = {
   footTag:'The flight module of Efficiency Life. Destination discovery driven by the distance-to-price ratio.',
   adFree:'Ad space — not active yet',
   ccYes:'Accept', ccNo:'Decline', ccOpen:'Cookie preferences',
-  cookie:'<b>One moment of clarity.</b> This consent concerns advertising: if you decline, the site works exactly the same but does not load the advertising network. Your choice stays in your browser and you can change it at any time from the footer. The Travelpayouts affiliate integration is described separately under <a href="#privacy">How we handle data</a>.',
+  cookie:'<b>One moment of clarity.</b> The site is funded by the bookings that start here: the affiliate network uses cookies to recognise that a traveller came from our engine, and if we ever switch advertising on, it would use its own to measure how it performs. If you decline, the site works exactly the same — nothing is taken away, every price and link stays — we simply load nothing from third parties. Your choice stays in your browser and you can change it any time from the footer. <a href="#privacy">How we handle data</a>.',
   method:[
    ['01','Distance per euro','Great-circle distance between the two airports, doubled for the round trip, divided by the fare. A 4,300 km return for €62 is 138 km/€ — the primary signal, worth 45% of the score.'],
    ['02','Flight minutes per euro','Round-trip block time as published by the source, divided by the fare. It separates a genuinely long flight from a short hop that merely covers ground fast. Worth 25%.'],
@@ -1421,7 +1422,7 @@ const PROSE = {
   priv:[
    ['01','No account','There is no sign-up, no email collected, nothing asked. The only things kept in your browser are the theme, language and currency you picked.'],
    ['02','We do not sell tickets','Efficiency Life Flight is a research tool. The verify buttons open Google Flights or Skyscanner: booking happens there, on their terms. We hold no payment data because we never see any.'],
-   ['03','Affiliate links','The <b>Book</b> and <b>Hotels</b> buttons, where present, carry an affiliate code: if you book, the site earns a commission from the operator. <b>It does not change the price you pay by a single cent</b> and does not influence the ranking, which depends only on kilometres, minutes and price. The site also loads Travelpayouts Drive, which may measure outbound visits and convert compatible links into affiliate links. The Google button remains the independent cross-check and earns us nothing.'],
+   ['03','Affiliate links','The <b>Book</b> and <b>Hotels</b> buttons, where present, carry an affiliate code: if you book, the site earns a commission from the operator. <b>It does not change the price you pay by a single cent</b> and does not influence the ranking, which depends only on kilometres, minutes and price. The Google button is there on purpose: it is the independent cross-check, and it earns us nothing.'],
    ['04','Prices are indicative','Every fare is a dated observation, not guaranteed availability. Airfares move several times a day: use this board to decide <b>where</b> to look, then confirm on the operator\'s site before booking.'],
   ],
  }
@@ -1534,12 +1535,28 @@ async function fetchLive(quiet){
   if(!quiet){ runSearch(); renderBoard(); }
 }
 
-/* ── consenso pubblicita' ────────────────────────────────
+/* ── consenso e pubblicita' ──────────────────────────────
    Il circuito pubblicitario si attiva da scripts/build.py. Finche' non
-   c'e', il banner pubblicitario non compare.
+   c'e', nessuno script di terze parti entra nella pagina e il banner non
+   compare: non si chiede il permesso per qualcosa che non si fa.
    Quando c'e', lo script viene caricato SOLO dopo un si' esplicito. */
 const ADS = { client: '__ADS_CLIENT__', slot: '__ADS_SLOT__' };
 const ADS_ON = () => !!ADS.client && ADS.client !== '__ADS_' + 'CLIENT__';
+
+/* Travelpayouts Drive: lo script con cui il circuito verifica il sito e
+   misura le uscite affiliate. E' codice di terze parti come la pubblicita',
+   quindi passa dalla stessa porta: caricato solo dopo un si' esplicito.
+   L'indirizzo resta scritto nel sorgente della pagina anche prima del
+   consenso, cosi' chi controlla il codice lo trova. */
+const DRIVE_URL = '__TP_DRIVE_URL__';
+const DRIVE_ON  = () => !!DRIVE_URL && DRIVE_URL !== '__TP_' + 'DRIVE_URL__';
+const TRACK_ON  = () => ADS_ON() || DRIVE_ON();
+function loadDrive(){
+  if(!DRIVE_ON() || document.getElementById('tpdrive')) return;
+  const sc = document.createElement('script');
+  sc.id = 'tpdrive'; sc.async = true; sc.src = DRIVE_URL;
+  document.head.appendChild(sc);
+}
 const CC_KEY = 'elf-consent';
 function ccGet(){ try{ return localStorage.getItem(CC_KEY); }catch(_){ return null; } }
 function ccSet(v){ try{ localStorage.setItem(CC_KEY, v); }catch(_){} }
@@ -1564,15 +1581,15 @@ function ccRender(){
   $('#ccYes').textContent = p.ccYes;
   $('#ccNo').textContent  = p.ccNo;
   $('#ccOpen').textContent = p.ccOpen;
-  $('#ccOpen').hidden = !ADS_ON();
+  $('#ccOpen').hidden = !TRACK_ON();
 }
 function ccInit(){
-  if(!ADS_ON()) return;
+  if(!TRACK_ON()) return;
   const v = ccGet();
-  if(v === 'yes') loadAds();
+  if(v === 'yes'){ loadAds(); loadDrive(); }
   else if(v !== 'no') $('#cc').hidden = false;
 }
-$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; loadAds(); });
+$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; loadAds(); loadDrive(); });
 $('#ccNo').addEventListener('click',  () => { ccSet('no');  $('#cc').hidden = true; });
 $('#ccOpen').addEventListener('click', () => { $('#cc').hidden = false; });
 
