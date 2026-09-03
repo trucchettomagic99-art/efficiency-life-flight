@@ -41,10 +41,10 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/ber/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/pvg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/pvg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/da/ams/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/from/ams/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/kul/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/kul/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/da/ams/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/from/ams/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/krk/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/krk/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/crl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -81,16 +81,16 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/dus/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/vce/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/vce/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/da/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/from/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/da/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/from/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/ala/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/ala/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/da/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/from/wmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/fra/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/fra/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/opo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/opo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/da/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/from/prg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/sof/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/sof/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/rmo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -179,8 +179,6 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/cgk/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/cmn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/cmn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/da/tbs/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/from/tbs/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/pmo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/pmo/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/tsf/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -197,6 +195,8 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/kwi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/rix/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/rix/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/da/tbs/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/from/tbs/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/syd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/syd/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/han/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -209,6 +209,8 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/trn/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/atl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/atl/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/da/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
+  <url><loc>https://efficiencylife-flight.netlify.app/from/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/yvr/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/mel/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
@@ -225,8 +227,6 @@
   <url><loc>https://efficiencylife-flight.netlify.app/from/alg/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/sea/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/da/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
-  <url><loc>https://efficiencylife-flight.netlify.app/from/pmi/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/from/nap/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
   <url><loc>https://efficiencylife-flight.netlify.app/da/cia/</loc><lastmod>2026-09-03</lastmod><priority>0.7</priority></url>
