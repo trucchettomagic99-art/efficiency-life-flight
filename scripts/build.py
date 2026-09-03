@@ -13,7 +13,7 @@ PUBLIC = ROOT / 'public'
 DIST   = ROOT / 'dist'
 
 # ── l'indirizzo pubblico del sito: cambialo quando avrai il tuo dominio ────
-SITE = 'https://efficiencylife-flight.netlify.app'
+SITE = 'https://efficiency-life-flight.pages.dev'
 
 # ── monetizzazione: tre interruttori, tutti spenti finche' non li accendi ──
 #
