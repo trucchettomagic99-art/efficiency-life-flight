@@ -1,0 +1,54 @@
+name: Indice notturno
+
+# Ogni notte alle 03:20 UTC (04:20 in Italia d'inverno, 05:20 d'estate):
+# interroga Travelpayouts, ricostruisce l'indice, ricompila il sito e committa.
+# Netlify vede il commit e pubblica da solo.
+on:
+  schedule:
+    - cron: '20 3 * * *'
+  workflow_dispatch:        # per lanciarlo a mano dal tab Actions
+
+permissions:
+  contents: write           # serve per ricommittare i dati aggiornati
+
+concurrency:
+  group: indice
+  cancel-in-progress: false
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Scarica il repository
+        uses: actions/checkout@v4
+
+      - name: Prepara Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Raccogli le tariffe
+        env:
+          TP_TOKEN: ${{ secrets.TP_TOKEN }}
+        run: python scripts/fetch_prices.py
+
+      - name: Ricompila il sito
+        run: python scripts/build.py
+
+      - name: Rigenera le pagine per aeroporto
+        run: python scripts/build_pages.py
+
+      - name: Committa se qualcosa e' cambiato
+        run: |
+          git config user.name  "efficiency-life-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/index.json dist/
+          if git diff --staged --quiet; then
+            echo "Nessuna variazione: niente da pubblicare."
+          else
+            git commit -m "Indice tariffe $(date -u +%Y-%m-%d)"
+            git push
+            echo "Indice aggiornato e pubblicato."
+          fi
