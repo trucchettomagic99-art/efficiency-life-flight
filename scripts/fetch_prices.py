@@ -12,16 +12,24 @@ Se una notte l'API non risponde, lo script NON sovrascrive l'indice esistente:
 meglio dati di ieri che una pagina vuota.
 """
 from __future__ import annotations
-import json, os, sys, time, pathlib, datetime
+import json, os, sys, time, pathlib, datetime, re
 from concurrent.futures import ThreadPoolExecutor
-import urllib.request, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / 'data'
 
-TOKEN = os.environ.get('TP_TOKEN', '').strip()
+# Il token va ripulito da OGNI spazio, non solo da quelli in testa e in coda:
+# incollandolo in un campo web ci si porta dietro con facilita' un a capo o
+# uno spazio in mezzo, e Python rifiuta di comporre un indirizzo che li
+# contiene — la richiesta non parte nemmeno.
+TOKEN = ''.join(os.environ.get('TP_TOKEN', '').split())
 if not TOKEN:
     sys.exit('TP_TOKEN mancante: aggiungilo nei Secrets del repository.')
+if not re.fullmatch(r'[0-9a-fA-F]{32}', TOKEN):
+    print(f'! TP_TOKEN ha una forma inattesa: {len(TOKEN)} caratteri, '
+          f'mi aspettavo 32 esadecimali. Provo lo stesso.', file=sys.stderr)
+TOKEN_Q = urllib.parse.quote(TOKEN, safe='')
 
 API   = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices'
 CITIES   = 'https://api.travelpayouts.com/data/en/cities.json'
@@ -30,10 +38,26 @@ AIRPORTS = 'https://api.travelpayouts.com/data/en/airports.json'
 MIN_NIGHTS, MAX_NIGHTS = 2, 30      # esclude same-day e soggiorni assurdi
 MIN_PRICE  = 10                     # sotto i 10 EUR sono errori di prezzo
 PER_ORIGIN = 60                     # destinazioni tenute per aeroporto
-WORKERS    = 6                      # richieste in parallelo: gentile con l'API
+WORKERS    = 3                      # richieste in parallelo
+PAUSA      = 0.35                   # secondi fra una richiesta e l'altra
+
+# Sei richieste in parallelo erano troppe: l'API rallentava e i tentativi
+# ripetuti allungavano la corsa fino a farla scadere. Tre alla volta, con una
+# pausa breve, e' piu' lento ma arriva in fondo — e alla fine il tempo totale
+# e' minore, perche' non si spreca in ritentativi.
 
 
-def get(url: str, tries: int = 3, timeout: int = 45):
+def safe(x) -> str:
+    """Toglie il token da qualunque testo prima di stamparlo.
+
+    Su un repository pubblico i log delle esecuzioni li legge chiunque. GitHub
+    maschera i secret di suo, ma il messaggio di un'eccezione di rete puo'
+    contenere l'indirizzo completo e non voglio dipendere solo da quello.
+    """
+    return str(x).replace(TOKEN, '***') if TOKEN else str(x)
+
+
+def get(url: str, tries: int = 4, timeout: int = 60):
     last = None
     for n in range(tries):
         try:
@@ -42,17 +66,20 @@ def get(url: str, tries: int = 3, timeout: int = 45):
                 return json.load(r)
         except Exception as e:                      # rete, 5xx, rate limit
             last = e
-            time.sleep(2 * (n + 1))
-    raise RuntimeError(f'{url.split("?")[0]} non raggiungibile: {last}')
+            # attesa crescente: 3, 6, 12 secondi. Se e' un limite di frequenza,
+            # insistere subito peggiora le cose.
+            time.sleep(3 * (2 ** n))
+    raise RuntimeError(f'{url.split("?")[0]} non raggiungibile: {safe(last)}')
 
 
 def fetch_origin(iata: str):
+    time.sleep(PAUSA)
     url = (f'{API}?origin={iata}&currency=eur&period_type=year&group_by=directions'
-           f'&one_way=false&limit=1000&token={TOKEN}')
+           f'&one_way=false&limit=1000&token={TOKEN_Q}')
     try:
         j = get(url)
     except Exception as e:
-        print(f'  ! {iata}: {e}', flush=True)
+        print(f'  ! {iata}: {safe(e)}', flush=True)
         return iata, []
 
     rows = []
@@ -101,9 +128,16 @@ def main() -> int:
             counts[iata] = len(rows)
 
     ok = len(counts)
+    vuoti = [i for i, r in results if not r]
+    print(f'\nRisposte utili: {ok}/{len(origins)} · tariffe grezze: {len(deals)}', flush=True)
+    if vuoti:
+        print(f'Senza rotte: {len(vuoti)} — {" ".join(vuoti[:24])}'
+              + (' …' if len(vuoti) > 24 else ''), flush=True)
+
     if ok < len(origins) * 0.5 or len(deals) < 500:
         print(f'ABORT: solo {ok}/{len(origins)} origini e {len(deals)} tariffe. '
-              f'Tengo l\'indice precedente.', file=sys.stderr)
+              f'Tengo l\'indice precedente: meglio i dati di ieri che una pagina vuota.',
+              file=sys.stderr)
         return 1
 
     # anagrafica luoghi: nome, paese, coordinate per ogni codice citato
@@ -118,7 +152,7 @@ def main() -> int:
                                  'la': round(float(co['lat']), 2),
                                  'lo': round(float(co['lon']), 2)}
     except Exception as e:
-        print(f'! anagrafica luoghi non scaricata ({e}); uso quella esistente', file=sys.stderr)
+        print(f'! anagrafica luoghi non scaricata ({safe(e)}); uso quella esistente', file=sys.stderr)
         places = json.loads((DATA / 'index.json').read_text()).get('places', {})
 
     for a in catalog['airports']:                     # gli scali del catalogo non mancano mai
