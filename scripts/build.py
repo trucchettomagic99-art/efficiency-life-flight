@@ -15,6 +15,34 @@ DIST   = ROOT / 'dist'
 # ── l'indirizzo pubblico del sito: cambialo quando avrai il tuo dominio ────
 SITE = 'https://efficiencylife-flight.netlify.app'
 
+# ── monetizzazione ────────────────────────────────────────────────────────
+# TP_MARKER  ID partner Travelpayouts. Vuoto = nessun link affiliato.
+# TP_LINK    formato di redirect, letto da un link vero generato dal pannello.
+#            I segnaposto {marker} {trs} {p} {campaign} {url} li riempie il sito.
+# TP_P_*     codice del singolo programma. Se manca, quel pulsante manda
+#            l'utente diretto invece che dal redirect.
+# ADS_CLIENT codice editore AdSense (ca-pub-...). Vuoto = nessuno script di
+#            terze parti entra nella pagina e il banner cookie non compare.
+TP_MARKER    = '772942'          # ID partner
+TP_TRS       = '569809'          # progetto "Efficiencylife-flight"
+TP_CAMPAIGN  = '100'
+TP_LINK      = 'https://tp.media/r?campaign_id={campaign}&marker={marker}&p={p}&trs={trs}&u={url}'
+TP_P_FLIGHT  = '4114'            # Aviasales
+TP_P_HOTEL   = ''                # codice programma alloggi, quando ce ne sara' uno
+# Hotellook ha chiuso il 20 ottobre 2025 e con lui l'unico motore alberghi del
+# circuito. Finche' questa riga e' vuota il pulsante alloggio non compare: un
+# pulsante che manda traffico senza incassare e' peggio di nessun pulsante.
+TP_HOTEL_URL = ''
+
+# Attivita' ed esperienze — Klook. La sua ricerca accetta il nome della citta'
+# in chiaro, quindi un solo formato copre tutte le destinazioni.
+TP_P_ACT     = '4110'
+TP_C_ACT     = '137'
+TP_ACT_URL   = 'https://www.klook.com/search/result/?query={city}&search_scope=main_search'
+ADS_CLIENT   = ''
+ADS_SLOT     = ''
+
+
 DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
@@ -27,14 +55,30 @@ def main() -> int:
     tpl = (ROOT / 'src' / 'app.html').read_text()
     cat = (DATA / 'catalog.json').read_text()
     idx = (DATA / 'index.json').read_text()
+    wld = (DATA / 'world.json').read_text()
+    i18 = (ROOT / 'src' / 'i18n.js').read_text()
 
-    for name, blob in (('catalog.json', cat), ('index.json', idx)):
+    for name, blob in (('catalog.json', cat), ('index.json', idx),
+                       ('world.json', wld), ('i18n.js', i18)):
         if '</script' in blob.lower():
             sys.exit(f'{name} contiene un tag di chiusura script: mi fermo.')
 
-    body = tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
-    if '__CATALOG__' in body or '__DEALS__' in body:
-        sys.exit('segnaposto non sostituiti nel template.')
+    body = (tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
+               .replace('__WORLD__', wld).replace('__I18N__', i18)
+               .replace('__TP_MARKER__', TP_MARKER).replace('__TP_LINK__', TP_LINK)
+               .replace('__TP_TRS__', TP_TRS).replace('__TP_CAMPAIGN__', TP_CAMPAIGN)
+               .replace('__TP_P_FLIGHT__', TP_P_FLIGHT).replace('__TP_P_HOTEL__', TP_P_HOTEL)
+               .replace('__TP_HOTEL_URL__', TP_HOTEL_URL)
+               .replace('__TP_P_ACT__', TP_P_ACT).replace('__TP_C_ACT__', TP_C_ACT)
+               .replace('__TP_ACT_URL__', TP_ACT_URL)
+               .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
+    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__',
+               '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
+               '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
+               '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
+               '__ADS_CLIENT__', '__ADS_SLOT__'):
+        if ph in body:
+            sys.exit(f'segnaposto {ph} non sostituito nel template.')
 
     head = f"""<!doctype html>
 <html lang="it">
