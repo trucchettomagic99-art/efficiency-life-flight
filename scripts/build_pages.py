@@ -24,6 +24,7 @@ B = importlib.util.module_from_spec(spec); spec.loader.exec_module(B)
 SITE, TP_MARKER, TP_LINK = B.SITE, B.TP_MARKER, B.TP_LINK
 TP_TRS, TP_CAMPAIGN, TP_P_FLIGHT = B.TP_TRS, B.TP_CAMPAIGN, B.TP_P_FLIGHT
 TP_P_ACT, TP_C_ACT, TP_ACT_URL = B.TP_P_ACT, B.TP_C_ACT, B.TP_ACT_URL
+DRIVE_HEAD = B.DRIVE_HEAD
 
 MIN_ROUTES = 6          # sotto questa soglia la pagina sarebbe povera: non la creo
 TOP        = 12         # righe in tabella
@@ -248,7 +249,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title>
+{DRIVE_HEAD}<title>{esc(title)}</title>
 <meta name="description" content="{esc(desc)}">
 <link rel="canonical" href="{url}">
 <link rel="alternate" hreflang="{lang}" href="{url}">

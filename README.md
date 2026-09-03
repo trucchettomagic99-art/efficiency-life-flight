@@ -2,37 +2,38 @@
 
 ### Il modulo voli della piattaforma Efficiency Life
 
-Sito statico, un solo file. Nessun server, nessun dominio, nessun database sono
-necessari per farlo funzionare: apri `index.html` con un doppio clic e funziona,
-già pieno di dati. Tutto il resto qui sotto è opzionale e serve solo a farlo crescere.
+Sito statico generato automaticamente. I sorgenti vivono in `src/`, i dati in
+`data/` e il contenuto pubblicato da Netlify viene scritto in `dist/`. Ogni
+notte GitHub Actions aggiorna le tariffe, ricompila il sito e pubblica il nuovo
+indice tramite Netlify.
 
 ---
 
 ## 1. Cosa c'è nella cartella
 
-| File | Cosa fa | Serve subito? |
-|---|---|---|
-| `index.html` | Il sito completo: indice tariffe, catalogo, motore di scoring, interfaccia IT/EN. Un solo file, zero dipendenze a parte i font Google. | **sì** |
-| `og.png` | L'anteprima che compare quando qualcuno condivide il link su WhatsApp, Slack, X, LinkedIn. | sì, se pubblichi |
-| `netlify.toml` / `_headers` | Header di sicurezza e cache. Già configurati: non vanno toccati. | sì, se pubblichi |
-| `robots.txt` / `sitemap.xml` | Per farsi indicizzare da Google. Dentro c'è un indirizzo segnaposto da sostituire col tuo dominio. | sì, se pubblichi |
-| `worker.js` | Proxy Cloudflare, serve solo per aggiornare i prezzi in automatico (punto 5). | no |
-| `README.md` | Questo file. | — |
+| Percorso | Cosa contiene |
+|---|---|
+| `src/app.html` | Interfaccia, motore di scoring e logica del sito. |
+| `src/i18n.js` | Testi e traduzioni dell'interfaccia. |
+| `data/` | Catalogo aeroporti, origini e indice delle tariffe. |
+| `scripts/` | Raccolta dati e generazione del sito e delle pagine SEO. |
+| `public/` | Immagine social, header, robots e file statici sorgente. |
+| `dist/` | Versione compilata pubblicata da Netlify; non va modificata a mano. |
+| `netlify/functions/prices.mjs` | Endpoint serverless per l'aggiornamento dei prezzi selezionati. |
+| `.github/workflows/nightly.yml` | Aggiornamento automatico notturno. |
+| `worker.js` | Proxy Cloudflare alternativo, non usato dal deploy Netlify. |
 
-**Dentro `index.html`, incorporati:**
+`dist/index.html` incorpora l'ultima fotografia disponibile di `data/index.json`:
+voli diretti andata e ritorno, data della rilevazione, prezzo, durata e distanza.
+Il catalogo comprende 917 aeroporti in 219 paesi e territori. I conteggi delle
+tariffe cambiano a ogni aggiornamento notturno e non vengono duplicati qui.
 
-- **4.243 tariffe reali** andata e ritorno, solo voli diretti, rilevate il 2 settembre 2026
-- **225 aeroporti di partenza** in **108 paesi**
-- **988 destinazioni** in **182 paesi**
-- catalogo di **917 aeroporti** in **219 paesi e territori**, con coordinate reali
-
-Nessun prezzo è stimato, modellato o generato. Ogni riga è una osservazione con
-fonte e data. Dove non c'è rilevazione, il sito lo dichiara e rimanda alla
-ricerca live invece di riempire il vuoto.
+I prezzi sono osservazioni provenienti dalla cache Travelpayouts/Aviasales e
+devono essere verificati sul motore di prenotazione prima dell'acquisto.
 
 ---
 
-## 2. Top 10 dall'Italia — rilevazione 02.09.2026
+## 2. Esempio storico dall'Italia — rilevazione 02.09.2026
 
 Voli **diretti**, **andata e ritorno**, partenze entro un anno, dai 20 maggiori
 aeroporti italiani verso destinazioni estere. Pesi di default:

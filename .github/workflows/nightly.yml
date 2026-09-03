@@ -4,6 +4,14 @@ name: Indice notturno
 # interroga Travelpayouts, ricostruisce l'indice, ricompila il sito e committa.
 # Netlify vede il commit e pubblica da solo.
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nightly.yml'
+      - 'scripts/**'
+      - 'src/**'
+      - 'public/**'
+      - 'netlify.toml'
   schedule:
     - cron: '20 3 * * *'
   workflow_dispatch:        # per lanciarlo a mano dal tab Actions
