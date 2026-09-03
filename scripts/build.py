@@ -53,9 +53,9 @@ TP_HOTEL_URL = ''
 TP_P_ACT     = ''                # Klook (era 4110): programma non ancora
 TP_C_ACT     = '137'             # approvato, e il redirect e' comunque bloccato
 TP_ACT_URL   = 'https://www.klook.com/search/result/?query={city}&search_scope=main_search'
-# Travelpayouts Drive — codice univoco del progetto. Viene inserito nel tag
-# <head> di tutte le pagine, come richiesto dalla procedura di installazione.
-# Svuota questa riga per toglierlo del tutto.
+# Travelpayouts Drive — lo script con cui il circuito verifica il sito. Vive
+# dietro il banner di consenso insieme alla pubblicita': si carica solo dopo un
+# si' esplicito. Svuota questa riga per toglierlo del tutto.
 TP_DRIVE_URL = 'https://emrldtp.com/NTY5ODA5.js?t=569809'
 
 ADS_CLIENT = ''
@@ -68,26 +68,6 @@ DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilo
 FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
            "%3Crect width='32' height='32' fill='%2303070E'/%3E"
            "%3Cpath d='M16 6 L26 25 L16 20 L6 25 Z' fill='%232E8DFF'/%3E%3C/svg%3E")
-
-
-def drive_head(url: str) -> str:
-    """Restituisce il codice Drive ufficiale da collocare nel tag <head>."""
-    if not url:
-        return ''
-    return f'''<script nowprocket data-noptimize="1" data-cfasync="false"
- data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
-(function () {{
-    var script = document.createElement("script");
-    script.async = true;
-    script.setAttribute("data-cmp-ab", "2");
-    script.src = {json.dumps(url)};
-    document.head.appendChild(script);
-}})();
-</script>
-'''
-
-
-DRIVE_HEAD = drive_head(TP_DRIVE_URL)
 
 
 def main() -> int:
@@ -110,12 +90,13 @@ def main() -> int:
                .replace('__TP_HOTEL_URL__', TP_HOTEL_URL)
                .replace('__TP_P_ACT__', TP_P_ACT).replace('__TP_C_ACT__', TP_C_ACT)
                .replace('__TP_ACT_URL__', TP_ACT_URL)
+               .replace('__TP_DRIVE_URL__', TP_DRIVE_URL)
                .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
     for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__',
                '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
                '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
                '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
-               '__ADS_CLIENT__', '__ADS_SLOT__'):
+               '__TP_DRIVE_URL__', '__ADS_CLIENT__', '__ADS_SLOT__'):
         if ph in body:
             sys.exit(f'segnaposto {ph} non sostituito nel template.')
 
@@ -124,7 +105,7 @@ def main() -> int:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-{DRIVE_HEAD}<title>Efficiency Life Flight</title>
+<title>Efficiency Life Flight</title>
 <meta name="description" content="{DESC}">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#EDF2F8" media="(prefers-color-scheme: light)">
