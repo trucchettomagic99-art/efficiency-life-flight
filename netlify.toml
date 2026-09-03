@@ -9,6 +9,13 @@
   # Pubblica solo il secondo, evitando di spendere crediti per una build obsoleta.
   ignore   = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF dist"
 
+# La funzione che serve i prezzi in tempo reale (/api/prices).
+# Il token Travelpayouts si imposta nel pannello come variabile d'ambiente
+# TP_TOKEN — non va mai scritto in un file.
+[functions]
+  directory    = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[headers]]
   for = "/*"
   [headers.values]
