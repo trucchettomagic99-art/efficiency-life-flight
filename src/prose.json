@@ -1,0 +1,893 @@
+{
+  "version": 1,
+  "locales": {
+    "en": {
+      "name": "English",
+      "path": "en",
+      "hreflang": "en",
+      "locale": "en_GB",
+      "dir": "ltr",
+      "consent": {
+        "accept": "Accept",
+        "decline": "Decline",
+        "preferences": "Cookie preferences",
+        "body": "<b>Your choice.</b> If you accept, optional third-party tools may measure affiliate referrals and, if advertising is activated, ad performance. If you decline, search, prices and links work normally and no optional third-party script is loaded. The choice stays in this browser and can be changed in the footer. <a href=\"#privacy\">How we handle data</a>."
+      },
+      "indexNote": "<b>About this index.</b> {fareCount} observed non-stop return fares on {observed}, from <b>{originCount} departure airports</b> to <b>{destCount} destinations</b>. The interface covers {languageCount} languages and {currencyCount} currencies. Every fare is observed; none is modelled.",
+      "method": [
+        ["Distance per euro", "Round-trip great-circle distance divided by the fare. If the one-way distance is 4,300 km, a €62 return yields 139 km/€. Weight: 32%."],
+        ["Expected price", "A robust curve <code>p = a · km^b</code> estimates price by distance across the full index. <b>Deal</b> measures how far a fare is below that expectation. Weight: 30%."],
+        ["Flight minutes per euro", "Published round-trip flight minutes divided by the fare. It rewards useful time in the air, not only distance. Weight: 13%."],
+        ["Trip shape", "Filters use the actual departure and return weekdays: long weekend (Fri→Mon), weekend (Fri→Sun) and quick trip (Sat→Sun). Counts reflect the one observed date per destination."],
+        ["Price history", "The index is archived nightly. After at least five observations, a route can be marked in the <b>lowest 10% of its last 90 days</b>. History began on 4 September 2026."],
+        ["Proportionate stay", "Suggested nights rise with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. Results also show the observed stay."],
+        ["Baggage", "Sources do not state whether checked baggage is included, so we do not guess. The slider adds the same assumed fee to every fare and recalculates the ranking."],
+        ["Currency", "Source prices are in euro. Other currencies use rates dated {fxDate} for display only; the operator’s checkout price is authoritative. LIVE prices are converted by the source."],
+        ["Departure window", "The source supplies one cheapest date per destination, not a full calendar search. Bands cover 1–30, 31–60 and so on to 180+ days, and can be combined."],
+        ["Index and live", "<b>INDEX</b> is the dated snapshot embedded in the page. <b>LIVE</b> is a fresh request to the price service. The switch is automatic when live data is available."]
+      ],
+      "privacy": [
+        ["No account", "There is no sign-up and no email is collected. This browser stores only your theme, language, currency and consent choice."],
+        ["We do not sell tickets", "Efficiency Life Flight is a research tool. Booking happens with the operator or comparison service; we never see payment data."],
+        ["Affiliate links", "Booking and activity links may be affiliate links. A purchase can earn us a commission without changing your price or the ranking. Google Flights remains an independent check."],
+        ["Prices are indicative", "Every fare is a dated observation, not guaranteed availability. Verify the current price and conditions with the operator before booking."]
+      ],
+      "seo": {
+        "title": "Best-value direct flights | Efficiency Life Flight",
+        "description": "Choose a departure airport, travel period and budget. Compare observed non-stop return fares by kilometres per euro, price and Efficiency Score."
+      }
+    },
+    "zh": {
+      "name": "中文", "path": "zh", "hreflang": "zh", "locale": "zh_CN", "dir": "ltr",
+      "consent": {"accept": "接受", "decline": "拒绝", "preferences": "Cookie 偏好", "body": "<b>由你选择。</b>接受后，可选的第三方工具可能会衡量联盟推荐效果；若启用广告，也会衡量广告表现。拒绝后，搜索、价格和链接仍可正常使用，且不会加载可选的第三方脚本。此选择仅保存在本浏览器中，可在页脚更改。<a href=\"#privacy\">了解我们如何处理数据</a>。"},
+      "indexNote": "<b>关于此索引。</b>{observed} 观察到 {fareCount} 个直飞往返票价，覆盖 <b>{originCount} 个出发机场</b>和 <b>{destCount} 个目的地</b>。界面支持 {languageCount} 种语言和 {currencyCount} 种货币。所有票价均为实际观察值，而非模型估算。",
+      "method": [
+        ["每欧元飞行距离", "往返大圆距离除以票价。单程 4,300 公里、往返 €62，即 139 公里/欧元。权重：32%。"],
+        ["预期价格", "稳健曲线 <code>p = a · km^b</code> 根据完整索引中的距离估算价格。<b>优惠度</b>表示票价低于预期的程度。权重：30%。"],
+        ["每欧元飞行分钟", "来源公布的往返飞行分钟数除以票价，衡量实际空中时间价值。权重：13%。"],
+        ["行程形态", "筛选器使用真实出发与返程星期：长周末（周五→周一）、周末（周五→周日）和短途（周六→周日）。"],
+        ["价格历史", "索引每晚归档。至少有五次观察后，可标记为<b>过去 90 天最低 10%</b>。历史始于 2026 年 9 月 4 日。"],
+        ["匹配距离的住宿", "建议住宿随距离增加：<code>≤800 公里 → 3–4</code>、<code>≤2,000 → 5–7</code>、<code>≤4,000 → 8–10</code>、<code>≤7,000 → 12–14</code>、<code>&gt;7,000 → 15–21</code>。"],
+        ["行李", "来源未说明是否含托运行李，因此我们不作猜测。滑块为所有票价加入相同的假定费用并重新排序。"],
+        ["货币", "源价格为欧元。其他货币仅按 {fxDate} 的汇率显示；最终以运营商结账价格为准。LIVE 价格由来源换算。"],
+        ["出发时间窗", "来源仅提供每个目的地的一个最低价日期，并非完整日历搜索。区间为 1–30、31–60 天，依此类推至 180+ 天，可组合选择。"],
+        ["INDEX 与 LIVE", "<b>INDEX</b> 是页面内嵌的日期快照；<b>LIVE</b> 是向价格服务发起的新请求。有实时数据时自动切换。"]
+      ],
+      "privacy": [
+        ["无需账户", "无需注册，也不收集电子邮件。本浏览器仅保存主题、语言、货币和同意选择。"],
+        ["我们不售票", "Efficiency Life Flight 是研究工具。预订在运营商或比价服务完成，我们不会看到付款数据。"],
+        ["联盟链接", "预订和活动链接可能是联盟链接。购买可能为我们带来佣金，但不会改变你的价格或排名。Google Flights 仍是独立核验渠道。"],
+        ["价格仅供参考", "每个票价都是带日期的观察值，不代表保证有票。预订前请向运营商核实当前价格和条件。"]
+      ],
+      "seo": {"title": "高性价比直飞航班 | Efficiency Life Flight", "description": "选择出发机场、旅行时间和预算，按每欧元公里数、价格和 Efficiency Score 比较观察到的直飞往返票价。"}
+    },
+    "hi": {
+      "name": "हिन्दी", "path": "hi", "hreflang": "hi", "locale": "hi_IN", "dir": "ltr",
+      "consent": {"accept": "स्वीकार करें", "decline": "अस्वीकार करें", "preferences": "कुकी प्राथमिकताएँ", "body": "<b>चुनाव आपका है।</b> स्वीकार करने पर वैकल्पिक तृतीय-पक्ष टूल अफ़िलिएट रेफ़रल और, विज्ञापन चालू होने पर, विज्ञापन प्रदर्शन माप सकते हैं। अस्वीकार करने पर खोज, कीमतें और लिंक सामान्य रूप से काम करेंगे और कोई वैकल्पिक तृतीय-पक्ष स्क्रिप्ट लोड नहीं होगी। चुनाव इसी ब्राउज़र में रहता है और फ़ुटर से बदला जा सकता है। <a href=\"#privacy\">हम डेटा कैसे संभालते हैं</a>।"},
+      "indexNote": "<b>इस इंडेक्स के बारे में।</b> {observed} को देखे गए {fareCount} सीधे आने-जाने के किराए, <b>{originCount} प्रस्थान हवाई अड्डों</b> से <b>{destCount} गंतव्यों</b> तक। इंटरफ़ेस {languageCount} भाषाओं और {currencyCount} मुद्राओं में है। हर किराया देखा गया है, मॉडल से नहीं बनाया गया।",
+      "method": [
+        ["प्रति यूरो दूरी", "आने-जाने की ग्रेट-सर्कल दूरी को किराए से भाग दिया जाता है। 4,300 किमी एकतरफ़ा और €62 वापसी = 139 किमी/€। भार: 32%।"],
+        ["अपेक्षित कीमत", "मज़बूत वक्र <code>p = a · km^b</code> पूरे इंडेक्स में दूरी के आधार पर कीमत का अनुमान लगाता है। <b>डील</b> बताता है कि किराया अपेक्षा से कितना कम है। भार: 30%।"],
+        ["प्रति यूरो उड़ान मिनट", "प्रकाशित आने-जाने के उड़ान मिनटों को किराए से भाग दिया जाता है। भार: 13%।"],
+        ["यात्रा का स्वरूप", "फ़िल्टर वास्तविक दिनों का उपयोग करते हैं: लंबा सप्ताहांत (शुक्र→सोम), सप्ताहांत (शुक्र→रवि) और छोटी यात्रा (शनि→रवि)।"],
+        ["मूल्य इतिहास", "इंडेक्स हर रात संग्रहित होता है। कम-से-कम पाँच अवलोकनों के बाद मार्ग को <b>पिछले 90 दिनों के सबसे कम 10%</b> में दिखाया जा सकता है। इतिहास 4 सितंबर 2026 से है।"],
+        ["दूरी के अनुसार ठहराव", "सुझाई रातें दूरी के साथ बढ़ती हैं: <code>≤800 किमी → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>।"],
+        ["सामान", "स्रोत चेक-इन सामान शामिल होने की जानकारी नहीं देते, इसलिए हम अनुमान नहीं लगाते। स्लाइडर हर किराए में समान अनुमानित शुल्क जोड़कर रैंकिंग दोबारा बनाता है।"],
+        ["मुद्रा", "स्रोत कीमतें यूरो में हैं। दूसरी मुद्राएँ केवल {fxDate} की दरों पर दिखाई जाती हैं; ऑपरेटर का चेकआउट मूल्य अंतिम है। LIVE कीमत स्रोत द्वारा बदली जाती है।"],
+        ["प्रस्थान अवधि", "स्रोत हर गंतव्य के लिए केवल एक सबसे सस्ती तारीख देता है, पूरा कैलेंडर नहीं। पट्टियाँ 1–30, 31–60 से 180+ दिन तक हैं और जोड़ी जा सकती हैं।"],
+        ["INDEX और LIVE", "<b>INDEX</b> पेज में मौजूद दिनांकित स्नैपशॉट है। <b>LIVE</b> मूल्य सेवा से नया अनुरोध है। डेटा मिलने पर बदलाव स्वतः होता है।"]
+      ],
+      "privacy": [
+        ["खाता नहीं", "साइन-अप नहीं है और ईमेल नहीं लिया जाता। यह ब्राउज़र केवल थीम, भाषा, मुद्रा और सहमति का चुनाव रखता है।"],
+        ["हम टिकट नहीं बेचते", "Efficiency Life Flight एक शोध टूल है। बुकिंग ऑपरेटर या तुलना सेवा पर होती है; हमें भुगतान डेटा नहीं मिलता।"],
+        ["अफ़िलिएट लिंक", "बुकिंग और गतिविधि लिंक अफ़िलिएट हो सकते हैं। खरीद पर हमें कमीशन मिल सकता है, पर आपकी कीमत या रैंकिंग नहीं बदलती। Google Flights स्वतंत्र जाँच है।"],
+        ["कीमतें संकेतात्मक हैं", "हर किराया दिनांकित अवलोकन है, उपलब्धता की गारंटी नहीं। बुकिंग से पहले ऑपरेटर से वर्तमान कीमत और शर्तें जाँचें।"]
+      ],
+      "seo": {"title": "सबसे उपयोगी सीधे उड़ान सौदे | Efficiency Life Flight", "description": "प्रस्थान हवाई अड्डा, यात्रा अवधि और बजट चुनें। प्रति यूरो किलोमीटर, कीमत और Efficiency Score से देखे गए सीधे वापसी किरायों की तुलना करें।"}
+    },
+    "es": {
+      "name": "Español", "path": "es", "hreflang": "es", "locale": "es_ES", "dir": "ltr",
+      "consent": {"accept": "Aceptar", "decline": "Rechazar", "preferences": "Preferencias de cookies", "body": "<b>Tú eliges.</b> Si aceptas, herramientas opcionales de terceros podrán medir las referencias de afiliación y, si se activa la publicidad, el rendimiento de los anuncios. Si rechazas, la búsqueda, los precios y los enlaces funcionarán con normalidad y no se cargará ningún script opcional de terceros. La elección se guarda en este navegador y puede cambiarse en el pie de página. <a href=\"#privacy\">Cómo tratamos los datos</a>."},
+      "indexNote": "<b>Sobre este índice.</b> {fareCount} tarifas observadas de ida y vuelta sin escalas el {observed}, desde <b>{originCount} aeropuertos de salida</b> a <b>{destCount} destinos</b>. La interfaz incluye {languageCount} idiomas y {currencyCount} monedas. Todas las tarifas son observadas; ninguna es modelada.",
+      "method": [
+        ["Distancia por euro", "Distancia ortodrómica de ida y vuelta dividida por la tarifa. Si el trayecto de ida mide 4.300 km, un billete de €62 ofrece 139 km/€. Peso: 32%."],
+        ["Precio esperado", "Una curva robusta <code>p = a · km^b</code> estima el precio según la distancia en todo el índice. <b>Oferta</b> mide cuánto queda una tarifa por debajo. Peso: 30%."],
+        ["Minutos de vuelo por euro", "Minutos publicados de vuelo de ida y vuelta divididos por la tarifa. Valora el tiempo útil en el aire. Peso: 13%."],
+        ["Forma del viaje", "Los filtros usan los días reales: puente (vie→lun), fin de semana (vie→dom) y escapada rápida (sáb→dom)."],
+        ["Historial de precios", "El índice se archiva cada noche. Con cinco observaciones, una ruta puede marcarse en el <b>10% más barato de los últimos 90 días</b>. El historial empezó el 4 de septiembre de 2026."],
+        ["Estancia proporcional", "Las noches sugeridas aumentan con la distancia: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Equipaje", "Las fuentes no indican si incluyen equipaje facturado, así que no lo suponemos. El control añade la misma tarifa estimada a cada vuelo y recalcula la clasificación."],
+        ["Moneda", "Los precios de origen están en euros. Las demás monedas usan los tipos del {fxDate} solo para mostrar; manda el precio de pago del operador. LIVE se convierte en origen."],
+        ["Ventana de salida", "La fuente proporciona una única fecha más barata por destino, no un calendario completo. Las franjas cubren 1–30, 31–60 y hasta 180+ días, y se pueden combinar."],
+        ["Índice y directo", "<b>INDEX</b> es la instantánea fechada incluida en la página. <b>LIVE</b> es una nueva petición al servicio de precios. El cambio es automático si hay datos en directo."]
+      ],
+      "privacy": [
+        ["Sin cuenta", "No hay registro ni se recogen correos. Este navegador solo guarda tema, idioma, moneda y elección de consentimiento."],
+        ["No vendemos billetes", "Efficiency Life Flight es una herramienta de investigación. La reserva se hace con el operador o comparador; no vemos datos de pago."],
+        ["Enlaces de afiliación", "Los enlaces de reservas y actividades pueden ser afiliados. Una compra puede generarnos comisión sin cambiar tu precio ni la clasificación. Google Flights sigue siendo una comprobación independiente."],
+        ["Precios orientativos", "Cada tarifa es una observación fechada, no disponibilidad garantizada. Comprueba el precio y las condiciones actuales con el operador antes de reservar."]
+      ],
+      "seo": {"title": "Vuelos directos con la mejor relación calidad-precio | Efficiency Life Flight", "description": "Elige aeropuerto de salida, periodo y presupuesto. Compara tarifas observadas de ida y vuelta sin escalas por kilómetros por euro, precio y Efficiency Score."}
+    },
+    "ar": {
+      "name": "العربية", "path": "ar", "hreflang": "ar", "locale": "ar_SA", "dir": "rtl",
+      "consent": {"accept": "قبول", "decline": "رفض", "preferences": "تفضيلات ملفات الارتباط", "body": "<b>الخيار لك.</b> عند القبول قد تقيس أدوات خارجية اختيارية إحالات التسويق بالعمولة، وأداء الإعلانات إذا فُعّلت. عند الرفض تعمل عمليات البحث والأسعار والروابط كالمعتاد ولا يُحمّل أي نص برمجي اختياري. يُحفظ الاختيار في هذا المتصفح ويمكن تغييره من التذييل. <a href=\"#privacy\">كيف نتعامل مع البيانات</a>."},
+      "indexNote": "<b>عن هذا الفهرس.</b> {fareCount} سعراً مرصوداً لرحلات مباشرة ذهاباً وإياباً في {observed}، من <b>{originCount} مطار انطلاق</b> إلى <b>{destCount} وجهة</b>. تتوفر الواجهة بـ {languageCount} لغة و{currencyCount} عملة. كل سعر مرصود فعلياً وليس ناتجاً عن نموذج.",
+      "method": [
+        ["المسافة لكل يورو", "مسافة الدائرة العظمى ذهاباً وإياباً مقسومة على السعر. مسافة 4,300 كم للذهاب وسعر €62 للعودة تعني 139 كم/€. الوزن: 32%."],
+        ["السعر المتوقع", "يقدّر منحنى متين <code>p = a · km^b</code> السعر حسب المسافة في كامل الفهرس. يقيس <b>العرض</b> مقدار انخفاض السعر عن المتوقع. الوزن: 30%."],
+        ["دقائق الطيران لكل يورو", "دقائق الطيران المنشورة ذهاباً وإياباً مقسومة على السعر. تكافئ وقت الطيران المفيد. الوزن: 13%."],
+        ["شكل الرحلة", "تستخدم المرشحات الأيام الفعلية: عطلة طويلة (الجمعة→الاثنين)، عطلة نهاية الأسبوع (الجمعة→الأحد)، ورحلة سريعة (السبت→الأحد)."],
+        ["سجل الأسعار", "يُؤرشف الفهرس كل ليلة. بعد خمس ملاحظات يمكن تمييز المسار ضمن <b>أدنى 10% خلال آخر 90 يوماً</b>. بدأ السجل في 4 سبتمبر 2026."],
+        ["إقامة تناسب المسافة", "تزداد الليالي المقترحة مع المسافة: <code>≤800 كم → 3–4</code>، <code>≤2,000 → 5–7</code>، <code>≤4,000 → 8–10</code>، <code>≤7,000 → 12–14</code>، <code>&gt;7,000 → 15–21</code>."],
+        ["الأمتعة", "لا توضّح المصادر شمول الأمتعة المسجلة، لذلك لا نفترض ذلك. يضيف شريط التمرير الرسوم التقديرية نفسها لكل سعر ويعيد الترتيب."],
+        ["العملة", "الأسعار المصدرية باليورو. العملات الأخرى تستخدم أسعار صرف {fxDate} للعرض فقط؛ سعر الدفع لدى المشغّل هو المرجع. يحوّل المصدر أسعار LIVE."],
+        ["نافذة المغادرة", "يوفر المصدر أرخص تاريخ واحد لكل وجهة، وليس تقويماً كاملاً. تغطي النطاقات 1–30 و31–60 وصولاً إلى 180+ يوماً ويمكن جمعها."],
+        ["INDEX وLIVE", "<b>INDEX</b> لقطة مؤرخة مدمجة في الصفحة. <b>LIVE</b> طلب جديد من خدمة الأسعار. يتم التبديل تلقائياً عند توفر البيانات."]
+      ],
+      "privacy": [
+        ["لا حساب", "لا يوجد تسجيل ولا نجمع البريد الإلكتروني. يحفظ المتصفح السمة واللغة والعملة واختيار الموافقة فقط."],
+        ["لا نبيع التذاكر", "Efficiency Life Flight أداة بحث. يتم الحجز لدى المشغّل أو خدمة المقارنة ولا نرى بيانات الدفع."],
+        ["روابط العمولة", "قد تكون روابط الحجز والأنشطة تسويقية بالعمولة. قد نحصل على عمولة دون تغيير سعرك أو الترتيب. يبقى Google Flights وسيلة تحقق مستقلة."],
+        ["الأسعار إرشادية", "كل سعر ملاحظة مؤرخة وليس توفراً مضموناً. تحقق من السعر والشروط الحالية لدى المشغّل قبل الحجز."]
+      ],
+      "seo": {"title": "أفضل قيمة للرحلات المباشرة | Efficiency Life Flight", "description": "اختر مطار المغادرة والفترة والميزانية. قارن أسعار رحلات الذهاب والعودة المباشرة المرصودة حسب الكيلومترات لكل يورو والسعر وEfficiency Score."}
+    },
+    "fr": {
+      "name": "Français", "path": "fr", "hreflang": "fr", "locale": "fr_FR", "dir": "ltr",
+      "consent": {"accept": "Accepter", "decline": "Refuser", "preferences": "Préférences des cookies", "body": "<b>Vous choisissez.</b> Si vous acceptez, des outils tiers facultatifs peuvent mesurer les recommandations d’affiliation et, si la publicité est activée, ses performances. Si vous refusez, recherche, prix et liens fonctionnent normalement et aucun script tiers facultatif n’est chargé. Le choix reste dans ce navigateur et se modifie depuis le pied de page. <a href=\"#privacy\">Notre traitement des données</a>."},
+      "indexNote": "<b>À propos de cet indice.</b> {fareCount} tarifs aller-retour sans escale observés le {observed}, depuis <b>{originCount} aéroports de départ</b> vers <b>{destCount} destinations</b>. L’interface couvre {languageCount} langues et {currencyCount} devises. Chaque tarif est observé, aucun n’est modélisé.",
+      "method": [
+        ["Distance par euro", "Distance orthodromique aller-retour divisée par le tarif. Pour 4 300 km à l’aller et €62 l’aller-retour : 139 km/€. Poids : 32 %."],
+        ["Prix attendu", "Une courbe robuste <code>p = a · km^b</code> estime le prix selon la distance sur tout l’indice. <b>Bonne affaire</b> mesure l’écart sous cette estimation. Poids : 30 %."],
+        ["Minutes de vol par euro", "Minutes de vol aller-retour publiées, divisées par le tarif. Elles valorisent le temps utile en vol. Poids : 13 %."],
+        ["Forme du voyage", "Les filtres utilisent les vrais jours : week-end prolongé (ven→lun), week-end (ven→dim) et escapade (sam→dim)."],
+        ["Historique des prix", "L’indice est archivé chaque nuit. Après cinq observations, un trajet peut figurer dans les <b>10 % les moins chers des 90 derniers jours</b>. Historique depuis le 4 septembre 2026."],
+        ["Séjour proportionné", "Les nuits suggérées augmentent avec la distance : <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Bagages", "Les sources n’indiquent pas si le bagage en soute est inclus : nous ne le supposons pas. Le curseur ajoute le même coût estimé à chaque tarif et recalcule le classement."],
+        ["Devise", "Les prix sources sont en euros. Les autres devises utilisent les taux du {fxDate} pour l’affichage seulement ; le prix de paiement de l’opérateur fait foi. LIVE est converti par la source."],
+        ["Fenêtre de départ", "La source fournit une seule date, la moins chère, par destination, et non un calendrier complet. Les plages couvrent 1–30, 31–60 jusqu’à 180+ jours et se combinent."],
+        ["Index et direct", "<b>INDEX</b> est l’instantané daté intégré à la page. <b>LIVE</b> est une nouvelle requête au service de prix. Le basculement est automatique si des données sont disponibles."]
+      ],
+      "privacy": [
+        ["Sans compte", "Aucune inscription ni collecte d’adresse e-mail. Ce navigateur conserve seulement thème, langue, devise et choix de consentement."],
+        ["Nous ne vendons pas de billets", "Efficiency Life Flight est un outil de recherche. La réservation se fait auprès de l’opérateur ou du comparateur ; nous ne voyons jamais les données de paiement."],
+        ["Liens d’affiliation", "Les liens de réservation et d’activités peuvent être affiliés. Un achat peut nous rapporter une commission sans modifier votre prix ni le classement. Google Flights reste un contrôle indépendant."],
+        ["Prix indicatifs", "Chaque tarif est une observation datée, pas une disponibilité garantie. Vérifiez le prix et les conditions actuelles auprès de l’opérateur avant de réserver."]
+      ],
+      "seo": {"title": "Vols directs au meilleur rapport qualité-prix | Efficiency Life Flight", "description": "Choisissez l’aéroport de départ, la période et le budget. Comparez les tarifs aller-retour directs observés par kilomètres par euro, prix et Efficiency Score."}
+    },
+    "bn": {
+      "name": "বাংলা", "path": "bn", "hreflang": "bn", "locale": "bn_BD", "dir": "ltr",
+      "consent": {"accept": "গ্রহণ করুন", "decline": "প্রত্যাখ্যান করুন", "preferences": "কুকি পছন্দ", "body": "<b>সিদ্ধান্ত আপনার।</b> গ্রহণ করলে ঐচ্ছিক তৃতীয়-পক্ষের টুল অ্যাফিলিয়েট রেফারেল এবং বিজ্ঞাপন চালু থাকলে তার কার্যকারিতা মাপতে পারে। প্রত্যাখ্যান করলে অনুসন্ধান, মূল্য ও লিংক স্বাভাবিকভাবে চলবে এবং কোনো ঐচ্ছিক তৃতীয়-পক্ষ স্ক্রিপ্ট লোড হবে না। পছন্দটি এই ব্রাউজারেই থাকে এবং ফুটার থেকে বদলানো যায়। <a href=\"#privacy\">আমরা কীভাবে ডেটা ব্যবহার করি</a>।"},
+      "indexNote": "<b>এই সূচক সম্পর্কে।</b> {observed} তারিখে দেখা {fareCount}টি সরাসরি যাওয়া-আসার ভাড়া, <b>{originCount}টি প্রস্থান বিমানবন্দর</b> থেকে <b>{destCount}টি গন্তব্যে</b>। ইন্টারফেসে {languageCount}টি ভাষা ও {currencyCount}টি মুদ্রা আছে। প্রতিটি ভাড়া পর্যবেক্ষিত, মডেল-তৈরি নয়।",
+      "method": [
+        ["প্রতি ইউরো দূরত্ব", "যাওয়া-আসার গ্রেট-সার্কেল দূরত্বকে ভাড়া দিয়ে ভাগ করা হয়। একমুখী 4,300 কিমি ও €62 ফেরত ভাড়া মানে 139 কিমি/€। ওজন: 32%।"],
+        ["প্রত্যাশিত মূল্য", "শক্তিশালী বক্ররেখা <code>p = a · km^b</code> পুরো সূচকে দূরত্ব অনুযায়ী মূল্য অনুমান করে। <b>ডিল</b> ভাড়া কতটা নিচে তা মাপে। ওজন: 30%।"],
+        ["প্রতি ইউরো ফ্লাইট মিনিট", "প্রকাশিত যাওয়া-আসার ফ্লাইট মিনিটকে ভাড়া দিয়ে ভাগ করা হয়। ওজন: 13%।"],
+        ["ভ্রমণের ধরন", "ফিল্টার প্রকৃত দিন ব্যবহার করে: দীর্ঘ সপ্তাহান্ত (শুক্র→সোম), সপ্তাহান্ত (শুক্র→রবি), ছোট ভ্রমণ (শনি→রবি)।"],
+        ["মূল্যের ইতিহাস", "সূচক প্রতি রাতে সংরক্ষিত হয়। অন্তত পাঁচটি পর্যবেক্ষণের পর রুটকে <b>গত 90 দিনের সর্বনিম্ন 10%</b>-এ দেখানো যায়। ইতিহাস 4 সেপ্টেম্বর 2026 থেকে।"],
+        ["দূরত্ব অনুযায়ী থাকা", "প্রস্তাবিত রাত দূরত্বের সঙ্গে বাড়ে: <code>≤800 কিমি → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>।"],
+        ["ব্যাগেজ", "চেকড ব্যাগেজ অন্তর্ভুক্ত কি না উৎস জানায় না, তাই আমরা অনুমান করি না। স্লাইডার সব ভাড়ায় একই সম্ভাব্য ফি যোগ করে র‍্যাঙ্কিং পুনর্গণনা করে।"],
+        ["মুদ্রা", "উৎসের মূল্য ইউরোতে। অন্য মুদ্রা শুধু প্রদর্শনের জন্য {fxDate}-এর হার ব্যবহার করে; অপারেটরের চেকআউট মূল্য চূড়ান্ত। LIVE মূল্য উৎস রূপান্তর করে।"],
+        ["প্রস্থানের সময়সীমা", "উৎস প্রতিটি গন্তব্যের জন্য একটি সস্তা তারিখ দেয়, পূর্ণ ক্যালেন্ডার নয়। সীমা 1–30, 31–60 থেকে 180+ দিন এবং একত্র করা যায়।"],
+        ["INDEX ও LIVE", "<b>INDEX</b> পাতায় থাকা তারিখযুক্ত স্ন্যাপশট। <b>LIVE</b> মূল্য সেবায় নতুন অনুরোধ। ডেটা থাকলে স্বয়ংক্রিয়ভাবে বদলায়।"]
+      ],
+      "privacy": [
+        ["অ্যাকাউন্ট নয়", "সাইন-আপ নেই এবং ইমেইল সংগ্রহ করা হয় না। ব্রাউজার শুধু থিম, ভাষা, মুদ্রা ও সম্মতির পছন্দ রাখে।"],
+        ["আমরা টিকিট বিক্রি করি না", "Efficiency Life Flight একটি গবেষণা টুল। বুকিং অপারেটর বা তুলনা সেবায় হয়; আমরা পেমেন্ট ডেটা দেখি না।"],
+        ["অ্যাফিলিয়েট লিংক", "বুকিং ও কার্যকলাপের লিংক অ্যাফিলিয়েট হতে পারে। কেনাকাটায় আমরা কমিশন পেতে পারি, তবে আপনার মূল্য বা র‍্যাঙ্কিং বদলায় না। Google Flights স্বাধীন যাচাই।"],
+        ["মূল্য নির্দেশক", "প্রতিটি ভাড়া তারিখযুক্ত পর্যবেক্ষণ, নিশ্চিত প্রাপ্যতা নয়। বুকিংয়ের আগে অপারেটরের কাছে বর্তমান মূল্য ও শর্ত যাচাই করুন।"]
+      ],
+      "seo": {"title": "সেরা মূল্যের সরাসরি ফ্লাইট | Efficiency Life Flight", "description": "প্রস্থান বিমানবন্দর, সময় ও বাজেট বেছে নিন। প্রতি ইউরো কিলোমিটার, মূল্য ও Efficiency Score দিয়ে পর্যবেক্ষিত সরাসরি যাওয়া-আসার ভাড়া তুলনা করুন।"}
+    },
+    "pt": {
+      "name": "Português", "path": "pt", "hreflang": "pt", "locale": "pt_PT", "dir": "ltr",
+      "consent": {"accept": "Aceitar", "decline": "Recusar", "preferences": "Preferências de cookies", "body": "<b>A escolha é sua.</b> Ao aceitar, ferramentas opcionais de terceiros podem medir referências de afiliados e, se a publicidade for ativada, o desempenho dos anúncios. Ao recusar, pesquisa, preços e ligações funcionam normalmente e nenhum script opcional de terceiros é carregado. A escolha fica neste navegador e pode ser alterada no rodapé. <a href=\"#privacy\">Como tratamos os dados</a>."},
+      "indexNote": "<b>Sobre este índice.</b> {fareCount} tarifas observadas de ida e volta sem escalas em {observed}, de <b>{originCount} aeroportos de partida</b> para <b>{destCount} destinos</b>. A interface inclui {languageCount} idiomas e {currencyCount} moedas. Todas as tarifas foram observadas; nenhuma é modelada.",
+      "method": [
+        ["Distância por euro", "Distância de grande círculo de ida e volta dividida pela tarifa. 4 300 km de ida e €62 de ida e volta dão 139 km/€. Peso: 32%."],
+        ["Preço esperado", "Uma curva robusta <code>p = a · km^b</code> estima o preço por distância em todo o índice. <b>Oferta</b> mede quanto a tarifa fica abaixo dessa previsão. Peso: 30%."],
+        ["Minutos de voo por euro", "Minutos publicados de voo de ida e volta divididos pela tarifa. Valoriza tempo útil no ar. Peso: 13%."],
+        ["Formato da viagem", "Os filtros usam os dias reais: fim de semana prolongado (sex→seg), fim de semana (sex→dom) e escapadinha (sáb→dom)."],
+        ["Histórico de preços", "O índice é arquivado todas as noites. Após cinco observações, uma rota pode surgir nos <b>10% mais baixos dos últimos 90 dias</b>. O histórico começou em 4 de setembro de 2026."],
+        ["Estadia proporcional", "As noites sugeridas aumentam com a distância: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Bagagem", "As fontes não dizem se a bagagem de porão está incluída, por isso não presumimos. O controlo adiciona o mesmo custo estimado a cada tarifa e recalcula a classificação."],
+        ["Moeda", "Os preços de origem são em euros. Outras moedas usam as taxas de {fxDate} apenas para apresentação; prevalece o preço no pagamento do operador. LIVE é convertido pela fonte."],
+        ["Janela de partida", "A fonte fornece uma única data mais barata por destino, não um calendário completo. As faixas cobrem 1–30, 31–60 até 180+ dias e podem ser combinadas."],
+        ["Índice e direto", "<b>INDEX</b> é a fotografia datada incorporada na página. <b>LIVE</b> é um novo pedido ao serviço de preços. A mudança é automática quando existem dados."]
+      ],
+      "privacy": [
+        ["Sem conta", "Não há registo nem recolha de e-mail. Este navegador guarda apenas tema, idioma, moeda e escolha de consentimento."],
+        ["Não vendemos bilhetes", "Efficiency Life Flight é uma ferramenta de pesquisa. A reserva ocorre no operador ou comparador; nunca vemos dados de pagamento."],
+        ["Ligações de afiliados", "As ligações de reservas e atividades podem ser de afiliados. Uma compra pode gerar comissão sem alterar o seu preço ou a classificação. O Google Flights continua uma verificação independente."],
+        ["Preços indicativos", "Cada tarifa é uma observação datada, não disponibilidade garantida. Confirme o preço e as condições atuais com o operador antes de reservar."]
+      ],
+      "seo": {"title": "Voos diretos com a melhor relação qualidade-preço | Efficiency Life Flight", "description": "Escolha aeroporto de partida, período e orçamento. Compare tarifas observadas de ida e volta sem escalas por quilómetros por euro, preço e Efficiency Score."}
+    },
+    "ru": {
+      "name": "Русский", "path": "ru", "hreflang": "ru", "locale": "ru_RU", "dir": "ltr",
+      "consent": {"accept": "Принять", "decline": "Отклонить", "preferences": "Настройки cookie", "body": "<b>Выбор за вами.</b> При согласии необязательные сторонние инструменты могут измерять партнёрские переходы и, если включена реклама, её эффективность. При отказе поиск, цены и ссылки работают как обычно, а необязательные сторонние скрипты не загружаются. Выбор хранится в этом браузере и меняется внизу страницы. <a href=\"#privacy\">Как мы обрабатываем данные</a>."},
+      "indexNote": "<b>Об этом индексе.</b> {fareCount} наблюдаемых тарифов на прямые рейсы туда и обратно за {observed}: из <b>{originCount} аэропортов вылета</b> в <b>{destCount} пунктов назначения</b>. Интерфейс поддерживает {languageCount} языков и {currencyCount} валют. Все тарифы наблюдались, а не моделировались.",
+      "method": [
+        ["Расстояние за евро", "Расстояние по дуге большого круга туда и обратно делится на тариф. 4 300 км в одну сторону и €62 туда-обратно дают 139 км/€. Вес: 32%."],
+        ["Ожидаемая цена", "Устойчивая кривая <code>p = a · km^b</code> оценивает цену по расстоянию во всём индексе. <b>Выгода</b> показывает отклонение тарифа ниже ожидания. Вес: 30%."],
+        ["Минуты полёта за евро", "Опубликованные минуты полёта туда и обратно делятся на тариф. Учитывается полезное время в воздухе. Вес: 13%."],
+        ["Формат поездки", "Фильтры используют реальные дни: длинные выходные (пт→пн), выходные (пт→вс) и короткая поездка (сб→вс)."],
+        ["История цен", "Индекс архивируется каждую ночь. После пяти наблюдений маршрут может быть отмечен в <b>самых дешёвых 10% за последние 90 дней</b>. История ведётся с 4 сентября 2026 года."],
+        ["Соразмерная поездка", "Рекомендуемое число ночей растёт с расстоянием: <code>≤800 км → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Багаж", "Источники не указывают, включён ли багаж, поэтому мы не предполагаем. Ползунок прибавляет одинаковый расчётный сбор ко всем тарифам и обновляет рейтинг."],
+        ["Валюта", "Исходные цены указаны в евро. Другие валюты используют курсы на {fxDate} только для отображения; окончательна цена оператора при оплате. LIVE конвертируется источником."],
+        ["Период вылета", "Источник предоставляет одну самую дешёвую дату на направление, а не полный календарь. Диапазоны: 1–30, 31–60 и далее до 180+ дней; их можно объединять."],
+        ["INDEX и LIVE", "<b>INDEX</b> — датированный снимок на странице. <b>LIVE</b> — новый запрос к сервису цен. Переключение происходит автоматически при наличии данных."]
+      ],
+      "privacy": [
+        ["Без аккаунта", "Регистрация не нужна, электронная почта не собирается. Браузер хранит только тему, язык, валюту и выбор согласия."],
+        ["Мы не продаём билеты", "Efficiency Life Flight — инструмент исследования. Бронирование происходит у оператора или сервиса сравнения; платёжные данные нам не видны."],
+        ["Партнёрские ссылки", "Ссылки на бронирование и развлечения могут быть партнёрскими. Покупка может принести нам комиссию, не меняя вашу цену или рейтинг. Google Flights остаётся независимой проверкой."],
+        ["Цены ориентировочные", "Каждый тариф — датированное наблюдение, а не гарантия наличия. Перед бронированием проверьте текущую цену и условия у оператора."]
+      ],
+      "seo": {"title": "Прямые рейсы с лучшим соотношением цены и пользы | Efficiency Life Flight", "description": "Выберите аэропорт вылета, период и бюджет. Сравните наблюдаемые тарифы туда-обратно без пересадок по километрам за евро, цене и Efficiency Score."}
+    },
+    "ur": {
+      "name": "اردو", "path": "ur", "hreflang": "ur", "locale": "ur_PK", "dir": "rtl",
+      "consent": {"accept": "قبول کریں", "decline": "انکار کریں", "preferences": "کوکی ترجیحات", "body": "<b>انتخاب آپ کا ہے۔</b> قبول کرنے پر اختیاری تیسرے فریق کے ٹولز افیلیئیٹ حوالہ جات اور، اگر اشتہارات فعال ہوں، ان کی کارکردگی ناپ سکتے ہیں۔ انکار کے بعد تلاش، قیمتیں اور لنکس معمول کے مطابق چلیں گے اور کوئی اختیاری اسکرپٹ لوڈ نہیں ہوگا۔ انتخاب اسی براؤزر میں رہتا ہے اور فوٹر سے بدلا جا سکتا ہے۔ <a href=\"#privacy\">ہم ڈیٹا کیسے سنبھالتے ہیں</a>۔"},
+      "indexNote": "<b>اس انڈیکس کے بارے میں۔</b> {observed} کو دیکھی گئی {fareCount} براہِ راست واپسی کی قیمتیں، <b>{originCount} روانگی کے ہوائی اڈوں</b> سے <b>{destCount} منزلوں</b> تک۔ انٹرفیس {languageCount} زبانوں اور {currencyCount} کرنسیوں میں ہے۔ ہر قیمت حقیقی مشاہدہ ہے، ماڈل کا اندازہ نہیں۔",
+      "method": [
+        ["فی یورو فاصلہ", "آنے جانے کا گریٹ سرکل فاصلہ کرائے سے تقسیم کیا جاتا ہے۔ یک طرفہ 4,300 کلومیٹر اور €62 واپسی = 139 کلومیٹر/€۔ وزن: 32%۔"],
+        ["متوقع قیمت", "مضبوط منحنی <code>p = a · km^b</code> پورے انڈیکس میں فاصلے سے قیمت کا اندازہ لگاتا ہے۔ <b>ڈیل</b> متوقع قیمت سے کمی ناپتی ہے۔ وزن: 30%۔"],
+        ["فی یورو پرواز کے منٹ", "شائع شدہ آنے جانے کے پروازی منٹ کرائے سے تقسیم ہوتے ہیں۔ وزن: 13%۔"],
+        ["سفر کی شکل", "فلٹر اصل دن استعمال کرتے ہیں: طویل ویک اینڈ (جمعہ→پیر)، ویک اینڈ (جمعہ→اتوار)، مختصر سفر (ہفتہ→اتوار)۔"],
+        ["قیمت کی تاریخ", "انڈیکس ہر رات محفوظ ہوتا ہے۔ پانچ مشاہدوں کے بعد راستہ <b>گزشتہ 90 دن کے کم ترین 10%</b> میں نشان زد ہو سکتا ہے۔ تاریخ 4 ستمبر 2026 سے ہے۔"],
+        ["فاصلے کے مطابق قیام", "تجویز کردہ راتیں فاصلے کے ساتھ بڑھتی ہیں: <code>≤800 کلومیٹر → 3–4</code>، <code>≤2,000 → 5–7</code>، <code>≤4,000 → 8–10</code>، <code>≤7,000 → 12–14</code>، <code>&gt;7,000 → 15–21</code>۔"],
+        ["سامان", "ذرائع چیک اِن سامان شامل ہونے کی وضاحت نہیں کرتے، اس لیے ہم اندازہ نہیں لگاتے۔ سلائیڈر ہر کرائے میں یکساں مفروضہ فیس شامل کر کے درجہ بندی دوبارہ بناتا ہے۔"],
+        ["کرنسی", "اصل قیمتیں یورو میں ہیں۔ دوسری کرنسیاں صرف دکھانے کے لیے {fxDate} کی شرح استعمال کرتی ہیں؛ آپریٹر کی چیک آؤٹ قیمت حتمی ہے۔ LIVE قیمت کا تبادلہ ذریعہ کرتا ہے۔"],
+        ["روانگی کی مدت", "ذریعہ ہر منزل کے لیے صرف ایک سستی تاریخ دیتا ہے، مکمل کیلنڈر نہیں۔ مدتیں 1–30، 31–60 سے 180+ دن تک ہیں اور ملائی جا سکتی ہیں۔"],
+        ["INDEX اور LIVE", "<b>INDEX</b> صفحے میں شامل تاریخ والا اسنیپ شاٹ ہے۔ <b>LIVE</b> قیمت سروس کو نئی درخواست ہے۔ ڈیٹا دستیاب ہو تو تبدیلی خودکار ہے۔"]
+      ],
+      "privacy": [
+        ["کوئی اکاؤنٹ نہیں", "سائن اپ نہیں اور ای میل جمع نہیں کی جاتی۔ براؤزر صرف تھیم، زبان، کرنسی اور رضامندی کا انتخاب محفوظ کرتا ہے۔"],
+        ["ہم ٹکٹ نہیں بیچتے", "Efficiency Life Flight ایک تحقیقی ٹول ہے۔ بکنگ آپریٹر یا تقابلی سروس پر ہوتی ہے؛ ہمیں ادائیگی کا ڈیٹا نظر نہیں آتا۔"],
+        ["افیلیئیٹ لنکس", "بکنگ اور سرگرمی کے لنکس افیلیئیٹ ہو سکتے ہیں۔ خریداری سے ہمیں کمیشن مل سکتا ہے مگر آپ کی قیمت یا درجہ بندی نہیں بدلتی۔ Google Flights آزاد جانچ ہے۔"],
+        ["قیمتیں تخمینی ہیں", "ہر کرایہ تاریخ والا مشاہدہ ہے، دستیابی کی ضمانت نہیں۔ بکنگ سے پہلے آپریٹر سے موجودہ قیمت اور شرائط کی تصدیق کریں۔"]
+      ],
+      "seo": {"title": "بہترین قدر والی براہِ راست پروازیں | Efficiency Life Flight", "description": "روانگی کا ہوائی اڈہ، مدت اور بجٹ منتخب کریں۔ فی یورو کلومیٹر، قیمت اور Efficiency Score کے مطابق دیکھی گئی براہِ راست واپسی کی قیمتوں کا موازنہ کریں۔"}
+    },
+    "id": {
+      "name": "Bahasa Indonesia", "path": "id", "hreflang": "id", "locale": "id_ID", "dir": "ltr",
+      "consent": {"accept": "Terima", "decline": "Tolak", "preferences": "Preferensi cookie", "body": "<b>Pilihan ada pada Anda.</b> Jika menerima, alat pihak ketiga opsional dapat mengukur rujukan afiliasi dan, bila iklan diaktifkan, kinerja iklan. Jika menolak, pencarian, harga, dan tautan tetap berfungsi normal tanpa memuat skrip pihak ketiga opsional. Pilihan disimpan di browser ini dan dapat diubah melalui footer. <a href=\"#privacy\">Cara kami menangani data</a>."},
+      "indexNote": "<b>Tentang indeks ini.</b> {fareCount} tarif pulang-pergi nonstop yang diamati pada {observed}, dari <b>{originCount} bandara keberangkatan</b> menuju <b>{destCount} destinasi</b>. Antarmuka mencakup {languageCount} bahasa dan {currencyCount} mata uang. Semua tarif diamati, bukan hasil pemodelan.",
+      "method": [
+        ["Jarak per euro", "Jarak lingkar besar pulang-pergi dibagi tarif. Jika jarak sekali jalan 4.300 km, tiket pulang-pergi €62 menghasilkan 139 km/€. Bobot: 32%."],
+        ["Harga perkiraan", "Kurva robust <code>p = a · km^b</code> memperkirakan harga berdasarkan jarak di seluruh indeks. <b>Deal</b> mengukur seberapa jauh tarif di bawah perkiraan. Bobot: 30%."],
+        ["Menit terbang per euro", "Menit penerbangan pulang-pergi yang diterbitkan dibagi tarif. Ini menghargai waktu berguna di udara. Bobot: 13%."],
+        ["Bentuk perjalanan", "Filter memakai hari sebenarnya: akhir pekan panjang (Jum→Sen), akhir pekan (Jum→Min), dan perjalanan singkat (Sab→Min)."],
+        ["Riwayat harga", "Indeks diarsipkan setiap malam. Setelah lima pengamatan, rute dapat ditandai dalam <b>10% termurah selama 90 hari terakhir</b>. Riwayat dimulai 4 September 2026."],
+        ["Lama inap proporsional", "Malam yang disarankan bertambah dengan jarak: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Bagasi", "Sumber tidak menyebutkan apakah bagasi tercatat termasuk, jadi kami tidak menebak. Penggeser menambah biaya asumsi yang sama ke setiap tarif lalu menghitung ulang peringkat."],
+        ["Mata uang", "Harga sumber dalam euro. Mata uang lain memakai kurs {fxDate} hanya untuk tampilan; harga checkout operator yang berlaku. Harga LIVE dikonversi oleh sumber."],
+        ["Rentang keberangkatan", "Sumber memberikan satu tanggal termurah per destinasi, bukan kalender penuh. Rentang mencakup 1–30, 31–60 hingga 180+ hari dan dapat digabungkan."],
+        ["INDEX dan LIVE", "<b>INDEX</b> adalah cuplikan bertanggal yang tertanam di halaman. <b>LIVE</b> adalah permintaan baru ke layanan harga. Peralihan otomatis bila data tersedia."]
+      ],
+      "privacy": [
+        ["Tanpa akun", "Tidak ada pendaftaran dan email tidak dikumpulkan. Browser ini hanya menyimpan tema, bahasa, mata uang, dan pilihan persetujuan."],
+        ["Kami tidak menjual tiket", "Efficiency Life Flight adalah alat riset. Pemesanan dilakukan melalui operator atau layanan pembanding; kami tidak pernah melihat data pembayaran."],
+        ["Tautan afiliasi", "Tautan pemesanan dan aktivitas mungkin merupakan tautan afiliasi. Pembelian dapat memberi kami komisi tanpa mengubah harga atau peringkat Anda. Google Flights tetap menjadi pemeriksaan independen."],
+        ["Harga bersifat indikatif", "Setiap tarif adalah pengamatan bertanggal, bukan jaminan ketersediaan. Periksa harga dan ketentuan saat ini dengan operator sebelum memesan."]
+      ],
+      "seo": {"title": "Penerbangan langsung dengan nilai terbaik | Efficiency Life Flight", "description": "Pilih bandara keberangkatan, periode, dan anggaran. Bandingkan tarif pulang-pergi nonstop yang diamati berdasarkan kilometer per euro, harga, dan Efficiency Score."}
+    },
+    "de": {
+      "name": "Deutsch", "path": "de", "hreflang": "de", "locale": "de_DE", "dir": "ltr",
+      "consent": {"accept": "Akzeptieren", "decline": "Ablehnen", "preferences": "Cookie-Einstellungen", "body": "<b>Sie entscheiden.</b> Bei Zustimmung können optionale Drittanbieter-Tools Affiliate-Verweise und, falls Werbung aktiviert wird, die Anzeigenleistung messen. Bei Ablehnung funktionieren Suche, Preise und Links normal; optionale Drittanbieter-Skripte werden nicht geladen. Die Auswahl bleibt in diesem Browser und lässt sich im Footer ändern. <a href=\"#privacy\">So behandeln wir Daten</a>."},
+      "indexNote": "<b>Über diesen Index.</b> {fareCount} am {observed} beobachtete Nonstop-Hin- und Rückflugtarife von <b>{originCount} Abflughäfen</b> zu <b>{destCount} Zielen</b>. Die Oberfläche umfasst {languageCount} Sprachen und {currencyCount} Währungen. Jeder Tarif wurde beobachtet, keiner modelliert.",
+      "method": [
+        ["Entfernung pro Euro", "Großkreisdistanz für Hin- und Rückflug geteilt durch den Tarif. Bei 4.300 km einfach und €62 retour ergeben sich 139 km/€. Gewicht: 32 %."],
+        ["Erwarteter Preis", "Eine robuste Kurve <code>p = a · km^b</code> schätzt den Preis nach Entfernung über den gesamten Index. <b>Deal</b> misst die Abweichung nach unten. Gewicht: 30 %."],
+        ["Flugminuten pro Euro", "Veröffentlichte Flugminuten für Hin- und Rückflug geteilt durch den Tarif. Bewertet nutzbare Zeit in der Luft. Gewicht: 13 %."],
+        ["Reiseform", "Filter verwenden die tatsächlichen Wochentage: langes Wochenende (Fr→Mo), Wochenende (Fr→So), Kurztrip (Sa→So)."],
+        ["Preisverlauf", "Der Index wird jede Nacht archiviert. Nach fünf Beobachtungen kann eine Route zu den <b>günstigsten 10 % der letzten 90 Tage</b> zählen. Verlauf seit 4. September 2026."],
+        ["Angemessene Aufenthaltsdauer", "Empfohlene Nächte steigen mit der Entfernung: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Gepäck", "Quellen nennen nicht, ob Aufgabegepäck enthalten ist; wir raten daher nicht. Der Regler addiert zu jedem Tarif dieselbe angenommene Gebühr und berechnet die Rangfolge neu."],
+        ["Währung", "Quellpreise sind in Euro. Andere Währungen nutzen Kurse vom {fxDate} nur zur Anzeige; maßgeblich ist der Checkout-Preis des Anbieters. LIVE wird an der Quelle umgerechnet."],
+        ["Abflugfenster", "Die Quelle liefert je Ziel nur ein günstigstes Datum, keine vollständige Kalendersuche. Bereiche umfassen 1–30, 31–60 bis 180+ Tage und sind kombinierbar."],
+        ["Index und Live", "<b>INDEX</b> ist der datierte, eingebettete Stand. <b>LIVE</b> ist eine neue Anfrage an den Preisdienst. Bei verfügbaren Daten wird automatisch gewechselt."]
+      ],
+      "privacy": [
+        ["Kein Konto", "Keine Anmeldung, keine E-Mail-Erfassung. Dieser Browser speichert nur Design, Sprache, Währung und Einwilligungswahl."],
+        ["Wir verkaufen keine Tickets", "Efficiency Life Flight ist ein Recherchewerkzeug. Gebucht wird beim Anbieter oder Vergleichsdienst; Zahlungsdaten sehen wir nie."],
+        ["Affiliate-Links", "Buchungs- und Aktivitätslinks können Affiliate-Links sein. Ein Kauf kann uns Provision bringen, ohne Ihren Preis oder die Rangfolge zu ändern. Google Flights bleibt eine unabhängige Kontrolle."],
+        ["Preise sind Richtwerte", "Jeder Tarif ist eine datierte Beobachtung, keine Verfügbarkeitsgarantie. Prüfen Sie vor der Buchung Preis und Bedingungen beim Anbieter."]
+      ],
+      "seo": {"title": "Direktflüge mit bestem Preis-Leistungs-Verhältnis | Efficiency Life Flight", "description": "Abflughafen, Zeitraum und Budget wählen. Beobachtete Nonstop-Hin- und Rückflugtarife nach Kilometern pro Euro, Preis und Efficiency Score vergleichen."}
+    },
+    "ja": {
+      "name": "日本語", "path": "ja", "hreflang": "ja", "locale": "ja_JP", "dir": "ltr",
+      "consent": {"accept": "同意する", "decline": "拒否する", "preferences": "Cookie設定", "body": "<b>選択するのはあなたです。</b>同意すると、任意の第三者ツールがアフィリエイト経由のアクセスを測定し、広告が有効な場合は広告効果も測定することがあります。拒否しても検索・価格・リンクは通常どおり機能し、任意の第三者スクリプトは読み込まれません。選択はこのブラウザーに保存され、フッターから変更できます。<a href=\"#privacy\">データの取り扱い</a>。"},
+      "indexNote": "<b>このインデックスについて。</b>{observed} に観測された直行便の往復運賃 {fareCount} 件を、<b>{originCount} 出発空港</b>から<b>{destCount} 都市</b>について掲載しています。画面は {languageCount} 言語、{currencyCount} 通貨に対応。すべて実測運賃で、モデルによる推定値ではありません。",
+      "method": [
+        ["1ユーロあたりの距離", "往復の大圏距離を運賃で割ります。片道4,300 km、往復€62なら139 km/€です。比重：32%。"],
+        ["予想価格", "ロバスト曲線 <code>p = a · km^b</code> がインデックス全体から距離別の価格を推定。<b>お得度</b>は予想価格をどれだけ下回るかを示します。比重：30%。"],
+        ["1ユーロあたりの飛行時間", "公開された往復の飛行分数を運賃で割り、実際に空を移動できる時間を評価します。比重：13%。"],
+        ["旅程の形", "実際の曜日で絞り込みます：ロングウィークエンド（金→月）、週末（金→日）、弾丸旅行（土→日）。"],
+        ["価格履歴", "インデックスは毎晩保存されます。5回以上観測後、<b>過去90日で最安の10%</b>に入る路線を表示できます。履歴は2026年9月4日開始。"],
+        ["距離に合う滞在", "推奨泊数は距離に応じて増えます：<code>≤800 km → 3–4</code>、<code>≤2,000 → 5–7</code>、<code>≤4,000 → 8–10</code>、<code>≤7,000 → 12–14</code>、<code>&gt;7,000 → 15–21</code>。"],
+        ["手荷物", "預け手荷物込みかは情報源に記載がないため推測しません。スライダーは全運賃に同じ想定料金を加え、順位を再計算します。"],
+        ["通貨", "元の価格はユーロです。他通貨は表示用に {fxDate} のレートを使用しますが、決済時の運航会社価格が優先されます。LIVE価格は情報源側で換算されます。"],
+        ["出発期間", "情報源が提供するのは目的地ごとの最安日1件で、完全なカレンダー検索ではありません。1–30、31–60から180日超までの範囲を組み合わせられます。"],
+        ["INDEXとLIVE", "<b>INDEX</b>はページに組み込まれた日付付きスナップショット。<b>LIVE</b>は価格サービスへの新規照会です。利用可能なら自動で切り替わります。"]
+      ],
+      "privacy": [
+        ["アカウント不要", "登録やメール収集はありません。このブラウザーにはテーマ、言語、通貨、同意の選択だけを保存します。"],
+        ["航空券は販売しません", "Efficiency Life Flightは調査ツールです。予約は運航会社や比較サービスで行い、当サイトが決済情報を見ることはありません。"],
+        ["アフィリエイトリンク", "予約・アクティビティのリンクはアフィリエイトの場合があります。購入で当サイトに手数料が入っても、価格や順位は変わりません。Google Flightsは独立した確認手段です。"],
+        ["価格は目安", "各運賃は日付付きの観測値で、空席を保証しません。予約前に運航会社で現在の価格と条件をご確認ください。"]
+      ],
+      "seo": {"title": "コストパフォーマンスの高い直行便 | Efficiency Life Flight", "description": "出発空港、旅行時期、予算を選び、観測された直行便の往復運賃を1ユーロ当たりの距離、価格、Efficiency Scoreで比較。"}
+    },
+    "tr": {
+      "name": "Türkçe", "path": "tr", "hreflang": "tr", "locale": "tr_TR", "dir": "ltr",
+      "consent": {"accept": "Kabul et", "decline": "Reddet", "preferences": "Çerez tercihleri", "body": "<b>Seçim sizin.</b> Kabul ederseniz isteğe bağlı üçüncü taraf araçları bağlı kuruluş yönlendirmelerini ve reklam etkinleştirilirse reklam performansını ölçebilir. Reddederseniz arama, fiyatlar ve bağlantılar normal çalışır; isteğe bağlı üçüncü taraf betiği yüklenmez. Seçim bu tarayıcıda kalır ve alt bilgiden değiştirilebilir. <a href=\"#privacy\">Verileri nasıl işliyoruz</a>."},
+      "indexNote": "<b>Bu endeks hakkında.</b> {observed} tarihinde gözlenen {fareCount} aktarmasız gidiş-dönüş ücreti; <b>{originCount} kalkış havalimanından</b> <b>{destCount} varış noktasına</b>. Arayüz {languageCount} dil ve {currencyCount} para birimini kapsar. Her ücret gözlemlenmiştir, modellenmemiştir.",
+      "method": [
+        ["Euro başına mesafe", "Gidiş-dönüş büyük daire mesafesi ücrete bölünür. Tek yön 4.300 km ve €62 dönüş bileti 139 km/€ verir. Ağırlık: %32."],
+        ["Beklenen fiyat", "Sağlam <code>p = a · km^b</code> eğrisi tüm endekste mesafeye göre fiyat tahmini yapar. <b>Fırsat</b>, ücretin beklentinin ne kadar altında olduğunu ölçer. Ağırlık: %30."],
+        ["Euro başına uçuş dakikası", "Yayımlanan gidiş-dönüş uçuş dakikaları ücrete bölünür. Havadaki yararlı zamanı ödüllendirir. Ağırlık: %13."],
+        ["Seyahat biçimi", "Filtreler gerçek günleri kullanır: uzun hafta sonu (Cum→Pzt), hafta sonu (Cum→Paz), kısa gezi (Cmt→Paz)."],
+        ["Fiyat geçmişi", "Endeks her gece arşivlenir. Beş gözlemden sonra rota <b>son 90 günün en düşük %10'unda</b> işaretlenebilir. Geçmiş 4 Eylül 2026'da başladı."],
+        ["Orantılı konaklama", "Önerilen geceler mesafeyle artar: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Bagaj", "Kaynaklar kayıtlı bagajın dahil olup olmadığını belirtmez; tahmin yürütmeyiz. Kaydırıcı her ücrete aynı varsayılan bedeli ekler ve sıralamayı yeniden hesaplar."],
+        ["Para birimi", "Kaynak fiyatlar eurodur. Diğer para birimleri yalnızca gösterim için {fxDate} kurlarını kullanır; operatörün ödeme fiyatı geçerlidir. LIVE fiyatları kaynak dönüştürür."],
+        ["Kalkış aralığı", "Kaynak her varış noktası için yalnızca en ucuz bir tarih verir, tam takvim sunmaz. Aralıklar 1–30, 31–60'tan 180+ güne kadar uzanır ve birleştirilebilir."],
+        ["INDEX ve LIVE", "<b>INDEX</b> sayfaya gömülü tarihli anlık görüntüdür. <b>LIVE</b> fiyat hizmetine yeni istektir. Veri varsa geçiş otomatiktir."]
+      ],
+      "privacy": [
+        ["Hesap yok", "Kayıt yoktur ve e-posta toplanmaz. Tarayıcı yalnızca tema, dil, para birimi ve onay seçimini saklar."],
+        ["Bilet satmıyoruz", "Efficiency Life Flight bir araştırma aracıdır. Rezervasyon operatör veya karşılaştırma hizmetinde yapılır; ödeme verilerini görmeyiz."],
+        ["Bağlı kuruluş bağlantıları", "Rezervasyon ve etkinlik bağlantıları bağlı kuruluş bağlantıları olabilir. Satın alma bize komisyon kazandırabilir; fiyatınızı veya sıralamayı değiştirmez. Google Flights bağımsız kontroldür."],
+        ["Fiyatlar gösterge niteliğinde", "Her ücret tarihli bir gözlemdir, müsaitlik garantisi değildir. Rezervasyondan önce güncel fiyat ve koşulları operatörden doğrulayın."]
+      ],
+      "seo": {"title": "En iyi değerli direkt uçuşlar | Efficiency Life Flight", "description": "Kalkış havalimanı, dönem ve bütçe seçin. Gözlenen aktarmasız gidiş-dönüş ücretlerini euro başına kilometre, fiyat ve Efficiency Score ile karşılaştırın."}
+    },
+    "ko": {
+      "name": "한국어", "path": "ko", "hreflang": "ko", "locale": "ko_KR", "dir": "ltr",
+      "consent": {"accept": "동의", "decline": "거부", "preferences": "쿠키 설정", "body": "<b>선택은 사용자의 몫입니다.</b> 동의하면 선택적 제3자 도구가 제휴 추천을 측정하고, 광고가 활성화될 경우 광고 성과도 측정할 수 있습니다. 거부해도 검색·가격·링크는 정상 작동하며 선택적 제3자 스크립트는 로드되지 않습니다. 선택은 이 브라우저에 저장되며 푸터에서 변경할 수 있습니다. <a href=\"#privacy\">데이터 처리 방식</a>."},
+      "indexNote": "<b>이 인덱스에 관하여.</b> {observed}에 관측된 직항 왕복 요금 {fareCount}건으로, <b>{originCount}개 출발 공항</b>과 <b>{destCount}개 목적지</b>를 다룹니다. 인터페이스는 {languageCount}개 언어와 {currencyCount}개 통화를 지원합니다. 모든 요금은 관측값이며 모델 추정값이 아닙니다.",
+      "method": [
+        ["유로당 거리", "왕복 대권 거리를 요금으로 나눕니다. 편도 4,300km, 왕복 €62이면 139km/€입니다. 가중치: 32%."],
+        ["예상 가격", "강건한 곡선 <code>p = a · km^b</code>이 전체 인덱스에서 거리별 가격을 추정합니다. <b>특가</b>는 예상보다 낮은 정도입니다. 가중치: 30%."],
+        ["유로당 비행시간", "공개된 왕복 비행 분을 요금으로 나눠 실제 공중 체류 가치를 반영합니다. 가중치: 13%."],
+        ["여행 형태", "실제 요일을 사용합니다: 긴 주말(금→월), 주말(금→일), 짧은 여행(토→일)."],
+        ["가격 이력", "인덱스는 매일 밤 보관됩니다. 5회 이상 관측하면 <b>최근 90일 최저 10%</b>인 노선을 표시할 수 있습니다. 이력은 2026년 9월 4일부터입니다."],
+        ["거리에 맞는 숙박", "권장 숙박일은 거리에 따라 늘어납니다: <code>≤800km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["수하물", "출처에는 위탁 수하물 포함 여부가 없어 추정하지 않습니다. 슬라이더는 모든 요금에 같은 가정 비용을 더해 순위를 다시 계산합니다."],
+        ["통화", "원본 가격은 유로입니다. 다른 통화는 표시 목적으로만 {fxDate} 환율을 사용하며 운항사 결제 가격이 우선합니다. LIVE 가격은 출처에서 환산됩니다."],
+        ["출발 기간", "출처는 목적지별 최저가 날짜 하나만 제공하며 전체 달력 검색이 아닙니다. 1–30, 31–60일부터 180일 이상까지 구간을 함께 선택할 수 있습니다."],
+        ["INDEX와 LIVE", "<b>INDEX</b>는 페이지에 포함된 날짜별 스냅샷이고, <b>LIVE</b>는 가격 서비스에 보내는 새 요청입니다. 데이터가 있으면 자동 전환됩니다."]
+      ],
+      "privacy": [
+        ["계정 불필요", "가입이나 이메일 수집이 없습니다. 이 브라우저에는 테마, 언어, 통화, 동의 선택만 저장됩니다."],
+        ["항공권을 판매하지 않습니다", "Efficiency Life Flight는 조사 도구입니다. 예약은 운항사나 비교 서비스에서 진행되며 결제 데이터는 볼 수 없습니다."],
+        ["제휴 링크", "예약 및 활동 링크는 제휴 링크일 수 있습니다. 구매 시 수수료를 받을 수 있지만 사용자 가격이나 순위는 바뀌지 않습니다. Google Flights는 독립적인 확인 수단입니다."],
+        ["가격은 참고용", "각 요금은 날짜가 있는 관측값이며 좌석을 보장하지 않습니다. 예약 전 운항사에서 현재 가격과 조건을 확인하세요."]
+      ],
+      "seo": {"title": "가성비 좋은 직항편 | Efficiency Life Flight", "description": "출발 공항, 여행 기간, 예산을 선택하고 관측된 직항 왕복 요금을 유로당 거리, 가격, Efficiency Score로 비교하세요."}
+    },
+    "vi": {
+      "name": "Tiếng Việt", "path": "vi", "hreflang": "vi", "locale": "vi_VN", "dir": "ltr",
+      "consent": {"accept": "Chấp nhận", "decline": "Từ chối", "preferences": "Tùy chọn cookie", "body": "<b>Bạn là người quyết định.</b> Nếu chấp nhận, các công cụ bên thứ ba tùy chọn có thể đo lượt giới thiệu liên kết và hiệu quả quảng cáo nếu quảng cáo được bật. Nếu từ chối, tìm kiếm, giá và liên kết vẫn hoạt động bình thường, không tải tập lệnh bên thứ ba tùy chọn. Lựa chọn được lưu trong trình duyệt này và có thể đổi ở chân trang. <a href=\"#privacy\">Cách chúng tôi xử lý dữ liệu</a>."},
+      "indexNote": "<b>Về chỉ mục này.</b> {fareCount} giá vé khứ hồi bay thẳng được quan sát ngày {observed}, từ <b>{originCount} sân bay khởi hành</b> đến <b>{destCount} điểm đến</b>. Giao diện hỗ trợ {languageCount} ngôn ngữ và {currencyCount} loại tiền. Mọi giá vé đều là quan sát thực, không phải mô hình ước tính.",
+      "method": [
+        ["Khoảng cách mỗi euro", "Khoảng cách vòng tròn lớn khứ hồi chia cho giá vé. Một chiều 4.300 km và vé khứ hồi €62 cho 139 km/€. Trọng số: 32%."],
+        ["Giá dự kiến", "Đường cong vững <code>p = a · km^b</code> ước tính giá theo khoảng cách trên toàn chỉ mục. <b>Ưu đãi</b> đo mức giá thấp hơn dự kiến. Trọng số: 30%."],
+        ["Phút bay mỗi euro", "Số phút bay khứ hồi được công bố chia cho giá vé, ghi nhận thời gian hữu ích trên không. Trọng số: 13%."],
+        ["Dạng chuyến đi", "Bộ lọc dùng đúng ngày: cuối tuần dài (Thứ Sáu→Thứ Hai), cuối tuần (Thứ Sáu→Chủ Nhật), chuyến ngắn (Thứ Bảy→Chủ Nhật)."],
+        ["Lịch sử giá", "Chỉ mục được lưu mỗi đêm. Sau năm lần quan sát, tuyến có thể được đánh dấu trong <b>10% thấp nhất của 90 ngày qua</b>. Lịch sử bắt đầu ngày 4 tháng 9 năm 2026."],
+        ["Thời gian ở phù hợp", "Số đêm đề xuất tăng theo khoảng cách: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Hành lý", "Nguồn không nêu hành lý ký gửi có được bao gồm hay không, nên chúng tôi không suy đoán. Thanh trượt cộng cùng một phí giả định vào mọi giá vé và xếp hạng lại."],
+        ["Tiền tệ", "Giá nguồn bằng euro. Tiền tệ khác dùng tỷ giá ngày {fxDate} chỉ để hiển thị; giá thanh toán của hãng là quyết định. Giá LIVE do nguồn quy đổi."],
+        ["Khoảng khởi hành", "Nguồn chỉ cung cấp một ngày rẻ nhất cho mỗi điểm đến, không phải toàn bộ lịch. Các khoảng 1–30, 31–60 đến 180+ ngày có thể kết hợp."],
+        ["INDEX và LIVE", "<b>INDEX</b> là ảnh chụp có ngày được nhúng trong trang. <b>LIVE</b> là yêu cầu mới tới dịch vụ giá. Tự động chuyển khi có dữ liệu."]
+      ],
+      "privacy": [
+        ["Không cần tài khoản", "Không đăng ký và không thu email. Trình duyệt chỉ lưu giao diện, ngôn ngữ, tiền tệ và lựa chọn đồng ý."],
+        ["Chúng tôi không bán vé", "Efficiency Life Flight là công cụ nghiên cứu. Việc đặt chỗ diễn ra với hãng hoặc dịch vụ so sánh; chúng tôi không thấy dữ liệu thanh toán."],
+        ["Liên kết tiếp thị", "Liên kết đặt chỗ và hoạt động có thể là liên kết tiếp thị. Giao dịch có thể mang lại hoa hồng mà không đổi giá hay thứ hạng của bạn. Google Flights vẫn là kiểm tra độc lập."],
+        ["Giá chỉ mang tính tham khảo", "Mỗi giá vé là quan sát có ngày, không đảm bảo còn chỗ. Hãy kiểm tra giá và điều kiện hiện tại với hãng trước khi đặt."]
+      ],
+      "seo": {"title": "Chuyến bay thẳng đáng tiền nhất | Efficiency Life Flight", "description": "Chọn sân bay khởi hành, thời gian và ngân sách. So sánh giá vé khứ hồi bay thẳng đã quan sát theo kilômét mỗi euro, giá và Efficiency Score."}
+    },
+    "fa": {
+      "name": "فارسی", "path": "fa", "hreflang": "fa", "locale": "fa_IR", "dir": "rtl",
+      "consent": {"accept": "پذیرفتن", "decline": "رد کردن", "preferences": "تنظیمات کوکی", "body": "<b>انتخاب با شماست.</b> با پذیرش، ابزارهای اختیاری شخص ثالث ممکن است ارجاع‌های همکاری در فروش و، در صورت فعال شدن تبلیغات، عملکرد آن‌ها را اندازه‌گیری کنند. با رد کردن، جست‌وجو، قیمت‌ها و پیوندها عادی کار می‌کنند و هیچ اسکریپت اختیاری بارگیری نمی‌شود. انتخاب در همین مرورگر می‌ماند و از پاورقی قابل تغییر است. <a href=\"#privacy\">نحوهٔ استفاده از داده‌ها</a>."},
+      "indexNote": "<b>دربارهٔ این شاخص.</b> {fareCount} کرایهٔ رفت‌وبرگشت مستقیم مشاهده‌شده در {observed}، از <b>{originCount} فرودگاه مبدأ</b> به <b>{destCount} مقصد</b>. رابط از {languageCount} زبان و {currencyCount} ارز پشتیبانی می‌کند. همهٔ کرایه‌ها مشاهده شده‌اند و مدل‌سازی نیستند.",
+      "method": [
+        ["مسافت به‌ازای هر یورو", "مسافت دایرهٔ عظیم رفت‌وبرگشت بر کرایه تقسیم می‌شود. 4,300 کیلومتر یک‌طرفه با بلیت €62 رفت‌وبرگشت برابر 139 km/€ است. وزن: 32٪."],
+        ["قیمت مورد انتظار", "منحنی مقاوم <code>p = a · km^b</code> قیمت را بر پایهٔ مسافت در کل شاخص برآورد می‌کند. <b>فرصت</b> میزان پایین‌تر بودن کرایه را می‌سنجد. وزن: 30٪."],
+        ["دقیقهٔ پرواز به‌ازای یورو", "دقایق منتشرشدهٔ پرواز رفت‌وبرگشت بر کرایه تقسیم می‌شود. وزن: 13٪."],
+        ["شکل سفر", "فیلترها از روزهای واقعی استفاده می‌کنند: آخرهفتهٔ بلند (جمعه→دوشنبه)، آخرهفته (جمعه→یکشنبه)، سفر کوتاه (شنبه→یکشنبه)."],
+        ["سابقهٔ قیمت", "شاخص هر شب بایگانی می‌شود. پس از پنج مشاهده، مسیر می‌تواند در <b>کمترین 10٪ قیمت 90 روز گذشته</b> نشان داده شود. سابقه از 4 سپتامبر 2026 آغاز شده است."],
+        ["اقامت متناسب", "شب‌های پیشنهادی با مسافت افزایش می‌یابد: <code>≤800 کیلومتر → 3–4</code>، <code>≤2,000 → 5–7</code>، <code>≤4,000 → 8–10</code>، <code>≤7,000 → 12–14</code>، <code>&gt;7,000 → 15–21</code>."],
+        ["بار", "منابع نمی‌گویند بار تحویلی شامل است یا نه، بنابراین حدس نمی‌زنیم. نوار لغزنده هزینهٔ فرضی یکسانی به همهٔ کرایه‌ها می‌افزاید و رتبه‌بندی را دوباره محاسبه می‌کند."],
+        ["ارز", "قیمت منبع به یورو است. ارزهای دیگر فقط برای نمایش از نرخ {fxDate} استفاده می‌کنند؛ قیمت پرداخت اپراتور معتبر است. LIVE توسط منبع تبدیل می‌شود."],
+        ["بازهٔ حرکت", "منبع برای هر مقصد فقط یک تاریخ ارزان‌تر می‌دهد، نه تقویم کامل. بازه‌ها 1–30، 31–60 تا 180+ روز هستند و می‌توان آن‌ها را ترکیب کرد."],
+        ["INDEX و LIVE", "<b>INDEX</b> تصویر تاریخ‌دار تعبیه‌شده در صفحه است. <b>LIVE</b> درخواست تازه به سرویس قیمت است. با وجود داده، تغییر خودکار انجام می‌شود."]
+      ],
+      "privacy": [
+        ["بدون حساب", "ثبت‌نام و جمع‌آوری ایمیل نداریم. مرورگر فقط پوسته، زبان، ارز و انتخاب رضایت را ذخیره می‌کند."],
+        ["بلیت نمی‌فروشیم", "Efficiency Life Flight ابزار تحقیق است. رزرو نزد اپراتور یا سرویس مقایسه انجام می‌شود و دادهٔ پرداخت را نمی‌بینیم."],
+        ["پیوندهای همکاری", "پیوندهای رزرو و فعالیت ممکن است همکاری در فروش باشند. خرید می‌تواند بدون تغییر قیمت یا رتبهٔ شما برای ما کمیسیون ایجاد کند. Google Flights بررسی مستقل است."],
+        ["قیمت‌ها تقریبی‌اند", "هر کرایه مشاهده‌ای تاریخ‌دار است، نه تضمین موجودی. پیش از رزرو قیمت و شرایط فعلی را نزد اپراتور بررسی کنید."]
+      ],
+      "seo": {"title": "پروازهای مستقیم با بهترین ارزش | Efficiency Life Flight", "description": "فرودگاه مبدأ، بازه و بودجه را انتخاب کنید. کرایه‌های مشاهده‌شدهٔ رفت‌وبرگشت مستقیم را بر پایهٔ کیلومتر به‌ازای یورو، قیمت و Efficiency Score مقایسه کنید."}
+    },
+    "th": {
+      "name": "ไทย", "path": "th", "hreflang": "th", "locale": "th_TH", "dir": "ltr",
+      "consent": {"accept": "ยอมรับ", "decline": "ปฏิเสธ", "preferences": "การตั้งค่าคุกกี้", "body": "<b>คุณเป็นผู้เลือก</b> หากยอมรับ เครื่องมือเสริมของบุคคลที่สามอาจวัดการแนะนำผ่านพันธมิตรและประสิทธิภาพโฆษณาหากเปิดใช้งาน หากปฏิเสธ การค้นหา ราคา และลิงก์ยังทำงานตามปกติและจะไม่โหลดสคริปต์เสริม การเลือกจะเก็บไว้ในเบราว์เซอร์นี้และเปลี่ยนได้ที่ส่วนท้าย <a href=\"#privacy\">วิธีที่เราจัดการข้อมูล</a>"},
+      "indexNote": "<b>เกี่ยวกับดัชนีนี้</b> ค่าโดยสารไปกลับแบบไม่แวะพักที่สังเกตเมื่อ {observed} จำนวน {fareCount} รายการ จาก <b>{originCount} สนามบินต้นทาง</b> ไปยัง <b>{destCount} จุดหมาย</b> อินเทอร์เฟซรองรับ {languageCount} ภาษาและ {currencyCount} สกุลเงิน ทุกค่าโดยสารเป็นข้อมูลที่สังเกตจริง ไม่ใช่ค่าจากแบบจำลอง",
+      "method": [
+        ["ระยะทางต่อยูโร", "ระยะทางวงกลมใหญ่ไปกลับหารด้วยค่าโดยสาร เที่ยวเดียว 4,300 กม. และไปกลับ €62 เท่ากับ 139 กม./€ น้ำหนัก: 32%"],
+        ["ราคาที่คาดหมาย", "เส้นโค้งที่ทนทาน <code>p = a · km^b</code> ประเมินราคาตามระยะทางจากทั้งดัชนี <b>ดีล</b> วัดว่าราคาต่ำกว่าคาดเท่าใด น้ำหนัก: 30%"],
+        ["นาทีบินต่อยูโร", "นาทีบินไปกลับที่เผยแพร่หารด้วยค่าโดยสาร ให้คุณค่ากับเวลาบินจริง น้ำหนัก: 13%"],
+        ["รูปแบบการเดินทาง", "ตัวกรองใช้วันจริง: วันหยุดยาว (ศุกร์→จันทร์) สุดสัปดาห์ (ศุกร์→อาทิตย์) และทริปสั้น (เสาร์→อาทิตย์)"],
+        ["ประวัติราคา", "ดัชนีถูกเก็บทุกคืน หลังสังเกตอย่างน้อยห้าครั้ง เส้นทางอาจถูกระบุว่าอยู่ใน <b>10% ที่ถูกที่สุดใน 90 วันที่ผ่านมา</b> ประวัติเริ่ม 4 กันยายน 2026"],
+        ["ระยะพักที่เหมาะสม", "จำนวนคืนที่แนะนำเพิ่มตามระยะทาง: <code>≤800 กม. → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>"],
+        ["สัมภาระ", "แหล่งข้อมูลไม่ระบุว่ารวมสัมภาระโหลดใต้ท้องเครื่องหรือไม่ เราจึงไม่คาดเดา แถบเลื่อนเพิ่มค่าธรรมเนียมสมมติเท่ากันทุกค่าโดยสารและจัดอันดับใหม่"],
+        ["สกุลเงิน", "ราคาต้นทางเป็นยูโร สกุลอื่นใช้เรตวันที่ {fxDate} เพื่อแสดงเท่านั้น ราคาชำระของผู้ให้บริการเป็นหลัก ราคา LIVE แปลงโดยแหล่งข้อมูล"],
+        ["ช่วงออกเดินทาง", "แหล่งข้อมูลให้เพียงวันถูกที่สุดหนึ่งวันต่อจุดหมาย ไม่ใช่ปฏิทินเต็ม ช่วงคือ 1–30, 31–60 จนถึง 180+ วัน และเลือกหลายช่วงได้"],
+        ["INDEX และ LIVE", "<b>INDEX</b> คือภาพข้อมูลตามวันที่ที่ฝังในหน้า <b>LIVE</b> คือคำขอใหม่ไปยังบริการราคา ระบบสลับอัตโนมัติเมื่อมีข้อมูล"]
+      ],
+      "privacy": [
+        ["ไม่ต้องมีบัญชี", "ไม่มีการสมัครและไม่เก็บอีเมล เบราว์เซอร์นี้เก็บเพียงธีม ภาษา สกุลเงิน และตัวเลือกความยินยอม"],
+        ["เราไม่ขายตั๋ว", "Efficiency Life Flight เป็นเครื่องมือวิจัย การจองทำกับผู้ให้บริการหรือเว็บเปรียบเทียบ เราไม่เห็นข้อมูลการชำระเงิน"],
+        ["ลิงก์พันธมิตร", "ลิงก์จองและกิจกรรมอาจเป็นลิงก์พันธมิตร การซื้ออาจทำให้เราได้รับค่าคอมมิชชันโดยไม่เปลี่ยนราคาหรืออันดับของคุณ Google Flights ยังคงเป็นการตรวจสอบอิสระ"],
+        ["ราคาเป็นข้อมูลอ้างอิง", "ทุกค่าโดยสารเป็นการสังเกตตามวันที่ ไม่รับประกันที่นั่ง โปรดตรวจราคาและเงื่อนไขปัจจุบันกับผู้ให้บริการก่อนจอง"]
+      ],
+      "seo": {"title": "เที่ยวบินตรงที่คุ้มค่าที่สุด | Efficiency Life Flight", "description": "เลือกสนามบินต้นทาง ช่วงเดินทาง และงบประมาณ เปรียบเทียบค่าโดยสารไปกลับแบบไม่แวะพักตามกิโลเมตรต่อยูโร ราคา และ Efficiency Score"}
+    },
+    "pl": {
+      "name": "Polski", "path": "pl", "hreflang": "pl", "locale": "pl_PL", "dir": "ltr",
+      "consent": {"accept": "Akceptuj", "decline": "Odrzuć", "preferences": "Ustawienia plików cookie", "body": "<b>Wybór należy do Ciebie.</b> Po akceptacji opcjonalne narzędzia zewnętrzne mogą mierzyć polecenia afiliacyjne oraz, jeśli reklamy zostaną włączone, ich skuteczność. Po odrzuceniu wyszukiwanie, ceny i linki działają normalnie, bez ładowania opcjonalnych skryptów. Wybór zapisuje się w tej przeglądarce i można go zmienić w stopce. <a href=\"#privacy\">Jak przetwarzamy dane</a>."},
+      "indexNote": "<b>O tym indeksie.</b> {fareCount} zaobserwowanych {observed} cen bezpośrednich lotów w obie strony, z <b>{originCount} lotnisk wylotu</b> do <b>{destCount} miejsc docelowych</b>. Interfejs obsługuje {languageCount} języków i {currencyCount} walut. Każda cena jest obserwacją, a nie wynikiem modelu.",
+      "method": [
+        ["Odległość za euro", "Odległość po ortodromie w obie strony dzielona przez cenę. 4 300 km w jedną stronę i €62 w obie strony daje 139 km/€. Waga: 32%."],
+        ["Oczekiwana cena", "Odporna krzywa <code>p = a · km^b</code> szacuje cenę według odległości w całym indeksie. <b>Okazja</b> mierzy spadek poniżej oczekiwania. Waga: 30%."],
+        ["Minuty lotu za euro", "Opublikowane minuty lotu w obie strony dzielone przez cenę, premiujące użyteczny czas w powietrzu. Waga: 13%."],
+        ["Kształt podróży", "Filtry używają rzeczywistych dni: długi weekend (pt→pon), weekend (pt→niedz) i szybki wyjazd (sob→niedz)."],
+        ["Historia cen", "Indeks jest archiwizowany co noc. Po pięciu obserwacjach trasa może być oznaczona w <b>najtańszych 10% z ostatnich 90 dni</b>. Historia od 4 września 2026."],
+        ["Proporcjonalny pobyt", "Sugerowana liczba nocy rośnie z odległością: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Bagaż", "Źródła nie podają, czy bagaż rejestrowany jest w cenie, więc tego nie zakładamy. Suwak dodaje tę samą szacowaną opłatę do każdej ceny i przelicza ranking."],
+        ["Waluta", "Ceny źródłowe są w euro. Inne waluty używają kursów z {fxDate} tylko do wyświetlania; rozstrzyga cena operatora przy płatności. LIVE przelicza źródło."],
+        ["Okno wylotu", "Źródło podaje jedną najtańszą datę na kierunek, a nie pełny kalendarz. Zakresy 1–30, 31–60 aż do 180+ dni można łączyć."],
+        ["INDEX i LIVE", "<b>INDEX</b> to datowany obraz osadzony w stronie. <b>LIVE</b> to nowe zapytanie do usługi cenowej. Przełączenie jest automatyczne, gdy dane są dostępne."]
+      ],
+      "privacy": [
+        ["Bez konta", "Nie ma rejestracji ani zbierania adresu e-mail. Przeglądarka zapisuje tylko motyw, język, walutę i wybór zgody."],
+        ["Nie sprzedajemy biletów", "Efficiency Life Flight jest narzędziem badawczym. Rezerwacja odbywa się u operatora lub w porównywarce; nie widzimy danych płatniczych."],
+        ["Linki afiliacyjne", "Linki rezerwacji i atrakcji mogą być afiliacyjne. Zakup może przynieść nam prowizję bez zmiany Twojej ceny lub rankingu. Google Flights pozostaje niezależną kontrolą."],
+        ["Ceny orientacyjne", "Każda cena jest datowaną obserwacją, nie gwarancją dostępności. Przed rezerwacją sprawdź aktualną cenę i warunki u operatora."]
+      ],
+      "seo": {"title": "Najbardziej opłacalne loty bezpośrednie | Efficiency Life Flight", "description": "Wybierz lotnisko wylotu, okres i budżet. Porównaj obserwowane ceny lotów bezpośrednich w obie strony według kilometrów za euro, ceny i Efficiency Score."}
+    },
+    "nl": {
+      "name": "Nederlands", "path": "nl", "hreflang": "nl", "locale": "nl_NL", "dir": "ltr",
+      "consent": {"accept": "Accepteren", "decline": "Weigeren", "preferences": "Cookievoorkeuren", "body": "<b>De keuze is aan jou.</b> Bij accepteren kunnen optionele tools van derden affiliateverwijzingen en, als advertenties worden geactiveerd, advertentieprestaties meten. Bij weigeren werken zoeken, prijzen en links normaal en wordt geen optioneel script geladen. De keuze blijft in deze browser en kan via de footer worden aangepast. <a href=\"#privacy\">Hoe we gegevens verwerken</a>."},
+      "indexNote": "<b>Over deze index.</b> {fareCount} op {observed} waargenomen tarieven voor rechtstreekse retourvluchten, van <b>{originCount} vertrekluchthavens</b> naar <b>{destCount} bestemmingen</b>. De interface omvat {languageCount} talen en {currencyCount} valuta. Elk tarief is waargenomen, geen enkel gemodelleerd.",
+      "method": [
+        ["Afstand per euro", "Grootcirkelafstand heen en terug gedeeld door het tarief. 4.300 km enkele reis en €62 retour levert 139 km/€ op. Gewicht: 32%."],
+        ["Verwachte prijs", "Een robuuste curve <code>p = a · km^b</code> schat de prijs op basis van afstand over de hele index. <b>Deal</b> meet hoeveel het tarief eronder ligt. Gewicht: 30%."],
+        ["Vliegminuten per euro", "Gepubliceerde vliegminuten heen en terug gedeeld door het tarief. Beloont nuttige tijd in de lucht. Gewicht: 13%."],
+        ["Reisvorm", "Filters gebruiken de echte dagen: lang weekend (vr→ma), weekend (vr→zo) en korte trip (za→zo)."],
+        ["Prijsgeschiedenis", "De index wordt elke nacht gearchiveerd. Na vijf waarnemingen kan een route in de <b>laagste 10% van de laatste 90 dagen</b> worden gemarkeerd. Historie sinds 4 september 2026."],
+        ["Passend verblijf", "Voorgestelde nachten nemen toe met de afstand: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Bagage", "Bronnen melden niet of ruimbagage inbegrepen is, dus we gokken niet. De schuif voegt dezelfde aangenomen toeslag aan elk tarief toe en berekent de rangschikking opnieuw."],
+        ["Valuta", "Bronprijzen zijn in euro. Andere valuta gebruiken koersen van {fxDate} alleen voor weergave; de checkoutprijs van de aanbieder is leidend. LIVE wordt door de bron omgerekend."],
+        ["Vertrekperiode", "De bron levert één goedkoopste datum per bestemming, geen volledige kalender. Perioden 1–30, 31–60 tot 180+ dagen kunnen worden gecombineerd."],
+        ["INDEX en LIVE", "<b>INDEX</b> is de gedateerde momentopname in de pagina. <b>LIVE</b> is een nieuw verzoek aan de prijsdienst. Er wordt automatisch omgeschakeld wanneer gegevens beschikbaar zijn."]
+      ],
+      "privacy": [
+        ["Geen account", "Geen registratie en geen verzameling van e-mail. Deze browser bewaart alleen thema, taal, valuta en toestemmingskeuze."],
+        ["Wij verkopen geen tickets", "Efficiency Life Flight is een onderzoekstool. Boeken gebeurt bij de aanbieder of vergelijkingsdienst; wij zien geen betaalgegevens."],
+        ["Affiliatelinks", "Boekings- en activiteitenlinks kunnen affiliatelinks zijn. Een aankoop kan ons commissie opleveren zonder jouw prijs of rangschikking te veranderen. Google Flights blijft een onafhankelijke controle."],
+        ["Prijzen zijn indicatief", "Elk tarief is een gedateerde waarneming, geen beschikbaarheidsgarantie. Controleer voor het boeken de actuele prijs en voorwaarden bij de aanbieder."]
+      ],
+      "seo": {"title": "Rechtstreekse vluchten met de beste waarde | Efficiency Life Flight", "description": "Kies vertrekluchthaven, periode en budget. Vergelijk waargenomen non-stop retourtarieven op kilometers per euro, prijs en Efficiency Score."}
+    },
+    "uk": {
+      "name": "Українська", "path": "uk", "hreflang": "uk", "locale": "uk_UA", "dir": "ltr",
+      "consent": {"accept": "Прийняти", "decline": "Відхилити", "preferences": "Налаштування cookie", "body": "<b>Вибір за вами.</b> За згоди необов’язкові сторонні інструменти можуть вимірювати партнерські переходи та, якщо ввімкнено рекламу, її ефективність. За відмови пошук, ціни й посилання працюють звичайно, без завантаження необов’язкових скриптів. Вибір зберігається в цьому браузері й змінюється внизу сторінки. <a href=\"#privacy\">Як ми обробляємо дані</a>."},
+      "indexNote": "<b>Про цей індекс.</b> {fareCount} спостережених {observed} тарифів на прямі рейси туди й назад, з <b>{originCount} аеропортів вильоту</b> до <b>{destCount} напрямків</b>. Інтерфейс підтримує {languageCount} мов і {currencyCount} валют. Кожен тариф спостережений, а не змодельований.",
+      "method": [
+        ["Відстань за євро", "Відстань великого кола туди й назад ділиться на тариф. 4 300 км в один бік і €62 туди-назад дають 139 км/€. Вага: 32%."],
+        ["Очікувана ціна", "Стійка крива <code>p = a · km^b</code> оцінює ціну за відстанню в усьому індексі. <b>Вигода</b> показує, наскільки тариф нижчий. Вага: 30%."],
+        ["Хвилини польоту за євро", "Опубліковані хвилини польоту туди й назад діляться на тариф. Вага: 13%."],
+        ["Форма подорожі", "Фільтри використовують реальні дні: довгі вихідні (пт→пн), вихідні (пт→нд), коротка поїздка (сб→нд)."],
+        ["Історія цін", "Індекс архівується щоночі. Після п’яти спостережень маршрут може потрапити до <b>найдешевших 10% за останні 90 днів</b>. Історія від 4 вересня 2026 року."],
+        ["Пропорційне перебування", "Рекомендовані ночі зростають із відстанню: <code>≤800 км → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Багаж", "Джерела не вказують, чи входить зареєстрований багаж, тому ми не припускаємо. Повзунок додає однакову умовну плату до кожного тарифу й перераховує рейтинг."],
+        ["Валюта", "Ціни джерела в євро. Інші валюти використовують курс на {fxDate} лише для показу; остаточна ціна оператора при оплаті. LIVE конвертує джерело."],
+        ["Вікно вильоту", "Джерело дає одну найдешевшу дату на напрямок, не повний календар. Діапазони 1–30, 31–60 до 180+ днів можна поєднувати."],
+        ["INDEX і LIVE", "<b>INDEX</b> — датований знімок у сторінці. <b>LIVE</b> — новий запит до сервісу цін. Перемикання автоматичне, коли дані доступні."]
+      ],
+      "privacy": [
+        ["Без облікового запису", "Реєстрації та збору електронної пошти немає. Браузер зберігає лише тему, мову, валюту й вибір згоди."],
+        ["Ми не продаємо квитки", "Efficiency Life Flight — інструмент дослідження. Бронювання відбувається в оператора чи сервісу порівняння; ми не бачимо платіжних даних."],
+        ["Партнерські посилання", "Посилання на бронювання й активності можуть бути партнерськими. Купівля може принести нам комісію без зміни вашої ціни чи рейтингу. Google Flights лишається незалежною перевіркою."],
+        ["Ціни орієнтовні", "Кожен тариф — датоване спостереження, не гарантія наявності. Перед бронюванням перевірте актуальні ціну й умови в оператора."]
+      ],
+      "seo": {"title": "Найвигідніші прямі рейси | Efficiency Life Flight", "description": "Оберіть аеропорт вильоту, період і бюджет. Порівнюйте спостережені тарифи туди й назад без пересадок за кілометрами на євро, ціною та Efficiency Score."}
+    },
+    "ro": {
+      "name": "Română", "path": "ro", "hreflang": "ro", "locale": "ro_RO", "dir": "ltr",
+      "consent": {"accept": "Acceptă", "decline": "Refuză", "preferences": "Preferințe cookie", "body": "<b>Alegerea este a ta.</b> Dacă accepți, instrumente terțe opționale pot măsura recomandările afiliate și, dacă publicitatea este activată, performanța reclamelor. Dacă refuzi, căutarea, prețurile și linkurile funcționează normal, fără scripturi terțe opționale. Alegerea rămâne în acest browser și poate fi schimbată din subsol. <a href=\"#privacy\">Cum gestionăm datele</a>."},
+      "indexNote": "<b>Despre acest indice.</b> {fareCount} tarife dus-întors fără escală observate la {observed}, din <b>{originCount} aeroporturi de plecare</b> spre <b>{destCount} destinații</b>. Interfața acoperă {languageCount} limbi și {currencyCount} monede. Fiecare tarif este observat, nu modelat.",
+      "method": [
+        ["Distanță per euro", "Distanța ortodromică dus-întors împărțită la tarif. 4.300 km pe sens și €62 dus-întors dau 139 km/€. Pondere: 32%."],
+        ["Preț estimat", "O curbă robustă <code>p = a · km^b</code> estimează prețul după distanță în întregul indice. <b>Oferta</b> măsoară cât este tariful sub estimare. Pondere: 30%."],
+        ["Minute de zbor per euro", "Minutele publicate pentru zborul dus-întors împărțite la tarif. Pondere: 13%."],
+        ["Forma călătoriei", "Filtrele folosesc zilele reale: weekend prelungit (vin→lun), weekend (vin→dum), escapadă (sâm→dum)."],
+        ["Istoricul prețurilor", "Indicele este arhivat noaptea. După cinci observații, o rută poate fi în <b>cele mai ieftine 10% din ultimele 90 de zile</b>. Istoric din 4 septembrie 2026."],
+        ["Ședere proporțională", "Nopțile sugerate cresc cu distanța: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Bagaj", "Sursele nu spun dacă bagajul de cală este inclus, așa că nu presupunem. Glisorul adaugă aceeași taxă estimată fiecărui tarif și recalculează clasamentul."],
+        ["Monedă", "Prețurile sursă sunt în euro. Alte monede folosesc cursul din {fxDate} doar pentru afișare; prețul operatorului la plată prevalează. LIVE este convertit de sursă."],
+        ["Fereastra de plecare", "Sursa oferă o singură dată cea mai ieftină pentru fiecare destinație, nu un calendar complet. Intervalele 1–30, 31–60 până la 180+ zile se pot combina."],
+        ["INDEX și LIVE", "<b>INDEX</b> este instantaneul datat inclus în pagină. <b>LIVE</b> este o cerere nouă către serviciul de prețuri. Comutarea este automată când există date."]
+      ],
+      "privacy": [
+        ["Fără cont", "Nu există înscriere și nu colectăm adrese de e-mail. Browserul păstrează doar tema, limba, moneda și alegerea consimțământului."],
+        ["Nu vindem bilete", "Efficiency Life Flight este un instrument de cercetare. Rezervarea are loc la operator sau comparator; nu vedem datele de plată."],
+        ["Linkuri afiliate", "Linkurile de rezervare și activități pot fi afiliate. O achiziție ne poate aduce comision fără a schimba prețul sau clasamentul. Google Flights rămâne o verificare independentă."],
+        ["Prețuri orientative", "Fiecare tarif este o observație datată, nu disponibilitate garantată. Verifică prețul și condițiile actuale la operator înainte de rezervare."]
+      ],
+      "seo": {"title": "Zboruri directe cu cel mai bun raport calitate-preț | Efficiency Life Flight", "description": "Alege aeroportul de plecare, perioada și bugetul. Compară tarife dus-întors fără escală observate după kilometri per euro, preț și Efficiency Score."}
+    },
+    "el": {
+      "name": "Ελληνικά", "path": "el", "hreflang": "el", "locale": "el_GR", "dir": "ltr",
+      "consent": {"accept": "Αποδοχή", "decline": "Απόρριψη", "preferences": "Προτιμήσεις cookie", "body": "<b>Η επιλογή είναι δική σας.</b> Αν αποδεχτείτε, προαιρετικά εργαλεία τρίτων μπορεί να μετρούν παραπομπές συνεργατών και, αν ενεργοποιηθούν διαφημίσεις, την απόδοσή τους. Αν απορρίψετε, αναζήτηση, τιμές και σύνδεσμοι λειτουργούν κανονικά χωρίς προαιρετικά σενάρια τρίτων. Η επιλογή μένει σε αυτό το πρόγραμμα περιήγησης και αλλάζει από το υποσέλιδο. <a href=\"#privacy\">Πώς χειριζόμαστε δεδομένα</a>."},
+      "indexNote": "<b>Για αυτόν τον δείκτη.</b> {fareCount} παρατηρημένοι ναύλοι απευθείας με επιστροφή στις {observed}, από <b>{originCount} αεροδρόμια αναχώρησης</b> προς <b>{destCount} προορισμούς</b>. Η διεπαφή καλύπτει {languageCount} γλώσσες και {currencyCount} νομίσματα. Κάθε ναύλος είναι παρατήρηση, όχι μοντέλο.",
+      "method": [
+        ["Απόσταση ανά ευρώ", "Απόσταση μεγάλου κύκλου με επιστροφή διά τον ναύλο. 4.300 χλμ. απλή διαδρομή και €62 επιστροφή δίνουν 139 χλμ./€. Βάρος: 32%."],
+        ["Αναμενόμενη τιμή", "Ανθεκτική καμπύλη <code>p = a · km^b</code> εκτιμά τιμή βάσει απόστασης σε όλον τον δείκτη. Η <b>ευκαιρία</b> μετρά πόσο χαμηλότερος είναι ο ναύλος. Βάρος: 30%."],
+        ["Λεπτά πτήσης ανά ευρώ", "Δημοσιευμένα λεπτά πτήσης με επιστροφή διά τον ναύλο. Βάρος: 13%."],
+        ["Μορφή ταξιδιού", "Τα φίλτρα χρησιμοποιούν πραγματικές ημέρες: τριήμερο (Παρ→Δευ), σαββατοκύριακο (Παρ→Κυρ), σύντομη απόδραση (Σάβ→Κυρ)."],
+        ["Ιστορικό τιμών", "Ο δείκτης αρχειοθετείται κάθε βράδυ. Μετά από πέντε παρατηρήσεις, μια διαδρομή μπορεί να σημειωθεί στο <b>χαμηλότερο 10% των τελευταίων 90 ημερών</b>. Από 4 Σεπτεμβρίου 2026."],
+        ["Ανάλογη διαμονή", "Οι προτεινόμενες νύχτες αυξάνονται με την απόσταση: <code>≤800 χλμ. → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Αποσκευές", "Οι πηγές δεν αναφέρουν αν περιλαμβάνεται παραδοτέα αποσκευή, οπότε δεν μαντεύουμε. Το ρυθμιστικό προσθέτει την ίδια υποθετική χρέωση σε κάθε ναύλο και επανυπολογίζει την κατάταξη."],
+        ["Νόμισμα", "Οι τιμές πηγής είναι σε ευρώ. Άλλα νομίσματα χρησιμοποιούν ισοτιμίες {fxDate} μόνο για εμφάνιση· υπερισχύει η τιμή πληρωμής του παρόχου. Τα LIVE μετατρέπονται από την πηγή."],
+        ["Παράθυρο αναχώρησης", "Η πηγή δίνει μία φθηνότερη ημερομηνία ανά προορισμό, όχι πλήρες ημερολόγιο. Τα εύρη 1–30, 31–60 έως 180+ ημέρες συνδυάζονται."],
+        ["INDEX και LIVE", "Το <b>INDEX</b> είναι χρονολογημένο στιγμιότυπο στη σελίδα. Το <b>LIVE</b> είναι νέο αίτημα στην υπηρεσία τιμών. Η αλλαγή γίνεται αυτόματα όταν υπάρχουν δεδομένα."]
+      ],
+      "privacy": [
+        ["Χωρίς λογαριασμό", "Δεν υπάρχει εγγραφή ή συλλογή email. Το πρόγραμμα περιήγησης κρατά μόνο θέμα, γλώσσα, νόμισμα και επιλογή συγκατάθεσης."],
+        ["Δεν πουλάμε εισιτήρια", "Το Efficiency Life Flight είναι εργαλείο έρευνας. Η κράτηση γίνεται στον πάροχο ή τη σύγκριση· δεν βλέπουμε δεδομένα πληρωμής."],
+        ["Σύνδεσμοι συνεργατών", "Σύνδεσμοι κράτησης και δραστηριοτήτων μπορεί να είναι συνεργατών. Αγορά μπορεί να μας δώσει προμήθεια χωρίς αλλαγή της τιμής ή κατάταξης. Το Google Flights παραμένει ανεξάρτητος έλεγχος."],
+        ["Ενδεικτικές τιμές", "Κάθε ναύλος είναι χρονολογημένη παρατήρηση, όχι εγγυημένη διαθεσιμότητα. Ελέγξτε τρέχουσα τιμή και όρους στον πάροχο πριν την κράτηση."]
+      ],
+      "seo": {"title": "Απευθείας πτήσεις με την καλύτερη αξία | Efficiency Life Flight", "description": "Επιλέξτε αεροδρόμιο αναχώρησης, περίοδο και προϋπολογισμό. Συγκρίνετε παρατηρημένους ναύλους απευθείας με επιστροφή ανά χιλιόμετρα ανά ευρώ, τιμή και Efficiency Score."}
+    },
+    "cs": {
+      "name": "Čeština", "path": "cs", "hreflang": "cs", "locale": "cs_CZ", "dir": "ltr",
+      "consent": {"accept": "Přijmout", "decline": "Odmítnout", "preferences": "Nastavení cookies", "body": "<b>Volba je na vás.</b> Po přijetí mohou volitelné nástroje třetích stran měřit partnerská doporučení a při zapnutí reklamy její výkon. Po odmítnutí fungují vyhledávání, ceny a odkazy normálně a žádný volitelný skript se nenačte. Volba zůstává v tomto prohlížeči a lze ji změnit v zápatí. <a href=\"#privacy\">Jak nakládáme s daty</a>."},
+      "indexNote": "<b>O tomto indexu.</b> {fareCount} pozorovaných cen přímých zpátečních letů k {observed}, z <b>{originCount} odletových letišť</b> do <b>{destCount} destinací</b>. Rozhraní podporuje {languageCount} jazyků a {currencyCount} měn. Každá cena je pozorovaná, žádná modelovaná.",
+      "method": [
+        ["Vzdálenost za euro", "Ortodromická vzdálenost tam i zpět dělená cenou. 4 300 km jedním směrem a €62 zpáteční dává 139 km/€. Váha: 32 %."],
+        ["Očekávaná cena", "Robustní křivka <code>p = a · km^b</code> odhaduje cenu podle vzdálenosti v celém indexu. <b>Nabídka</b> měří pokles pod odhad. Váha: 30 %."],
+        ["Minuty letu za euro", "Publikované minuty letu tam i zpět dělené cenou. Váha: 13 %."],
+        ["Tvar cesty", "Filtry používají skutečné dny: prodloužený víkend (pá→po), víkend (pá→ne), rychlý výlet (so→ne)."],
+        ["Historie cen", "Index se archivuje každou noc. Po pěti pozorováních může být trasa označena v <b>nejnižších 10 % za posledních 90 dní</b>. Historie od 4. září 2026."],
+        ["Přiměřený pobyt", "Doporučené noci rostou se vzdáleností: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Zavazadla", "Zdroje neuvádějí, zda je odbavené zavazadlo zahrnuto, proto nehádáme. Posuvník přidá ke každé ceně stejný předpokládaný poplatek a přepočítá pořadí."],
+        ["Měna", "Zdrojové ceny jsou v eurech. Jiné měny používají kurz k {fxDate} jen pro zobrazení; rozhoduje cena provozovatele při platbě. LIVE převádí zdroj."],
+        ["Odletové období", "Zdroj poskytuje jedno nejlevnější datum na destinaci, ne celý kalendář. Pásma 1–30, 31–60 až 180+ dní lze kombinovat."],
+        ["INDEX a LIVE", "<b>INDEX</b> je datovaný snímek vložený do stránky. <b>LIVE</b> je nový požadavek cenové službě. Přepnutí je při dostupnosti dat automatické."]
+      ],
+      "privacy": [
+        ["Bez účtu", "Bez registrace a sběru e-mailu. Prohlížeč ukládá jen motiv, jazyk, měnu a volbu souhlasu."],
+        ["Neprodáváme letenky", "Efficiency Life Flight je výzkumný nástroj. Rezervace probíhá u provozovatele nebo srovnávače; platební údaje nevidíme."],
+        ["Partnerské odkazy", "Odkazy na rezervace a aktivity mohou být partnerské. Nákup nám může přinést provizi bez změny vaší ceny či pořadí. Google Flights zůstává nezávislou kontrolou."],
+        ["Ceny jsou orientační", "Každá cena je datované pozorování, nikoli záruka dostupnosti. Před rezervací ověřte aktuální cenu a podmínky u provozovatele."]
+      ],
+      "seo": {"title": "Přímé lety s nejlepší hodnotou | Efficiency Life Flight", "description": "Vyberte odletové letiště, období a rozpočet. Porovnejte pozorované ceny přímých zpátečních letů podle kilometrů za euro, ceny a Efficiency Score."}
+    },
+    "sv": {
+      "name": "Svenska", "path": "sv", "hreflang": "sv", "locale": "sv_SE", "dir": "ltr",
+      "consent": {"accept": "Godkänn", "decline": "Avböj", "preferences": "Cookieinställningar", "body": "<b>Du väljer.</b> Om du godkänner kan valfria tredjepartsverktyg mäta affiliatereferenser och, om annonser aktiveras, annonsprestanda. Om du avböjer fungerar sökning, priser och länkar normalt och inga valfria tredjepartsskript laddas. Valet sparas i denna webbläsare och kan ändras i sidfoten. <a href=\"#privacy\">Så hanterar vi data</a>."},
+      "indexNote": "<b>Om detta index.</b> {fareCount} observerade priser för direkt tur och retur den {observed}, från <b>{originCount} avreseflygplatser</b> till <b>{destCount} resmål</b>. Gränssnittet omfattar {languageCount} språk och {currencyCount} valutor. Varje pris är observerat, inget är modellerat.",
+      "method": [
+        ["Avstånd per euro", "Storcirkelavstånd tur och retur delat med priset. 4 300 km enkel väg och €62 retur ger 139 km/€. Vikt: 32 %."],
+        ["Förväntat pris", "En robust kurva <code>p = a · km^b</code> uppskattar pris efter avstånd i hela indexet. <b>Fynd</b> mäter hur långt priset ligger under. Vikt: 30 %."],
+        ["Flygminuter per euro", "Publicerade flygminuter tur och retur delat med priset. Vikt: 13 %."],
+        ["Resans form", "Filtren använder faktiska dagar: långhelg (fre→mån), helg (fre→sön), snabbresa (lör→sön)."],
+        ["Prishistorik", "Indexet arkiveras varje natt. Efter fem observationer kan en rutt markeras bland de <b>lägsta 10 % de senaste 90 dagarna</b>. Historik sedan 4 september 2026."],
+        ["Proportionerlig vistelse", "Föreslagna nätter ökar med avståndet: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Bagage", "Källorna anger inte om incheckat bagage ingår, så vi gissar inte. Reglaget lägger samma antagna avgift på varje pris och räknar om rankningen."],
+        ["Valuta", "Källpriserna är i euro. Andra valutor använder kurser från {fxDate} enbart för visning; operatörens betalningspris gäller. LIVE omvandlas av källan."],
+        ["Avresefönster", "Källan ger ett billigaste datum per resmål, inte en fullständig kalender. Intervall 1–30, 31–60 till 180+ dagar kan kombineras."],
+        ["INDEX och LIVE", "<b>INDEX</b> är den daterade ögonblicksbilden i sidan. <b>LIVE</b> är en ny begäran till pristjänsten. Byte sker automatiskt när data finns."]
+      ],
+      "privacy": [
+        ["Inget konto", "Ingen registrering och ingen e-post samlas in. Webbläsaren sparar bara tema, språk, valuta och samtycke."],
+        ["Vi säljer inga biljetter", "Efficiency Life Flight är ett researchverktyg. Bokning sker hos operatören eller jämförelsetjänsten; vi ser aldrig betalningsuppgifter."],
+        ["Affiliatelänkar", "Boknings- och aktivitetslänkar kan vara affiliatelänkar. Ett köp kan ge oss provision utan att ändra ditt pris eller rankningen. Google Flights är fortsatt en oberoende kontroll."],
+        ["Priser är vägledande", "Varje pris är en daterad observation, inte garanterad tillgänglighet. Kontrollera aktuellt pris och villkor hos operatören före bokning."]
+      ],
+      "seo": {"title": "Direktflyg med bäst värde | Efficiency Life Flight", "description": "Välj avreseflygplats, period och budget. Jämför observerade priser för direkt tur och retur efter kilometer per euro, pris och Efficiency Score."}
+    },
+    "hu": {
+      "name": "Magyar", "path": "hu", "hreflang": "hu", "locale": "hu_HU", "dir": "ltr",
+      "consent": {"accept": "Elfogadás", "decline": "Elutasítás", "preferences": "Cookie-beállítások", "body": "<b>Ön dönt.</b> Elfogadás esetén opcionális külső eszközök mérhetik a partneri hivatkozásokat és, ha a hirdetések aktiválódnak, azok teljesítményét. Elutasításkor a keresés, árak és hivatkozások rendesen működnek, és opcionális külső szkript nem töltődik be. A választás ebben a böngészőben marad, és a láblécben módosítható. <a href=\"#privacy\">Adatkezelésünk</a>."},
+      "indexNote": "<b>Erről az indexről.</b> {observed} napján megfigyelt {fareCount} közvetlen retúrjegyár, <b>{originCount} indulási repülőtérről</b> <b>{destCount} célállomásra</b>. A felület {languageCount} nyelvet és {currencyCount} pénznemet támogat. Minden ár megfigyelt, egyik sem modellezett.",
+      "method": [
+        ["Távolság eurónként", "Oda-vissza nagykör-távolság osztva a jegyárral. 4 300 km egy irányba és €62 retúr 139 km/€ értéket ad. Súly: 32%."],
+        ["Várható ár", "A robusztus <code>p = a · km^b</code> görbe a teljes indexen távolság szerint becsül árat. Az <b>ajánlat</b> az elvárás alatti eltérést méri. Súly: 30%."],
+        ["Repülési perc eurónként", "A közzétett oda-vissza repülési percek osztva a jegyárral. Súly: 13%."],
+        ["Az út formája", "A szűrők valódi napokat használnak: hosszú hétvége (pé→hét), hétvége (pé→vas), gyors út (szo→vas)."],
+        ["Ártörténet", "Az indexet éjszakánként archiváljuk. Öt megfigyelés után az útvonal az <b>utóbbi 90 nap legalacsonyabb 10%-ába</b> kerülhet. Történet 2026. szeptember 4-től."],
+        ["Arányos tartózkodás", "A javasolt éjszakák a távolsággal nőnek: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Poggyász", "A források nem jelzik, hogy a feladott poggyász benne van-e, ezért nem találgatunk. A csúszka ugyanazt a feltételezett díjat adja minden árhoz és újrarangsorol."],
+        ["Pénznem", "A forrásárak euróban vannak. Más pénznemek a {fxDate} árfolyamát csak kijelzésre használják; az üzemeltető fizetési ára mérvadó. A LIVE árat a forrás váltja át."],
+        ["Indulási időablak", "A forrás célállomásonként egy legolcsóbb dátumot ad, nem teljes naptárt. Az 1–30, 31–60 és 180+ napig tartó sávok kombinálhatók."],
+        ["INDEX és LIVE", "Az <b>INDEX</b> az oldalba ágyazott, dátumozott pillanatkép. A <b>LIVE</b> új kérés az árszolgáltatáshoz. Adat esetén a váltás automatikus."]
+      ],
+      "privacy": [
+        ["Nincs fiók", "Nincs regisztráció és e-mail-gyűjtés. A böngésző csak a témát, nyelvet, pénznemet és hozzájárulási választást tárolja."],
+        ["Nem árulunk jegyeket", "Az Efficiency Life Flight kutatóeszköz. A foglalás az üzemeltetőnél vagy összehasonlító szolgáltatásnál történik; fizetési adatokat nem látunk."],
+        ["Partneri hivatkozások", "A foglalási és programlinkek partnerek lehetnek. A vásárlás jutalékot hozhat nekünk az Ön ára vagy a rangsor változása nélkül. A Google Flights független ellenőrzés marad."],
+        ["Az árak tájékoztató jellegűek", "Minden ár dátumozott megfigyelés, nem garantált elérhetőség. Foglalás előtt ellenőrizze az aktuális árat és feltételeket az üzemeltetőnél."]
+      ],
+      "seo": {"title": "Legjobb értékű közvetlen járatok | Efficiency Life Flight", "description": "Válasszon indulási repülőteret, időszakot és költségkeretet. Hasonlítsa össze a megfigyelt közvetlen retúrárakat kilométer/euró, ár és Efficiency Score szerint."}
+    },
+    "he": {
+      "name": "עברית", "path": "he", "hreflang": "he", "locale": "he_IL", "dir": "rtl",
+      "consent": {"accept": "אישור", "decline": "דחייה", "preferences": "העדפות קובצי Cookie", "body": "<b>הבחירה בידיך.</b> באישור, כלים אופציונליים של צד שלישי עשויים למדוד הפניות שותפים ואם פרסום יופעל גם את ביצועי המודעות. בדחייה, החיפוש, המחירים והקישורים יפעלו כרגיל ולא ייטען סקריפט אופציונלי. הבחירה נשמרת בדפדפן זה וניתנת לשינוי בתחתית הדף. <a href=\"#privacy\">כיצד אנו מטפלים בנתונים</a>."},
+      "indexNote": "<b>על האינדקס.</b> {fareCount} תעריפי הלוך־ושוב ישירים שנצפו ב־{observed}, מ־<b>{originCount} נמלי תעופה מוצא</b> אל <b>{destCount} יעדים</b>. הממשק תומך ב־{languageCount} שפות וב־{currencyCount} מטבעות. כל מחיר נצפה בפועל ואינו תוצאה של מודל.",
+      "method": [
+        ["מרחק לאירו", "מרחק המעגל הגדול הלוך ושוב מחולק במחיר. 4,300 ק״מ לכיוון ומחיר חזור של €62 נותנים 139 ק״מ/€. משקל: 32%."],
+        ["מחיר צפוי", "עקומה עמידה <code>p = a · km^b</code> מעריכה מחיר לפי מרחק בכל האינדקס. <b>העסקה</b> מודדת כמה המחיר נמוך מהצפי. משקל: 30%."],
+        ["דקות טיסה לאירו", "דקות הטיסה המפורסמות הלוך ושוב מחולקות במחיר. משקל: 13%."],
+        ["מבנה הנסיעה", "המסננים משתמשים בימים בפועל: סוף שבוע ארוך (ו׳→ב׳), סוף שבוע (ו׳→א׳) ונסיעה קצרה (ש׳→א׳)."],
+        ["היסטוריית מחירים", "האינדקס נשמר בכל לילה. לאחר חמש תצפיות מסלול עשוי להיות מסומן ב־<b>10% הזולים ביותר ב־90 הימים האחרונים</b>. ההיסטוריה החלה ב־4 בספטמבר 2026."],
+        ["שהייה מותאמת למרחק", "מספר הלילות המוצע גדל עם המרחק: <code>≤800 ק״מ → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["כבודה", "המקורות אינם מציינים אם כבודה לבטן המטוס כלולה, ולכן איננו מנחשים. המחוון מוסיף עמלה משוערת זהה לכל מחיר ומחשב מחדש את הדירוג."],
+        ["מטבע", "מחירי המקור באירו. מטבעות אחרים משתמשים בשערי {fxDate} לתצוגה בלבד; מחיר התשלום של המפעיל קובע. מחירי LIVE מומרים במקור."],
+        ["חלון יציאה", "המקור מספק תאריך זול אחד לכל יעד, לא לוח שנה מלא. הטווחים 1–30, 31–60 ועד 180+ ימים ניתנים לשילוב."],
+        ["INDEX ו־LIVE", "<b>INDEX</b> הוא צילום מצב מתוארך המוטמע בדף. <b>LIVE</b> הוא בקשה חדשה לשירות המחירים. המעבר אוטומטי כשיש נתונים."]
+      ],
+      "privacy": [
+        ["ללא חשבון", "אין הרשמה ולא נאסף דוא״ל. הדפדפן שומר רק ערכת נושא, שפה, מטבע ובחירת הסכמה."],
+        ["איננו מוכרים כרטיסים", "Efficiency Life Flight הוא כלי מחקר. ההזמנה מתבצעת אצל המפעיל או שירות ההשוואה; איננו רואים נתוני תשלום."],
+        ["קישורי שותפים", "קישורי הזמנה ופעילויות עשויים להיות קישורי שותפים. רכישה עשויה להניב לנו עמלה בלי לשנות את המחיר או הדירוג. Google Flights נשאר בדיקה עצמאית."],
+        ["המחירים להמחשה", "כל מחיר הוא תצפית מתוארכת ולא הבטחת זמינות. יש לבדוק את המחיר והתנאים העדכניים אצל המפעיל לפני הזמנה."]
+      ],
+      "seo": {"title": "טיסות ישירות בעלות התמורה הטובה ביותר | Efficiency Life Flight", "description": "בחרו נמל מוצא, תקופה ותקציב. השוו תעריפי הלוך־ושוב ישירים שנצפו לפי קילומטרים לאירו, מחיר ו־Efficiency Score."}
+    },
+    "ms": {
+      "name": "Bahasa Melayu", "path": "ms", "hreflang": "ms", "locale": "ms_MY", "dir": "ltr",
+      "consent": {"accept": "Terima", "decline": "Tolak", "preferences": "Keutamaan kuki", "body": "<b>Pilihan di tangan anda.</b> Jika diterima, alat pihak ketiga pilihan boleh mengukur rujukan gabungan dan, jika iklan diaktifkan, prestasi iklan. Jika ditolak, carian, harga dan pautan berfungsi seperti biasa tanpa memuatkan skrip pihak ketiga pilihan. Pilihan disimpan dalam pelayar ini dan boleh diubah di pengaki. <a href=\"#privacy\">Cara kami mengendalikan data</a>."},
+      "indexNote": "<b>Tentang indeks ini.</b> {fareCount} tambang pergi balik tanpa henti yang diperhatikan pada {observed}, dari <b>{originCount} lapangan terbang berlepas</b> ke <b>{destCount} destinasi</b>. Antara muka meliputi {languageCount} bahasa dan {currencyCount} mata wang. Semua tambang diperhatikan, bukan dimodelkan.",
+      "method": [
+        ["Jarak setiap euro", "Jarak bulatan besar pergi balik dibahagi tambang. 4,300 km sehala dan €62 pergi balik memberi 139 km/€. Wajaran: 32%."],
+        ["Harga jangkaan", "Lengkung teguh <code>p = a · km^b</code> menganggar harga mengikut jarak dalam seluruh indeks. <b>Tawaran</b> mengukur harga di bawah jangkaan. Wajaran: 30%."],
+        ["Minit penerbangan setiap euro", "Minit penerbangan pergi balik yang diterbitkan dibahagi tambang. Wajaran: 13%."],
+        ["Bentuk perjalanan", "Penapis menggunakan hari sebenar: hujung minggu panjang (Jum→Isn), hujung minggu (Jum→Ahd), perjalanan singkat (Sab→Ahd)."],
+        ["Sejarah harga", "Indeks diarkib setiap malam. Selepas lima pemerhatian, laluan boleh ditanda dalam <b>10% terendah bagi 90 hari lalu</b>. Sejarah bermula 4 September 2026."],
+        ["Tempoh inap sepadan", "Malam dicadangkan meningkat mengikut jarak: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["Bagasi", "Sumber tidak menyatakan sama ada bagasi berdaftar disertakan, jadi kami tidak meneka. Gelangsar menambah yuran andaian yang sama pada setiap tambang dan mengira semula kedudukan."],
+        ["Mata wang", "Harga sumber dalam euro. Mata wang lain menggunakan kadar {fxDate} untuk paparan sahaja; harga daftar keluar pengendali adalah muktamad. LIVE ditukar oleh sumber."],
+        ["Tetingkap berlepas", "Sumber memberikan satu tarikh termurah bagi setiap destinasi, bukan kalendar penuh. Julat 1–30, 31–60 hingga 180+ hari boleh digabungkan."],
+        ["INDEX dan LIVE", "<b>INDEX</b> ialah petikan bertarikh dalam halaman. <b>LIVE</b> ialah permintaan baharu kepada perkhidmatan harga. Pertukaran automatik apabila data tersedia."]
+      ],
+      "privacy": [
+        ["Tanpa akaun", "Tiada pendaftaran atau kutipan e-mel. Pelayar hanya menyimpan tema, bahasa, mata wang dan pilihan persetujuan."],
+        ["Kami tidak menjual tiket", "Efficiency Life Flight ialah alat penyelidikan. Tempahan dibuat dengan pengendali atau perkhidmatan perbandingan; kami tidak melihat data pembayaran."],
+        ["Pautan gabungan", "Pautan tempahan dan aktiviti mungkin pautan gabungan. Pembelian boleh memberi kami komisen tanpa mengubah harga atau kedudukan anda. Google Flights kekal sebagai semakan bebas."],
+        ["Harga sebagai panduan", "Setiap tambang ialah pemerhatian bertarikh, bukan jaminan ketersediaan. Semak harga dan syarat semasa dengan pengendali sebelum menempah."]
+      ],
+      "seo": {"title": "Penerbangan terus dengan nilai terbaik | Efficiency Life Flight", "description": "Pilih lapangan terbang berlepas, tempoh dan bajet. Bandingkan tambang pergi balik tanpa henti mengikut kilometer setiap euro, harga dan Efficiency Score."}
+    },
+    "ta": {
+      "name": "தமிழ்", "path": "ta", "hreflang": "ta", "locale": "ta_IN", "dir": "ltr",
+      "consent": {"accept": "ஏற்கவும்", "decline": "மறுக்கவும்", "preferences": "குக்கீ விருப்பங்கள்", "body": "<b>தேர்வு உங்களுடையது.</b> ஏற்றால், விருப்பமான மூன்றாம் தரப்பு கருவிகள் இணைப்பு பரிந்துரைகளையும், விளம்பரம் இயக்கப்பட்டால் அதன் செயல்திறனையும் அளவிடலாம். மறுத்தாலும் தேடல், விலைகள், இணைப்புகள் இயல்பாக செயல்படும்; விருப்பமான மூன்றாம் தரப்பு ஸ்கிரிப்ட் ஏற்றப்படாது. தேர்வு இந்த உலாவியில் சேமிக்கப்பட்டு அடிக்குறிப்பில் மாற்றலாம். <a href=\"#privacy\">தரவை எவ்வாறு கையாளுகிறோம்</a>."},
+      "indexNote": "<b>இந்தக் குறியீடு பற்றி.</b> {observed} அன்று கவனிக்கப்பட்ட {fareCount} நேரடி இருவழிப் பயணக் கட்டணங்கள், <b>{originCount} புறப்படும் விமான நிலையங்களிலிருந்து</b> <b>{destCount} இடங்களுக்கு</b>. இடைமுகம் {languageCount} மொழிகளையும் {currencyCount} நாணயங்களையும் கொண்டது. ஒவ்வொரு கட்டணமும் கவனிக்கப்பட்டது; மாதிரி மதிப்பீடு அல்ல.",
+      "method": [
+        ["ஒரு யூரோவுக்கு தூரம்", "இருவழிப் பெருவட்டத் தூரத்தை கட்டணத்தால் வகுக்கிறது. ஒருவழி 4,300 கிமீ, இருவழி €62 என்றால் 139 கிமீ/€. எடை: 32%."],
+        ["எதிர்பார்க்கும் விலை", "உறுதியான <code>p = a · km^b</code> வளைவு முழுக் குறியீட்டில் தூரத்திற்கான விலையை மதிப்பிடுகிறது. <b>சலுகை</b> எதிர்பார்ப்பைவிட எவ்வளவு குறைவு என அளவிடுகிறது. எடை: 30%."],
+        ["ஒரு யூரோவுக்கு பறக்கும் நிமிடங்கள்", "வெளியிடப்பட்ட இருவழிப் பறக்கும் நிமிடங்களை கட்டணத்தால் வகுக்கிறது. எடை: 13%."],
+        ["பயண வடிவம்", "உண்மையான நாட்கள் பயன்படுத்தப்படுகின்றன: நீண்ட வாரஇறுதி (வெள்→திங்), வாரஇறுதி (வெள்→ஞாயி), குறும்பயணம் (சனி→ஞாயி)."],
+        ["விலை வரலாறு", "குறியீடு ஒவ்வோர் இரவும் சேமிக்கப்படுகிறது. ஐந்து கவனிப்புகளுக்குப் பின் பாதை <b>கடந்த 90 நாட்களின் குறைந்த 10%</b> எனக் குறிக்கலாம். வரலாறு 4 செப்டம்பர் 2026 முதல்."],
+        ["தூரத்திற்கேற்ற தங்கல்", "பரிந்துரைக்கப்படும் இரவுகள் தூரத்துடன் அதிகரிக்கும்: <code>≤800 கிமீ → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["சாமான்கள்", "செக்-இன் சாமான்கள் உள்ளதா என்று மூலங்கள் கூறவில்லை; நாங்கள் ஊகிக்கவில்லை. ஸ்லைடர் எல்லா கட்டணங்களுக்கும் ஒரே மதிப்பிடப்பட்ட கட்டணத்தைச் சேர்த்து தரவரிசையை மீண்டும் கணக்கிடுகிறது."],
+        ["நாணயம்", "மூல விலைகள் யூரோவில். பிற நாணயங்கள் {fxDate} மாற்று விகிதத்தை காட்சிக்கு மட்டும் பயன்படுத்தும்; இயக்குநரின் இறுதி கட்டணமே செல்லுபடியாகும். LIVE விலை மூலத்தால் மாற்றப்படுகிறது."],
+        ["புறப்படும் காலம்", "ஒவ்வொரு இடத்திற்கும் ஒரு மலிவான தேதியை மட்டும் மூலம் தருகிறது, முழுக் காலண்டர் அல்ல. 1–30, 31–60 முதல் 180+ நாள் வரையிலான பகுதிகளை இணைக்கலாம்."],
+        ["INDEX மற்றும் LIVE", "<b>INDEX</b> பக்கத்தில் பதிக்கப்பட்ட தேதியிட்ட நிலைப்படம். <b>LIVE</b> விலைச் சேவைக்கான புதிய கோரிக்கை. தரவு இருந்தால் தானாக மாறும்."]
+      ],
+      "privacy": [
+        ["கணக்கு தேவையில்லை", "பதிவு இல்லை; மின்னஞ்சல் சேகரிக்கப்படாது. இந்த உலாவி தோற்றம், மொழி, நாணயம், ஒப்புதல் தேர்வை மட்டும் சேமிக்கும்."],
+        ["நாங்கள் டிக்கெட் விற்பதில்லை", "Efficiency Life Flight ஒரு ஆய்வுக் கருவி. முன்பதிவு இயக்குநர் அல்லது ஒப்பீட்டுச் சேவையில் நடக்கும்; பணம் செலுத்தும் தரவை நாங்கள் பார்க்க மாட்டோம்."],
+        ["இணைப்பு லிங்குகள்", "முன்பதிவு மற்றும் செயல்பாட்டு இணைப்புகள் இணைப்பு லிங்குகளாக இருக்கலாம். வாங்குவது எங்களுக்கு கமிஷன் தரலாம்; உங்கள் விலை அல்லது தரவரிசை மாறாது. Google Flights சுயாதீன சரிபார்ப்பு."],
+        ["விலைகள் வழிகாட்டி", "ஒவ்வொரு கட்டணமும் தேதியிட்ட கவனிப்பு; கிடைப்பதற்கான உத்தரவாதம் அல்ல. முன்பதிவுக்கு முன் தற்போதைய விலை மற்றும் விதிகளை இயக்குநரிடம் சரிபார்க்கவும்."]
+      ],
+      "seo": {"title": "சிறந்த மதிப்புள்ள நேரடி விமானங்கள் | Efficiency Life Flight", "description": "புறப்படும் விமான நிலையம், காலம், பட்ஜெட்டைத் தேர்ந்தெடுக்கவும். கவனிக்கப்பட்ட நேரடி இருவழிக் கட்டணங்களை யூரோவுக்கு கிலோமீட்டர், விலை, Efficiency Score மூலம் ஒப்பிடவும்."}
+    },
+    "sw": {
+      "name": "Kiswahili", "path": "sw", "hreflang": "sw", "locale": "sw_KE", "dir": "ltr",
+      "consent": {"accept": "Kubali", "decline": "Kataa", "preferences": "Mapendeleo ya vidakuzi", "body": "<b>Chaguo ni lako.</b> Ukikubali, zana za hiari za wahusika wengine zinaweza kupima marejeleo ya washirika na, matangazo yakiwashwa, utendaji wake. Ukikataa, utafutaji, bei na viungo vitafanya kazi kawaida bila kupakia hati za hiari. Chaguo linahifadhiwa kwenye kivinjari hiki na linaweza kubadilishwa chini ya ukurasa. <a href=\"#privacy\">Jinsi tunavyoshughulikia data</a>."},
+      "indexNote": "<b>Kuhusu faharasa hii.</b> Nauli {fareCount} za kwenda na kurudi moja kwa moja zilizoonekana {observed}, kutoka <b>viwanja {originCount} vya kuondoka</b> hadi <b>maeneo {destCount}</b>. Kiolesura kina lugha {languageCount} na sarafu {currencyCount}. Kila nauli imeonekana; haijakadiriwa na modeli.",
+      "method": [
+        ["Umbali kwa euro", "Umbali wa duara kuu wa kwenda na kurudi hugawanywa kwa nauli. Km 4,300 kwenda na €62 kurudi ni km 139/€. Uzito: 32%."],
+        ["Bei inayotarajiwa", "Mstari thabiti <code>p = a · km^b</code> hukadiria bei kwa umbali kwenye faharasa yote. <b>Ofa</b> hupima kiasi kilicho chini ya matarajio. Uzito: 30%."],
+        ["Dakika za ndege kwa euro", "Dakika za safari ya kwenda na kurudi zilizochapishwa hugawanywa kwa nauli. Uzito: 13%."],
+        ["Muundo wa safari", "Vichujio hutumia siku halisi: wikendi ndefu (Iju→Jtn), wikendi (Iju→Jpl), safari fupi (Jmo→Jpl)."],
+        ["Historia ya bei", "Faharasa huhifadhiwa kila usiku. Baada ya uchunguzi tano, njia inaweza kuonyeshwa kwenye <b>10% ya bei za chini zaidi katika siku 90</b>. Historia tangu 4 Septemba 2026."],
+        ["Muda wa kukaa unaofaa", "Usiku unaopendekezwa huongezeka kwa umbali: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["Mizigo", "Vyanzo havisemi ikiwa mzigo wa kukaguliwa umejumuishwa, kwa hivyo hatukisii. Kitelezi huongeza ada ileile inayodhaniwa kwa kila nauli na kupanga upya."],
+        ["Sarafu", "Bei za chanzo ni euro. Sarafu nyingine hutumia viwango vya {fxDate} kwa onyesho tu; bei ya malipo ya mtoa huduma ndiyo halali. LIVE hubadilishwa na chanzo."],
+        ["Kipindi cha kuondoka", "Chanzo hutoa tarehe moja ya bei nafuu kwa kila eneo, si kalenda nzima. Vipindi vya siku 1–30, 31–60 hadi 180+ vinaweza kuunganishwa."],
+        ["INDEX na LIVE", "<b>INDEX</b> ni picha ya tarehe iliyopachikwa kwenye ukurasa. <b>LIVE</b> ni ombi jipya kwa huduma ya bei. Hubadilika moja kwa moja data ikipatikana."]
+      ],
+      "privacy": [
+        ["Hakuna akaunti", "Hakuna kujisajili wala ukusanyaji wa barua pepe. Kivinjari huhifadhi mandhari, lugha, sarafu na chaguo la idhini pekee."],
+        ["Hatuuzi tiketi", "Efficiency Life Flight ni zana ya utafiti. Kuhifadhi nafasi hufanyika kwa mtoa huduma au huduma ya kulinganisha; hatuoni data ya malipo."],
+        ["Viungo vya washirika", "Viungo vya kuhifadhi na shughuli vinaweza kuwa vya washirika. Ununuzi unaweza kutupa kamisheni bila kubadili bei yako au mpangilio. Google Flights ni ukaguzi huru."],
+        ["Bei ni za mwongozo", "Kila nauli ni uchunguzi wenye tarehe, si uhakika wa upatikanaji. Thibitisha bei na masharti ya sasa kwa mtoa huduma kabla ya kuhifadhi."]
+      ],
+      "seo": {"title": "Safari za moja kwa moja zenye thamani bora | Efficiency Life Flight", "description": "Chagua uwanja wa kuondoka, kipindi na bajeti. Linganisha nauli za kwenda na kurudi moja kwa moja kwa kilomita kwa euro, bei na Efficiency Score."}
+    },
+    "da": {
+      "name": "Dansk", "path": "da", "hreflang": "da", "locale": "da_DK", "dir": "ltr",
+      "consent": {"accept": "Acceptér", "decline": "Afvis", "preferences": "Cookieindstillinger", "body": "<b>Du vælger.</b> Hvis du accepterer, kan valgfrie tredjepartsværktøjer måle affiliatehenvisninger og, hvis annoncer aktiveres, annonceeffektivitet. Hvis du afviser, fungerer søgning, priser og links normalt, og ingen valgfrie scripts indlæses. Valget gemmes i denne browser og kan ændres i sidefoden. <a href=\"#privacy\">Sådan behandler vi data</a>."},
+      "indexNote": "<b>Om dette indeks.</b> {fareCount} observerede priser på direkte returrejser den {observed}, fra <b>{originCount} afgangslufthavne</b> til <b>{destCount} destinationer</b>. Brugerfladen dækker {languageCount} sprog og {currencyCount} valutaer. Hver pris er observeret, ingen er modelleret.",
+      "method": [
+        ["Afstand pr. euro", "Storcirkelafstand tur-retur divideret med prisen. 4.300 km én vej og €62 retur giver 139 km/€. Vægt: 32 %."],
+        ["Forventet pris", "En robust kurve <code>p = a · km^b</code> estimerer pris efter afstand i hele indekset. <b>Tilbud</b> måler, hvor langt prisen ligger under. Vægt: 30 %."],
+        ["Flyminutter pr. euro", "Offentliggjorte flyminutter tur-retur divideret med prisen. Vægt: 13 %."],
+        ["Rejseform", "Filtre bruger de faktiske dage: forlænget weekend (fre→man), weekend (fre→søn), kort tur (lør→søn)."],
+        ["Prishistorik", "Indekset arkiveres hver nat. Efter fem observationer kan en rute markeres i <b>de laveste 10 % de seneste 90 dage</b>. Historik fra 4. september 2026."],
+        ["Passende ophold", "Foreslåede nætter stiger med afstanden: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>."],
+        ["Bagage", "Kilderne oplyser ikke, om indtjekket bagage er inkluderet, så vi gætter ikke. Skyderen lægger samme antagede gebyr til hver pris og genberegner rangeringen."],
+        ["Valuta", "Kildepriser er i euro. Andre valutaer bruger kurser fra {fxDate} kun til visning; operatørens betalingspris er gældende. LIVE omregnes af kilden."],
+        ["Afgangsvindue", "Kilden giver én billigste dato pr. destination, ikke en komplet kalender. Intervaller 1–30, 31–60 til 180+ dage kan kombineres."],
+        ["INDEX og LIVE", "<b>INDEX</b> er det daterede øjebliksbillede i siden. <b>LIVE</b> er en ny forespørgsel til pristjenesten. Skift sker automatisk, når data er tilgængelige."]
+      ],
+      "privacy": [
+        ["Ingen konto", "Ingen tilmelding eller indsamling af e-mail. Browseren gemmer kun tema, sprog, valuta og samtykkevalg."],
+        ["Vi sælger ikke billetter", "Efficiency Life Flight er et researchværktøj. Booking sker hos operatøren eller sammenligningstjenesten; vi ser aldrig betalingsdata."],
+        ["Affiliatelinks", "Booking- og aktivitetslinks kan være affiliatelinks. Et køb kan give os provision uden at ændre din pris eller rangeringen. Google Flights er fortsat en uafhængig kontrol."],
+        ["Priser er vejledende", "Hver pris er en dateret observation, ikke en garanti for tilgængelighed. Kontrollér aktuel pris og vilkår hos operatøren før booking."]
+      ],
+      "seo": {"title": "Direkte fly med bedst værdi | Efficiency Life Flight", "description": "Vælg afgangslufthavn, periode og budget. Sammenlign observerede direkte returpriser efter kilometer pr. euro, pris og Efficiency Score."}
+    },
+    "no": {
+      "name": "Norsk", "path": "no", "hreflang": "no", "locale": "no_NO", "dir": "ltr",
+      "consent": {"accept": "Godta", "decline": "Avslå", "preferences": "Innstillinger for informasjonskapsler", "body": "<b>Du velger.</b> Hvis du godtar, kan valgfrie tredjepartsverktøy måle partnerhenvisninger og, hvis annonser aktiveres, annonseytelse. Hvis du avslår, fungerer søk, priser og lenker normalt, og ingen valgfrie skript lastes. Valget lagres i denne nettleseren og kan endres i bunnteksten. <a href=\"#privacy\">Slik behandler vi data</a>."},
+      "indexNote": "<b>Om denne indeksen.</b> {fareCount} observerte priser på direkte tur-retur-reiser den {observed}, fra <b>{originCount} avreiseflyplasser</b> til <b>{destCount} reisemål</b>. Grensesnittet støtter {languageCount} språk og {currencyCount} valutaer. Hver pris er observert, ingen er modellert.",
+      "method": [
+        ["Avstand per euro", "Storsirkelavstand tur-retur delt på prisen. 4 300 km én vei og €62 tur-retur gir 139 km/€. Vekt: 32 %."],
+        ["Forventet pris", "En robust kurve <code>p = a · km^b</code> anslår pris etter avstand i hele indeksen. <b>Tilbud</b> måler hvor langt prisen ligger under. Vekt: 30 %."],
+        ["Flyminutter per euro", "Publiserte flyminutter tur-retur delt på prisen. Vekt: 13 %."],
+        ["Reiseform", "Filtrene bruker faktiske dager: langhelg (fre→man), helg (fre→søn), korttur (lør→søn)."],
+        ["Prishistorikk", "Indeksen arkiveres hver natt. Etter fem observasjoner kan en rute merkes i <b>de laveste 10 % de siste 90 dagene</b>. Historikk fra 4. september 2026."],
+        ["Passende opphold", "Foreslåtte netter øker med avstanden: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Bagasje", "Kildene sier ikke om innsjekket bagasje er inkludert, så vi gjetter ikke. Glidebryteren legger samme antatte gebyr til hver pris og beregner rangeringen på nytt."],
+        ["Valuta", "Kildepriser er i euro. Andre valutaer bruker kurser fra {fxDate} kun for visning; operatørens betalingspris gjelder. LIVE omregnes av kilden."],
+        ["Avreisevindu", "Kilden gir én billigste dato per reisemål, ikke en komplett kalender. Intervaller 1–30, 31–60 til 180+ dager kan kombineres."],
+        ["INDEX og LIVE", "<b>INDEX</b> er det daterte øyeblikksbildet i siden. <b>LIVE</b> er en ny forespørsel til pristjenesten. Skiftet er automatisk når data finnes."]
+      ],
+      "privacy": [
+        ["Ingen konto", "Ingen registrering eller e-postinnsamling. Nettleseren lagrer bare tema, språk, valuta og samtykkevalg."],
+        ["Vi selger ikke billetter", "Efficiency Life Flight er et researchverktøy. Bestilling skjer hos operatøren eller sammenligningstjenesten; vi ser aldri betalingsdata."],
+        ["Partnerlenker", "Bestillings- og aktivitetslenker kan være partnerlenker. Et kjøp kan gi oss provisjon uten å endre prisen din eller rangeringen. Google Flights er fortsatt en uavhengig kontroll."],
+        ["Prisene er veiledende", "Hver pris er en datert observasjon, ikke garanti for tilgjengelighet. Kontroller gjeldende pris og vilkår hos operatøren før bestilling."]
+      ],
+      "seo": {"title": "Direktefly med best verdi | Efficiency Life Flight", "description": "Velg avreiseflyplass, periode og budsjett. Sammenlign observerte direkte tur-retur-priser etter kilometer per euro, pris og Efficiency Score."}
+    },
+    "fi": {
+      "name": "Suomi", "path": "fi", "hreflang": "fi", "locale": "fi_FI", "dir": "ltr",
+      "consent": {"accept": "Hyväksy", "decline": "Hylkää", "preferences": "Evästeasetukset", "body": "<b>Valinta on sinun.</b> Jos hyväksyt, valinnaiset kolmannen osapuolen työkalut voivat mitata kumppaniviittauksia ja mainonnan suorituskykyä, jos mainonta otetaan käyttöön. Jos hylkäät, haku, hinnat ja linkit toimivat normaalisti eikä valinnaisia skriptejä ladata. Valinta tallentuu tähän selaimeen ja sitä voi muuttaa alatunnisteesta. <a href=\"#privacy\">Näin käsittelemme tietoja</a>."},
+      "indexNote": "<b>Tietoa tästä indeksistä.</b> {fareCount} havaittua suoran meno-paluulennon hintaa päivältä {observed}, <b>{originCount} lähtölentoasemalta</b> <b>{destCount} kohteeseen</b>. Käyttöliittymä kattaa {languageCount} kieltä ja {currencyCount} valuuttaa. Jokainen hinta on havaittu, ei mallinnettu.",
+      "method": [
+        ["Etäisyys euroa kohti", "Meno-paluun isoympyräetäisyys jaetaan hinnalla. 4 300 km yhteen suuntaan ja €62 meno-paluu antaa 139 km/€. Paino: 32 %."],
+        ["Odotettu hinta", "Vakaa käyrä <code>p = a · km^b</code> arvioi hinnan etäisyyden perusteella koko indeksissä. <b>Löytö</b> mittaa alituksen. Paino: 30 %."],
+        ["Lentominuutit euroa kohti", "Julkaistut meno-paluun lentominuutit jaetaan hinnalla. Paino: 13 %."],
+        ["Matkan muoto", "Suodattimet käyttävät oikeita päiviä: pitkä viikonloppu (pe→ma), viikonloppu (pe→su), pikamatka (la→su)."],
+        ["Hintahistoria", "Indeksi arkistoidaan öisin. Viiden havainnon jälkeen reitti voidaan merkitä <b>viimeisten 90 päivän halvimpaan 10 %:iin</b>. Historia alkoi 4. syyskuuta 2026."],
+        ["Sopiva oleskelu", "Ehdotetut yöt kasvavat etäisyyden mukaan: <code>≤800 km → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Matkatavarat", "Lähteet eivät kerro, sisältyykö ruumaan menevä laukku, joten emme arvaa. Liukusäädin lisää saman oletusmaksun jokaiseen hintaan ja laskee järjestyksen uudelleen."],
+        ["Valuutta", "Lähdehinnat ovat euroissa. Muut valuutat käyttävät {fxDate}-kursseja vain näyttöön; operaattorin kassahinta ratkaisee. LIVE muunnetaan lähteessä."],
+        ["Lähtöikkuna", "Lähde antaa yhden halvimman päivämäärän kohdetta kohti, ei koko kalenteria. Jaksoja 1–30, 31–60 aina 180+ päivään voi yhdistää."],
+        ["INDEX ja LIVE", "<b>INDEX</b> on sivulle upotettu päivätty tilannekuva. <b>LIVE</b> on uusi pyyntö hintapalveluun. Vaihto tapahtuu automaattisesti, kun tietoa on."]
+      ],
+      "privacy": [
+        ["Ei tiliä", "Ei rekisteröitymistä eikä sähköpostin keräystä. Selain tallentaa vain teeman, kielen, valuutan ja suostumusvalinnan."],
+        ["Emme myy lippuja", "Efficiency Life Flight on tutkimustyökalu. Varaus tehdään operaattorilla tai vertailupalvelussa; emme näe maksutietoja."],
+        ["Kumppanilinkit", "Varaus- ja aktiviteettilinkit voivat olla kumppanilinkkejä. Ostos voi tuoda meille palkkion muuttamatta hintaasi tai sijoitusta. Google Flights on edelleen riippumaton tarkistus."],
+        ["Hinnat ovat suuntaa-antavia", "Jokainen hinta on päivätty havainto, ei saatavuustakuu. Tarkista ajantasainen hinta ja ehdot operaattorilta ennen varausta."]
+      ],
+      "seo": {"title": "Parhaan vastineen suorat lennot | Efficiency Life Flight", "description": "Valitse lähtölentoasema, ajankohta ja budjetti. Vertaa havaittuja suoria meno-paluuhintoja kilometreillä euroa kohti, hinnalla ja Efficiency Scorella."}
+    },
+    "bg": {
+      "name": "Български", "path": "bg", "hreflang": "bg", "locale": "bg_BG", "dir": "ltr",
+      "consent": {"accept": "Приемам", "decline": "Отказвам", "preferences": "Настройки за бисквитки", "body": "<b>Изборът е ваш.</b> При приемане допълнителни инструменти на трети страни могат да измерват партньорски препратки и, ако се активира реклама, ефективността ѝ. При отказ търсенето, цените и връзките работят нормално и не се зарежда допълнителен скрипт. Изборът се пази в този браузър и се променя от долната част. <a href=\"#privacy\">Как обработваме данни</a>."},
+      "indexNote": "<b>За този индекс.</b> {fareCount} наблюдавани цени за директни двупосочни полети към {observed}, от <b>{originCount} летища на заминаване</b> до <b>{destCount} дестинации</b>. Интерфейсът поддържа {languageCount} езика и {currencyCount} валути. Всяка цена е наблюдавана, а не моделирана.",
+      "method": [
+        ["Разстояние за евро", "Разстоянието по голяма окръжност в двете посоки се дели на цената. 4 300 км еднопосочно и €62 двупосочно дават 139 км/€. Тегло: 32%."],
+        ["Очаквана цена", "Устойчива крива <code>p = a · km^b</code> оценява цената според разстоянието в целия индекс. <b>Офертата</b> измерва колко е под очакването. Тегло: 30%."],
+        ["Полетни минути за евро", "Публикуваните минути за двупосочен полет се делят на цената. Тегло: 13%."],
+        ["Форма на пътуването", "Филтрите използват реалните дни: дълъг уикенд (пет→пон), уикенд (пет→нед), кратко пътуване (съб→нед)."],
+        ["История на цените", "Индексът се архивира всяка нощ. След пет наблюдения маршрут може да е в <b>най-ниските 10% за последните 90 дни</b>. Историята е от 4 септември 2026 г."],
+        ["Пропорционален престой", "Препоръчаните нощувки растат с разстоянието: <code>≤800 км → 3–4</code>, <code>≤2 000 → 5–7</code>, <code>≤4 000 → 8–10</code>, <code>≤7 000 → 12–14</code>, <code>&gt;7 000 → 15–21</code>."],
+        ["Багаж", "Източниците не посочват дали регистрираният багаж е включен, затова не гадаем. Плъзгачът добавя еднаква предполагаема такса към всяка цена и преизчислява класацията."],
+        ["Валута", "Цените от източника са в евро. Другите валути използват курсове от {fxDate} само за показване; важи цената на оператора при плащане. LIVE се конвертира от източника."],
+        ["Период на заминаване", "Източникът дава една най-евтина дата за дестинация, не пълен календар. Диапазоните 1–30, 31–60 до 180+ дни могат да се комбинират."],
+        ["INDEX и LIVE", "<b>INDEX</b> е датираната снимка в страницата. <b>LIVE</b> е нова заявка към ценовата услуга. Превключването е автоматично при налични данни."]
+      ],
+      "privacy": [
+        ["Без профил", "Няма регистрация или събиране на имейл. Браузърът пази само тема, език, валута и избор за съгласие."],
+        ["Не продаваме билети", "Efficiency Life Flight е инструмент за проучване. Резервацията става при оператора или услуга за сравнение; не виждаме платежни данни."],
+        ["Партньорски връзки", "Връзките за резервации и дейности може да са партньорски. Покупка може да ни донесе комисиона без промяна на цената или класацията. Google Flights остава независима проверка."],
+        ["Цените са ориентировъчни", "Всяка цена е датирано наблюдение, не гаранция за наличност. Проверете текущата цена и условия при оператора преди резервация."]
+      ],
+      "seo": {"title": "Директни полети с най-добра стойност | Efficiency Life Flight", "description": "Изберете летище на заминаване, период и бюджет. Сравнете наблюдавани цени за директни двупосочни полети по километри за евро, цена и Efficiency Score."}
+    },
+    "tl": {
+      "name": "Filipino", "path": "fil", "hreflang": "fil", "locale": "fil_PH", "dir": "ltr",
+      "consent": {"accept": "Tanggapin", "decline": "Tanggihan", "preferences": "Mga kagustuhan sa cookie", "body": "<b>Ikaw ang pumipili.</b> Kapag tinanggap, maaaring sukatin ng opsyonal na third-party tools ang affiliate referrals at, kung bubuksan ang ads, ang performance nito. Kapag tinanggihan, normal pa ring gagana ang paghahanap, presyo at links at walang opsyonal na script na ilo-load. Nasa browser na ito ang pagpili at mababago sa footer. <a href=\"#privacy\">Paano namin hinahawakan ang data</a>."},
+      "indexNote": "<b>Tungkol sa index na ito.</b> {fareCount} naobserbahang nonstop round-trip fares noong {observed}, mula sa <b>{originCount} departure airports</b> patungo sa <b>{destCount} destinations</b>. Sakop ng interface ang {languageCount} wika at {currencyCount} currency. Bawat fare ay naobserbahan at hindi tinantiya ng modelo.",
+      "method": [
+        ["Layo bawat euro", "Round-trip great-circle distance na hinati sa fare. Kung 4,300 km ang one-way at €62 ang round trip, 139 km/€ iyon. Timbang: 32%."],
+        ["Inaasahang presyo", "Tinatantiya ng matatag na curve na <code>p = a · km^b</code> ang presyo ayon sa layo sa buong index. Sinusukat ng <b>Deal</b> kung gaano kababa ang fare. Timbang: 30%."],
+        ["Minuto ng lipad bawat euro", "Nakalathalang round-trip flight minutes na hinati sa fare. Timbang: 13%."],
+        ["Hugis ng biyahe", "Aktuwal na araw ang gamit ng filters: long weekend (Biy→Lun), weekend (Biy→Lin), at mabilisang biyahe (Sab→Lin)."],
+        ["Kasaysayan ng presyo", "Ina-archive ang index gabi-gabi. Pagkatapos ng limang obserbasyon, maaaring markahan ang ruta sa <b>pinakamababang 10% ng nakaraang 90 araw</b>. Nagsimula noong Setyembre 4, 2026."],
+        ["Akma ang tagal ng pananatili", "Dumarami ang mungkahing gabi ayon sa layo: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>."],
+        ["Bagahe", "Hindi sinasabi ng sources kung kasama ang checked baggage kaya hindi kami nanghuhula. Nagdaragdag ang slider ng parehong ipinapalagay na fee sa bawat fare at muling nagra-rank."],
+        ["Currency", "Euro ang source prices. Ginagamit ng ibang currency ang rates noong {fxDate} para sa display lamang; ang checkout price ng operator ang masusunod. Source ang nagko-convert ng LIVE prices."],
+        ["Panahon ng pag-alis", "Isang pinakamurang petsa lang bawat destinasyon ang ibinibigay ng source, hindi buong calendar. Maaaring pagsamahin ang 1–30, 31–60 hanggang 180+ araw."],
+        ["INDEX at LIVE", "Ang <b>INDEX</b> ay dated snapshot na nasa page. Ang <b>LIVE</b> ay bagong request sa price service. Awtomatikong lilipat kapag may data."]
+      ],
+      "privacy": [
+        ["Walang account", "Walang sign-up at walang kinokolektang email. Theme, wika, currency at consent choice lang ang sinasave ng browser."],
+        ["Hindi kami nagbebenta ng ticket", "Research tool ang Efficiency Life Flight. Sa operator o comparison service ginagawa ang booking; hindi namin nakikita ang payment data."],
+        ["Affiliate links", "Maaaring affiliate ang booking at activity links. Maaari kaming kumita ng commission nang hindi nagbabago ang presyo o ranking mo. Independent check pa rin ang Google Flights."],
+        ["Gabay lamang ang presyo", "Dated observation ang bawat fare, hindi garantiya ng availability. I-check ang kasalukuyang presyo at kondisyon sa operator bago mag-book."]
+      ],
+      "seo": {"title": "Pinakasulit na direktang flight | Efficiency Life Flight", "description": "Piliin ang departure airport, travel period at budget. Ihambing ang naobserbahang nonstop round-trip fares ayon sa kilometro bawat euro, presyo at Efficiency Score."}
+    },
+    "it": {
+      "name": "Italiano",
+      "path": "it",
+      "hreflang": "it",
+      "locale": "it_IT",
+      "dir": "ltr",
+      "consent": {
+        "accept": "Accetta",
+        "decline": "Rifiuta",
+        "preferences": "Preferenze cookie",
+        "body": "<b>La scelta è tua.</b> Se accetti, strumenti facoltativi di terze parti possono misurare le segnalazioni di affiliazione e, se verrà attivata la pubblicità, il rendimento degli annunci. Se rifiuti, ricerca, prezzi e collegamenti funzionano normalmente e non viene caricato alcuno script facoltativo di terze parti. La scelta resta in questo browser e può essere cambiata dal piè di pagina. <a href=\"#privacy\">Come trattiamo i dati</a>."
+      },
+      "indexNote": "<b>Cosa contiene questo indice.</b> {fareCount} tariffe osservate per voli diretti andata e ritorno, rilevate il {observed}, da <b>{originCount} aeroporti di partenza</b> verso <b>{destCount} destinazioni</b>. L’interfaccia copre {languageCount} lingue e {currencyCount} valute. Ogni tariffa è osservata; nessuna è modellata.",
+      "method": [
+        ["Distanza per euro", "Distanza ortodromica di andata e ritorno divisa per la tariffa. Se la distanza di sola andata è 4.300 km, un a/r da 62 € vale 139 km/€. Peso: 32%."],
+        ["Prezzo atteso", "Una curva robusta <code>p = a · km^b</code> stima il prezzo in funzione della distanza sull’intero indice. <b>Affare</b> misura quanto una tariffa è sotto tale attesa. Peso: 30%."],
+        ["Minuti di volo per euro", "Minuti di volo andata e ritorno pubblicati dalla fonte, divisi per la tariffa. Premia il tempo utile in volo, non soltanto la distanza. Peso: 13%."],
+        ["Forma del viaggio", "I filtri usano i giorni reali di partenza e rientro: weekend lungo (ven→lun), weekend (ven→dom) e mordi e fuggi (sab→dom). I conteggi riflettono l’unica data osservata per destinazione."],
+        ["Storico dei prezzi", "L’indice viene archiviato ogni notte. Dopo almeno cinque osservazioni, una rotta può essere indicata nel <b>10% più basso degli ultimi 90 giorni</b>. Lo storico è iniziato il 4 settembre 2026."],
+        ["Soggiorno proporzionato", "Le notti suggerite crescono con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. I risultati mostrano anche il soggiorno osservato."],
+        ["Bagaglio", "Le fonti non indicano se il bagaglio da stiva è incluso, quindi non lo ipotizziamo. Il cursore aggiunge lo stesso costo presunto a ogni tariffa e ricalcola la classifica."],
+        ["Valuta", "I prezzi sorgente sono in euro. Le altre valute usano i cambi del {fxDate} solo per la visualizzazione; fa fede il prezzo al pagamento dell’operatore. In modalità LIVE la conversione arriva dalla fonte."],
+        ["Finestra di partenza", "La fonte fornisce una sola data, la più economica, per ciascuna destinazione: non è una ricerca su un calendario completo. Le fasce coprono 1–30, 31–60 e così via fino a 180+ giorni e si possono combinare."],
+        ["Indice e live", "<b>INDEX</b> è la fotografia datata incorporata nella pagina. <b>LIVE</b> è una nuova richiesta al servizio prezzi. Il passaggio è automatico quando i dati live sono disponibili."]
+      ],
+      "privacy": [
+        ["Nessun account", "Non c’è registrazione e non vengono raccolte email. Questo browser conserva soltanto tema, lingua, valuta e scelta del consenso."],
+        ["Non vendiamo biglietti", "Efficiency Life Flight è uno strumento di ricerca. La prenotazione avviene presso l’operatore o il comparatore; non vediamo mai i dati di pagamento."],
+        ["Link di affiliazione", "I link di prenotazione e attività possono essere affiliati. Un acquisto può generarci una commissione senza cambiare il tuo prezzo o la classifica. Google Flights resta un controllo indipendente."],
+        ["Prezzi indicativi", "Ogni tariffa è un’osservazione datata, non una disponibilità garantita. Verifica prezzo e condizioni attuali presso l’operatore prima di prenotare."]
+      ],
+      "seo": {
+        "title": "Voli diretti con il miglior rapporto qualità-prezzo | Efficiency Life Flight",
+        "description": "Scegli aeroporto di partenza, periodo e budget. Confronta tariffe reali per voli diretti andata e ritorno usando chilometri per euro, prezzo ed Efficiency Score."
+      }
+    }
+  }
+}

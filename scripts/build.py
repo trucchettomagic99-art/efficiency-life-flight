@@ -5,12 +5,26 @@ Non tocca la rete: prende quello che c'e' in data/ e produce il sito. Puo'
 girare in locale (`python scripts/build.py`) o dentro GitHub Actions subito
 dopo fetch_prices.py.
 """
-import datetime, json, pathlib, shutil, sys
+import datetime, json, pathlib, re, shutil, sys
 
 ROOT   = pathlib.Path(__file__).resolve().parent.parent
 DATA   = ROOT / 'data'
 PUBLIC = ROOT / 'public'
 DIST   = ROOT / 'dist'
+PROSE  = ROOT / 'src' / 'prose.json'
+
+LANG_CODES = ('en','zh','hi','es','ar','fr','bn','pt','ru','ur','id','de','ja','tr','ko','vi','it',
+              'fa','th','pl','nl','uk','ro','el','cs','sv','hu','he','ms','ta','sw','da','no','fi',
+              'bg','tl')
+
+
+def fx_date() -> str:
+    """Legge la data dei cambi dalla fonte usata anche dall'applicazione."""
+    source = (ROOT / 'src' / 'i18n.js').read_text()
+    match = re.search(r"const FX_DATE\s*=\s*['\"]([^'\"]+)['\"]", source)
+    if not match:
+        sys.exit('i18n.js: costante FX_DATE non trovata')
+    return match.group(1)
 
 # ── l'indirizzo pubblico del sito: cambialo quando avrai il tuo dominio ────
 SITE = 'https://efficiency-life.com'
@@ -107,21 +121,65 @@ def history_stats(days: int = 90, min_obs: int = 5) -> dict:
     return out
 
 
+def prose_data() -> dict:
+    """Carica e valida la sola fonte dei testi lunghi e delle pagine lingua."""
+    data = json.loads(PROSE.read_text())
+    locales = data.get('locales', {})
+    if set(locales) != set(LANG_CODES):
+        missing = sorted(set(LANG_CODES) - set(locales))
+        extra = sorted(set(locales) - set(LANG_CODES))
+        sys.exit(f'prose.json: lingue mancanti={missing}, inattese={extra}')
+    paths, hreflangs = set(), set()
+    index_vars = {'fareCount','observed','originCount','destCount','languageCount','currencyCount'}
+    allowed_vars = index_vars | {'fxDate'}
+    for code in LANG_CODES:
+        row = locales[code]
+        required = ('name','path','hreflang','locale','dir','consent','indexNote','method','privacy','seo')
+        absent = [k for k in required if k not in row]
+        if absent:
+            sys.exit(f'prose.json: {code} senza {absent}')
+        if row['dir'] not in ('ltr','rtl') or len(row['method']) != 10 or len(row['privacy']) != 4:
+            sys.exit(f'prose.json: struttura non valida per {code}')
+        if set(row['consent']) != {'accept','decline','preferences','body'}:
+            sys.exit(f'prose.json: consenso incompleto per {code}')
+        if set(row['seo']) != {'title','description'}:
+            sys.exit(f'prose.json: SEO incompleta per {code}')
+        if row['path'] in paths or row['hreflang'] in hreflangs:
+            sys.exit(f'prose.json: percorso o hreflang duplicato per {code}')
+        paths.add(row['path']); hreflangs.add(row['hreflang'])
+        found_index_vars = set(re.findall(r'\{([a-zA-Z]+)\}', row['indexNote']))
+        if found_index_vars != index_vars:
+            sys.exit(f'prose.json: segnaposto indice non validi per {code}: {sorted(found_index_vars)}')
+        texts = [row['consent']['body'], row['seo']['title'], row['seo']['description']]
+        texts += [text for group in ('method','privacy') for cell in row[group] for text in cell]
+        found_vars = set().union(*(set(re.findall(r'\{([a-zA-Z]+)\}', text)) for text in texts))
+        if not found_vars <= allowed_vars:
+            sys.exit(f'prose.json: segnaposto inattesi per {code}: {sorted(found_vars - allowed_vars)}')
+        if not any('{fxDate}' in body for _, body in row['method']):
+            sys.exit(f'prose.json: data cambi assente dal metodo per {code}')
+        for group in ('method','privacy'):
+            if any(not isinstance(cell, list) or len(cell) != 2 or not all(cell) for cell in row[group]):
+                sys.exit(f'prose.json: riquadro {group} non valido per {code}')
+    return data
+
+
 def main() -> int:
     tpl = (ROOT / 'src' / 'app.html').read_text()
     cat = (DATA / 'catalog.json').read_text()
     idx = (DATA / 'index.json').read_text()
     wld = (DATA / 'world.json').read_text()
     i18 = (ROOT / 'src' / 'i18n.js').read_text()
+    prose_obj = prose_data()
+    prose = json.dumps(prose_obj, ensure_ascii=False, separators=(',', ':'))
     hist = json.dumps(history_stats(), separators=(',', ':'))
 
     for name, blob in (('catalog.json', cat), ('index.json', idx),
-                       ('world.json', wld), ('i18n.js', i18)):
+                       ('world.json', wld), ('i18n.js', i18), ('prose.json', prose)):
         if '</script' in blob.lower():
             sys.exit(f'{name} contiene un tag di chiusura script: mi fermo.')
 
     body = (tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
-               .replace('__WORLD__', wld).replace('__I18N__', i18)
+               .replace('__WORLD__', wld).replace('__I18N__', i18).replace('__PROSE__', prose)
                .replace('__HIST__', hist)
                .replace('__TP_MARKER__', TP_MARKER).replace('__TP_LINK__', TP_LINK)
                .replace('__TP_TRS__', TP_TRS).replace('__TP_CAMPAIGN__', TP_CAMPAIGN)
@@ -131,13 +189,21 @@ def main() -> int:
                .replace('__TP_ACT_URL__', TP_ACT_URL)
                .replace('__TP_DRIVE_URL__', TP_DRIVE_URL)
                .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
-    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__', '__HIST__',
+    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__', '__PROSE__', '__HIST__',
                '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
                '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
                '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
                '__TP_DRIVE_URL__', '__ADS_CLIENT__', '__ADS_SLOT__'):
         if ph in body:
             sys.exit(f'segnaposto {ph} non sostituito nel template.')
+
+    alternates = '\n'.join(
+        f'<link rel="alternate" hreflang="{row["hreflang"]}" href="{SITE}/lang/{row["path"]}/">'
+        for row in prose_obj['locales'].values())
+    alternates += f'\n<link rel="alternate" hreflang="x-default" href="{SITE}/">'
+    og_alternates = '\n'.join(
+        f'<meta property="og:locale:alternate" content="{row["locale"]}">'
+        for code, row in prose_obj['locales'].items() if code != 'it')
 
     head = f"""<!doctype html>
 <html lang="it">
@@ -150,6 +216,7 @@ def main() -> int:
 <meta name="theme-color" content="#EDF2F8" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
 <link rel="canonical" href="{SITE}/">
+{alternates}
 <link rel="icon" href="{FAVICON}">
 <link rel="apple-touch-icon" href="{FAVICON}">
 <meta property="og:type" content="website">
@@ -159,7 +226,7 @@ def main() -> int:
 <meta property="og:url" content="{SITE}/">
 <meta property="og:image" content="{SITE}/og.png">
 <meta property="og:locale" content="it_IT">
-<meta property="og:locale:alternate" content="en_GB">
+{og_alternates}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Efficiency Life Flight">
 <meta name="twitter:description" content="{DESC}">

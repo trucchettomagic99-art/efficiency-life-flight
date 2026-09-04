@@ -53,6 +53,9 @@ jobs:
       - name: Rigenera le pagine per aeroporto
         run: python scripts/build_pages.py
 
+      - name: Verifica build, lingue e SEO
+        run: python scripts/check_build.py
+
       - name: Committa se qualcosa e' cambiato
         run: |
           git config user.name  "efficiency-life-bot"

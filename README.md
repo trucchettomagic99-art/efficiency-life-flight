@@ -264,9 +264,10 @@ visitate escluse, "portami dove non sono mai stato entro 60 €".
    ce l'ho già.
 2. **Il dominio.** il nome è deciso. Da verificare la disponibilità di
    `efficiencylife.com` (o `.it`) prima di stampare qualsiasi cosa.
-3. **Quali lingue ti servono.** Ora IT ed EN. Aggiungerne è meccanico (il
-   dizionario è un unico oggetto `T` in fondo al file), ma dimmi quali mercati
-   ti interessano davvero.
+3. **Lingue.** L'interfaccia, i testi di Metodo e Trasparenza, il consenso e le
+   pagine SEO sono disponibili in 36 lingue. Le stringhe brevi vivono in
+   `src/i18n.js`; i testi lunghi e i metadati internazionali in
+   `src/prose.json`.
 4. **Quanti aeroporti di partenza vuoi.** Adesso 225, scelti come i due maggiori
    scali dei primi 110 paesi più i 20 italiani. Portarli a 600–800 è una
    questione di tempo di raccolta, non di codice.
@@ -293,13 +294,14 @@ visitate escluse, "portami dove non sono mai stato entro 60 €".
 - **Nomi:** i paesi sono localizzati con `Intl.DisplayNames`; le città hanno una
   tabella italiana per le destinazioni più comuni e restano in inglese per le
   altre.
-- **localStorage:** solo tema e indirizzo del proxy, entrambi in try/catch. Il
-  sito funziona anche se il browser li blocca.
+- **localStorage:** tema, lingua, valuta e scelta del consenso, tutti gestiti in
+  `try/catch`. Il sito funziona anche se il browser li blocca.
 - **Accessibilità:** contrasti AA in entrambi i temi, focus visibile, rispetto di
   `prefers-reduced-motion` (il globo si ferma).
-- **Ricostruire i dati:** `build_data.py` (catalogo), `build_deals2.py` (indice
-  tariffe), `build.py` (inietta i JSON nel template `app.html`). Per aggiungere
-  aeroporti si tocca solo il dizionario `AIRPORTS` in `build_data.py`.
+- **Ricostruire il sito:** `scripts/build.py` inietta dati e traduzioni nel
+  template; `scripts/build_pages.py` genera pagine per aeroporto e 36 landing
+  linguistiche; `scripts/check_build.py` verifica JavaScript, hreflang, RTL,
+  sitemap e riconoscimento di `fil-PH` prima della pubblicazione.
 
 ---
 

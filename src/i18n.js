@@ -2,10 +2,9 @@
    ------------------------------------------------------------------
    L'interfaccia (etichette, pulsanti, intestazioni) e' tradotta in 36
    lingue: coprono circa cinque miliardi e mezzo di parlanti e tutti i
-   mercati di partenza serviti dall'indice. I testi lunghi del capitolo
-   "Metodo" e "Trasparenza" restano in italiano e inglese, con l'inglese
-   come ripiego: meglio un paragrafo in inglese che una traduzione
-   automatica di cui nessuno risponde.
+   mercati di partenza serviti dall'indice. Anche i testi lunghi di
+   "Metodo", "Trasparenza", consenso e SEO hanno una versione dedicata
+   in ciascuna lingua; la fonte unica e' src/prose.json.
    I nomi di paesi, lingue e valute non sono in queste tabelle: li
    fornisce Intl.DisplayNames del browser, nella lingua scelta.
    4.09.2026 — rilettura riga per riga di tutte le 36 lingue. Le voci

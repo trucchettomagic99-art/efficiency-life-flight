@@ -390,6 +390,10 @@ footer a{color:var(--ink-2)}
 .hub a{color:var(--ink-3);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;
   text-decoration:none;border-bottom:1px solid transparent}
 .hub a:hover{color:var(--signal);border-bottom-color:var(--signal)}
+.locale-index{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--rule)}
+.locale-index a{color:var(--ink-3);font-size:11.5px;text-decoration:none;border-bottom:1px solid transparent}
+.locale-index a:hover{color:var(--signal);border-bottom-color:var(--signal)}
 .trust{margin:8px 0 0;max-width:76ch;font-family:"JetBrains Mono",monospace;font-size:11.5px;
   line-height:1.7;letter-spacing:.02em;color:var(--ink-3);border-inline-start:2px solid var(--ok);
   padding-inline-start:11px}
@@ -699,6 +703,7 @@ footer a{color:var(--ink-2)}
 <script>
 "use strict";
 __I18N__
+const PROSE = __PROSE__;
 
 const CAT   = JSON.parse(document.getElementById('catalog').textContent);
 const IDX   = JSON.parse(document.getElementById('dealdata').textContent);
@@ -755,7 +760,7 @@ const T = k => {
   return row[TXT[k]] ?? LANGS.en[TXT[k]] ?? k;
 };
 const IT = () => S.lang === 'it';
-const EN_OR_IT = () => IT() ? 'it' : 'en';   // per i testi lunghi
+const P = () => PROSE.locales[S.lang] || PROSE.locales.en;
 let _dn = {}, _dnLang = '';
 function dispName(code, type){
   if(_dnLang !== S.lang){ _dnLang = S.lang; _dn = {}; }
@@ -1605,84 +1610,24 @@ function renderTicker(){
   $('#tick').innerHTML = one + one;
 }
 
-/* ── testi lunghi: italiano e inglese, con l'inglese come ripiego ── */
-const PROSE = {
- it:{
-  lede:'Il motore ordina le offerte di volo per <b>chilometri per euro</b> e <b>minuti di volo per euro</b>, non per prezzo assoluto. Scegli da dove parti e quando: la destinazione è il risultato, non il punto di partenza.',
-  boardNote:'Ogni riga è una tariffa realmente osservata, con data e fonte. L\'ordine di partenza è il punteggio dell\'algoritmo: clicca l\'intestazione di una colonna per riordinare come preferisci.',
-  methodLede:'Nessun prezzo è stimato o generato. Ogni tariffa mostrata è una rilevazione reale con fonte e data.',
-  privLede:'Cosa questo sito fa e non fa con chi lo visita.',
-  footTag:'Il modulo voli di Efficiency Life. Scoperta di destinazioni basata sul rapporto distanza/prezzo.',
-  adFree:'Spazio pubblicitario — non ancora attivo',
-  ccYes:'Accetta', ccNo:'Rifiuta', ccOpen:'Preferenze cookie',
-  cookie:'<b>Un attimo di chiarezza.</b> Il sito si mantiene con le prenotazioni che partono da qui: il circuito di affiliazione usa cookie per riconoscere che il viaggiatore è arrivato dal nostro motore, e se un giorno accenderemo la pubblicità userebbe i suoi per misurarne il rendimento. Se rifiuti, il sito funziona esattamente uguale — nessuna funzione viene tolta, i prezzi e i collegamenti restano tutti — semplicemente non caricheremo nulla di terze parti. La scelta resta nel tuo browser e la puoi cambiare quando vuoi dal piè di pagina. <a href="#privacy">Come trattiamo i dati</a>.',
-  method:[
-   ['01','Distanza per euro','Distanza ortodromica fra i due scali, raddoppiata per il ritorno, divisa per la tariffa. Un a/r di 4.300 km a 62 € vale 138 km/€. Pesa il 32% del punteggio.'],
-   ['02','Prezzo atteso','Il km/€ ha un difetto: premia sempre la distanza. Un intercontinentale a 400 € sembra un affare, un volo di 600 km a 19 € passa inosservato benché costi un terzo del normale per quella tratta. Allora stimiamo, sull\'intero indice, <b>come il prezzo cresce con la distanza</b> — una legge di potenza <code>p = a · km^b</code>, adattata nei logaritmi e ripulita in tre passate dalle tariffe anomale con mediana e MAD. La colonna <b>Affare</b> mostra quanto una tariffa sta sotto il prezzo atteso per la sua distanza. Pesa il 30%: quanto il chilometro per euro.'],
-   ['03','Minuti di volo per euro','Tempo di volo andata e ritorno dichiarato dalla fonte, diviso per la tariffa. Distingue un volo davvero lungo da una tratta breve che copre terreno in fretta. Pesa il 13%.'],
-   ['04','Forma del viaggio','I chip <i>weekend lungo</i> (ven→lun), <i>weekend</i> (ven→dom) e <i>mordi e fuggi</i> (sab→dom) filtrano sui giorni reali di partenza e rientro. Il numero sul pulsante dice quante rotte hanno davvero quella forma fra gli aeroporti scelti: la fonte dà una sola data per destinazione, quindi è una fetta stretta, ed è giusto saperlo prima di cercare.'],
-   ['05','Storico dei prezzi','Ogni notte l\'indice viene archiviato. Quando una rotta ha almeno cinque rilevazioni, il sito può dire una cosa che nessun aggregatore dice: se questo prezzo è <b>nel 10% più basso degli ultimi 90 giorni</b>, non solo se è basso in assoluto. Lo storico non si compra e non si recupera a posteriori: si accumula una notte alla volta, ed è cominciato il 4 settembre 2026.'],
-   ['06','Soggiorno proporzionato','Le notti suggerite scalano con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. La colonna "soggiorno" mostra invece le notti reali della tariffa trovata.'],
-   ['07','Bagaglio','Nessuna fonte dichiara se il bagaglio da stiva è incluso: non viene ipotizzato. Il cursore in ricerca applica un supplemento uniforme a tutte le tariffe e ricalcola la classifica, così confronti a parità di condizioni.'],
-   ['08','Valuta','I prezzi nascono in euro. Quando cambi valuta vengono convertiti con i cambi del ' + FX_DATE + ', che servono a rendere leggibile un ordine di grandezza: il prezzo su cui prenoti resta quello dell\'operatore. In modalità LIVE la conversione la fa direttamente la fonte.'],
-   ['09','Finestra di partenza','La fonte restituisce <b>una sola data per destinazione</b>: la più economica dell\'anno. Perciò la finestra non è una ricerca fra tante date, è una fetta di un insieme che ne ha già una sola. Da Fiumicino le 60 destinazioni dell\'indice si distribuiscono così: 12 entro 30 giorni, 13 a 60, 20 a 90, 3 a 120, 11 a 150, 1 a 180. Se selezioni solo <code>91–120</code> trovi tre rotte, e non è un errore: sono le uniche la cui data migliore cade lì. Ogni pulsante copre una fascia di giorni contati da oggi — 1–30, 31–60, e così via fino a 180+ — e puoi selezionarne più d\'una.'],
-   ['10','Indice e live','<b>INDEX</b> significa che stai guardando la fotografia incorporata nella pagina, con la sua data. <b>LIVE</b> significa che i prezzi sono stati chiesti in questo momento. Il passaggio è automatico: se il servizio prezzi risponde, il sito lo usa e basta.'],
-  ],
-  priv:[
-   ['01','Nessun account','Non c\'è registrazione, non si raccolgono email, non si chiede nulla. Le uniche cose che restano nel tuo browser sono il tema, la lingua e la valuta che hai scelto.'],
-   ['02','Non vendiamo biglietti','Efficiency Life Flight è uno strumento di ricerca. I pulsanti di verifica aprono Google Flights o Skyscanner: la prenotazione avviene lì, alle loro condizioni. Non trattiamo dati di pagamento perché non ne vediamo nessuno.'],
-   ['03','Link di affiliazione','I pulsanti <b>Prenota</b> e <b>Hotel</b>, quando sono presenti, contengono un codice affiliato: se prenoti, il sito riceve una commissione dall\'operatore. <b>Non cambia di un centesimo il prezzo che paghi</b> e non influenza la classifica, che dipende solo dai chilometri, dai minuti e dal prezzo. Il pulsante Google resta lì apposta: è la controprova indipendente, e non ci fa guadagnare niente.'],
-   ['04','Prezzi indicativi','Ogni tariffa è una rilevazione datata, non una disponibilità garantita. I prezzi cambiano più volte al giorno: usa questa classifica per decidere <b>dove</b> guardare, poi verifica sul sito dell\'operatore prima di prenotare.'],
-  ],
- },
- en:{
-  lede:'The engine ranks fares by <b>kilometres per euro</b> and <b>flight minutes per euro</b>, not by headline price. Pick where you leave from and when: the destination is the output, not the input.',
-  boardNote:'Every row is a fare actually observed, with its date and source. The default order is the algorithm score — click a column heading to re-sort it your way.',
-  methodLede:'No price is estimated or generated. Every fare shown is a real observation with a source and a date.',
-  privLede:'What this site does and does not do with the people who visit it.',
-  footTag:'The flight module of Efficiency Life. Destination discovery driven by the distance-to-price ratio.',
-  adFree:'Ad space — not active yet',
-  ccYes:'Accept', ccNo:'Decline', ccOpen:'Cookie preferences',
-  cookie:'<b>One moment of clarity.</b> The site is funded by the bookings that start here: the affiliate network uses cookies to recognise that a traveller came from our engine, and if we ever switch advertising on, it would use its own to measure how it performs. If you decline, the site works exactly the same — nothing is taken away, every price and link stays — we simply load nothing from third parties. Your choice stays in your browser and you can change it any time from the footer. <a href="#privacy">How we handle data</a>.',
-  method:[
-   ['01','Distance per euro','Great-circle distance between the two airports, doubled for the round trip, divided by the fare. A 4,300 km return for €62 is 138 km/€. Worth 32% of the score.'],
-   ['02','Expected price','Kilometres per euro has a flaw: it always rewards distance. A long-haul at €400 looks like a bargain, while a 600 km hop at €19 goes unnoticed even though it costs a third of what that leg normally costs. So we estimate, across the whole index, <b>how price grows with distance</b> — a power law <code>p = a · km^b</code>, fitted in logs and cleaned in three passes of median-and-MAD trimming. The <b>Deal</b> column shows how far below the expected price for its distance a fare sits. Worth 30% — as much as kilometres per euro.'],
-   ['03','Flight minutes per euro','Round-trip block time as published by the source, divided by the fare. It separates a genuinely long flight from a short hop that merely covers ground fast. Worth 13%.'],
-   ['04','Trip shape','The <i>long weekend</i> (Fri→Mon), <i>weekend</i> (Fri→Sun) and <i>quick trip</i> (Sat→Sun) chips filter on the actual departure and return weekdays. The number on each button says how many routes really have that shape among the airports you picked: the source gives one date per destination, so it is a narrow slice, and you deserve to know before searching.'],
-   ['05','Price history','Every night the index is archived. Once a route has at least five observations, the site can say something no aggregator says: whether this price is <b>in the lowest 10% of the last 90 days</b>, not merely low in absolute terms. History cannot be bought or backfilled: it accrues one night at a time, and it started on 4 September 2026.'],
-   ['06','Proportionate stay','Suggested nights scale with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. The "stay" column shows the actual nights of the fare found.'],
-   ['07','Baggage','No source states whether a checked bag is included, so it is not guessed. The slider in the search panel adds a uniform supplement to every fare and re-scores the board, so you compare like with like.'],
-   ['08','Currency','Prices originate in euro. Switching currency converts them at the ' + FX_DATE + ' rates, which exist to make an order of magnitude readable: the price you book at is the operator\'s. In LIVE mode the source converts directly.'],
-   ['09','Departure window','The source returns <b>one date per destination</b>: the cheapest of the year. So the window is not a search across many dates, it is a slice of a set that already has only one. From Rome Fiumicino the 60 destinations in the index fall out like this: 12 within 30 days, 13 at 60, 20 at 90, 3 at 120, 11 at 150, 1 at 180. Pick <code>91–120</code> alone and you get three routes — not a bug: they are the only ones whose best date lands there. Each button covers a band of days counted from today — 1–30, 31–60, and so on up to 180+ — and you can select more than one.'],
-   ['10','Index and live','<b>INDEX</b> means you are looking at the snapshot embedded in the page, with its date. <b>LIVE</b> means prices were requested just now. The switch is automatic: if the price service answers, the site simply uses it.'],
-  ],
-  priv:[
-   ['01','No account','There is no sign-up, no email collected, nothing asked. The only things kept in your browser are the theme, language and currency you picked.'],
-   ['02','We do not sell tickets','Efficiency Life Flight is a research tool. The verify buttons open Google Flights or Skyscanner: booking happens there, on their terms. We hold no payment data because we never see any.'],
-   ['03','Affiliate links','The <b>Book</b> and <b>Hotels</b> buttons, where present, carry an affiliate code: if you book, the site earns a commission from the operator. <b>It does not change the price you pay by a single cent</b> and does not influence the ranking, which depends only on kilometres, minutes and price. The Google button is there on purpose: it is the independent cross-check, and it earns us nothing.'],
-   ['04','Prices are indicative','Every fare is a dated observation, not guaranteed availability. Airfares move several times a day: use this board to decide <b>where</b> to look, then confirm on the operator\'s site before booking.'],
-  ],
- }
-};
 function renderProse(){
-  const p = PROSE[EN_OR_IT()];
-  /* Questi quattro capoversi si leggono prima ancora di capire cos'e' il
-     sito: restare in inglese per chi legge in giapponese era un difetto, non
-     una scelta. Ora vengono dalla tabella delle lingue. I testi lunghi del
-     Metodo restano in italiano e inglese. */
+  const p = P();
+  const vars = {
+    fxDate:FX_DATE, observed:IDX.observed,
+    fareCount:fmtN(IDX.deals.length), originCount:fmtN(Object.keys(IDX.counts).length),
+    destCount:fmtN(NDEST), languageCount:fmtN(LANG_META.length), currencyCount:fmtN(CUR.length)
+  };
+  const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
   $('#lede').textContent     = T('lede');
   $('#boardNote').textContent= T('boardNote');
   $('#methodLede').textContent = T('methodLede');
   $('#privLede').textContent = T('privLede');
   $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
-  $('#footTag').textContent  = p.footTag;
-  const cell = ([n,h,b]) => `<div class="mcell"><span class="lbl lbl-sig">${n}</span><h4>${h}</h4><p>${b}</p></div>`;
+  $('#footTag').textContent  = T('plat_note');
+  const cell = ([h,b],i) => `<div class="mcell"><span class="lbl lbl-sig">${String(i+1).padStart(2,'0')}</span><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
   $('#methodGrid').innerHTML = p.method.map(cell).join('');
-  $('#privGrid').innerHTML   = p.priv.map(cell).join('');
-  const nOri = Object.keys(IDX.counts).length;
-  $('#methodNote').innerHTML = IT()
-    ? `<b>Cosa contiene questo indice.</b> ${fmtN(IDX.deals.length)} tariffe andata e ritorno senza scali rilevate il ${IDX.observed} da <b>${nOri} aeroporti di partenza</b> verso <b>${NDEST} destinazioni</b>. L'interfaccia è tradotta in ${LANG_META.length} lingue e i prezzi si leggono in ${CUR.length} valute; i testi lunghi di questa sezione restano in italiano e inglese. Ogni riga è una osservazione, nessuna è modellata.`
-    : `<b>What this index contains.</b> ${fmtN(IDX.deals.length)} non-stop return fares recorded on ${IDX.observed} from <b>${nOri} departure airports</b> to <b>${NDEST} destinations</b>. The interface is translated into ${LANG_META.length} languages and prices read in ${CUR.length} currencies; the long-form text in this section stays in Italian and English. Every row is an observation — none is modelled.`;
+  $('#privGrid').innerHTML   = p.privacy.map(cell).join('');
+  $('#methodNote').innerHTML = fill(p.indexNote);
   $('#footNote').textContent = `${T('obs')} ${IDX.observed} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
   ccRender();
 }
@@ -1698,9 +1643,10 @@ function applyLang(){
   $('#heroEyebrow').textContent = `${T('obs')} ${IDX.observed} · ${T('direct')} · ${Object.keys(IDX.counts).length} ${T('st_air')}`;
   $('#panelHint').textContent = T('f_globe');
   $('#srcPill').title = S.live ? 'LIVE' : 'INDEX';
-  /* l'indice degli scali esiste in due lingue: a schermo si vede quello
-     giusto, ma entrambi restano nel sorgente perche' Google li segua */
-  document.querySelectorAll('.hub').forEach(el => { el.hidden = (el.lang === 'it') !== IT(); });
+  /* Gli indici aeroportuali esistono per italiano e inglese. In tutte le
+     altre lingue restano nel sorgente per i crawler, ma non ricadono a video
+     su una lingua diversa da quella selezionata. */
+  document.querySelectorAll('.hub').forEach(el => { el.hidden = el.lang !== S.lang; });
   renderProse();
 }
 function fillSelectors(){
@@ -1857,11 +1803,11 @@ function loadAds(){
   });
 }
 function ccRender(){
-  const p = PROSE[EN_OR_IT()];
-  $('#ccText').innerHTML = p.cookie;
-  $('#ccYes').textContent = p.ccYes;
-  $('#ccNo').textContent  = p.ccNo;
-  $('#ccOpen').textContent = p.ccOpen;
+  const c = P().consent;
+  $('#ccText').innerHTML = c.body;
+  $('#ccYes').textContent = c.accept;
+  $('#ccNo').textContent  = c.decline;
+  $('#ccOpen').textContent = c.preferences;
   $('#ccOpen').hidden = !TRACK_ON();
 }
 function ccInit(){
@@ -1952,7 +1898,7 @@ $('#rngBag').addEventListener('input', e => { S.bagFee = +e.target.value; render
 $('#btnSearch').addEventListener('click', async () => {
   if(!S.origins.size){ markDirty(); return; }
   clearDirty();
-  $('#searchNote').textContent = IT() ? 'Interrogazione…' : 'Querying…';
+  $('#searchNote').textContent = '…';
   if(location.protocol.startsWith('http')) await fetchLive(true);
   runSearch(); renderBoard(); writeURL();
   $('#searchNote').textContent = '';
@@ -2003,9 +1949,35 @@ $('#dayBtn').addEventListener('click', () => {
 addEventListener('resize', () => frame());
 
 /* ── avvio ──────────────────────────────────────────────── */
+const LANG_ALIAS = Object.freeze({fil:'tl',nb:'no',nn:'no',iw:'he',in:'id'});
+function languageFromTag(tag){
+  const normal = String(tag || '').trim().toLowerCase().replaceAll('_','-');
+  if(!normal) return '';
+  const primary = normal.split('-')[0];
+  const code = LANG_ALIAS[primary] || primary;
+  return LANG_META.some(x => x[0] === code) ? code : '';
+}
+function browserLanguage(){
+  const tags = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages : [navigator.language || 'en'];
+  return tags.map(languageFromTag).find(Boolean) || 'en';
+}
+function browserRegion(){
+  const tags = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages : [navigator.language || ''];
+  for(const tag of tags){
+    try{
+      const region = new Intl.Locale(tag).region;
+      if(region) return region.toUpperCase();
+    }catch(_){
+      const hit = String(tag).match(/[-_]([A-Za-z]{2}|\d{3})(?:[-_]|$)/);
+      if(hit) return hit[1].toUpperCase();
+    }
+  }
+  return '';
+}
 (function boot(){
-  const nav = (navigator.language||'en').slice(0,2).toLowerCase();
-  if(LANG_META.some(x => x[0] === nav)) S.lang = nav;
+  S.lang = browserLanguage();
   try{
     const l = localStorage.getItem('elf-lang'); if(l && LANG_META.some(x=>x[0]===l)) S.lang = l;
     const c = localStorage.getItem('elf-cur');  if(c && CURBY[c]) S.cur = c;
@@ -2026,7 +1998,7 @@ addEventListener('resize', () => frame());
      altrimenti lo scalo con piu' rotte — e la classifica c'e' gia'. Sono
      tariffe vere, non una vetrina finta: appena cerchi, vengono sostituite. */
   if(!S.origins.size){
-    const reg = (navigator.language||'').split('-')[1];
+    const reg = browserRegion();
     const cand = reg && CTRY[reg.toUpperCase()] ? reg.toUpperCase() : '';
     const top  = Object.keys(IDX.counts).sort((a,b) => IDX.counts[b]-IDX.counts[a])[0];
     const casa = cand && autoAirports(cand).some(i => dealsFrom[i]) ? cand
