@@ -571,7 +571,8 @@ footer a{color:var(--ink-2)}
   .step{padding:14px 14px 16px}
   .picklist{max-height:232px}
   #ctryList{max-height:210px!important}
-  #apList{max-height:190px!important}
+  #apList{max-height:190px!important;contain:paint;isolation:isolate}
+  #apList.ap-offscreen{visibility:hidden!important}
   .globe-box{gap:10px}
   #globe{height:270px}
   .limits{gap:14px 0}
@@ -1381,6 +1382,18 @@ function renderTabs(){
   renderWindows();
   updateReady();
 }
+
+/* Safari iOS: evita che badge IATA fuori viewport vengano compositati sotto la toolbar. */
+(function guardMobileAirportPaint(){
+  const list = $('#apList');
+  if(!list || !('IntersectionObserver' in window)) return;
+  list.classList.add('ap-offscreen');
+  const io = new IntersectionObserver(entries => {
+    for(const entry of entries)
+      list.classList.toggle('ap-offscreen', !entry.isIntersecting);
+  }, {root:null, rootMargin:'96px 0px 96px 0px', threshold:0});
+  io.observe(list);
+})();
 
 /* il pulsante Cerca resta spento finche' non c'e' almeno un aeroporto */
 function updateReady(){
