@@ -31,36 +31,25 @@ jobs:
               raise SystemExit('mobile airport CSS anchor not found')
           s = s.replace(old, new, 1)
 
-          anchor = "function renderAirports(){"
-          idx = s.find(anchor)
-          if idx < 0:
-              raise SystemExit('renderAirports anchor not found')
-
-          insert_after = "function renderTabs(){\n  const nAir = S.origins.size;"
-          if insert_after not in s:
-              raise SystemExit('renderTabs anchor not found')
-
-          guard = r'''/* Safari iOS puo' compositare il piccolo badge IATA di #apList sotto
-   la barra inferiore traslucida anche quando l'elenco e' molto piu' in basso.
-   Su schermi mobili il badge non viene quindi dipinto finche' la lista non e'
-   davvero vicina al viewport. La lista mantiene comunque il suo spazio e
-   torna visibile prima che l'utente la raggiunga. */
-(function guardMobileAirportPaint(){
-  const list = $('#apList');
-  if(!list || !('IntersectionObserver' in window)) return;
-  list.classList.add('ap-offscreen');
-  const io = new IntersectionObserver(entries => {
-    for(const entry of entries)
-      list.classList.toggle('ap-offscreen', !entry.isIntersecting);
-  }, {root:null, rootMargin:'96px 0px 96px 0px', threshold:0});
-  io.observe(list);
-})();
-
-'''
-
           marker = "/* il pulsante Cerca resta spento finche' non c'e' almeno un aeroporto */"
           if marker not in s:
               raise SystemExit('ready marker not found')
+
+          guard = "\n".join([
+              "/* Safari iOS: evita che badge IATA fuori viewport vengano compositati sotto la toolbar. */",
+              "(function guardMobileAirportPaint(){",
+              "  const list = $('#apList');",
+              "  if(!list || !('IntersectionObserver' in window)) return;",
+              "  list.classList.add('ap-offscreen');",
+              "  const io = new IntersectionObserver(entries => {",
+              "    for(const entry of entries)",
+              "      list.classList.toggle('ap-offscreen', !entry.isIntersecting);",
+              "  }, {root:null, rootMargin:'96px 0px 96px 0px', threshold:0});",
+              "  io.observe(list);",
+              "})();",
+              "",
+              "",
+          ])
           if 'guardMobileAirportPaint' not in s:
               s = s.replace(marker, guard + marker, 1)
 
