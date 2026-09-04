@@ -1,0 +1,149 @@
+name: One-shot mobile and hero copy fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-mobile-copy-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply requested mobile and copy fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast
+          import re
+
+          I18N = Path('src/i18n.js')
+          APP = Path('src/app.html')
+
+          hero = {
+              'en': 'Choose the best option for you.',
+              'zh': '选择最适合你的选项。',
+              'hi': 'अपने लिए सबसे अच्छा विकल्प चुनें।',
+              'es': 'Elige la mejor opción para ti.',
+              'ar': 'اختر الخيار الأنسب لك.',
+              'fr': 'Choisissez la meilleure option pour vous.',
+              'bn': 'আপনার জন্য সেরা বিকল্পটি বেছে নিন।',
+              'pt': 'Escolha a melhor opção para si.',
+              'ru': 'Выберите лучший вариант для себя.',
+              'ur': 'اپنے لیے بہترین آپشن منتخب کریں۔',
+              'id': 'Pilih pilihan terbaik untuk Anda.',
+              'de': 'Wählen Sie die beste Option für sich.',
+              'ja': 'あなたにぴったりの選択肢を選ぼう。',
+              'tr': 'Sizin için en iyi seçeneği seçin.',
+              'ko': '나에게 가장 잘 맞는 선택지를 고르세요.',
+              'vi': 'Hãy chọn lựa chọn phù hợp nhất với bạn.',
+              'it': "Scegli l'opzione migliore per te.",
+              'fa': 'بهترین گزینه را برای خودتان انتخاب کنید.',
+              'th': 'เลือกตัวเลือกที่ดีที่สุดสำหรับคุณ',
+              'pl': 'Wybierz najlepszą opcję dla siebie.',
+              'nl': 'Kies de beste optie voor jou.',
+              'uk': 'Оберіть найкращий варіант для себе.',
+              'ro': 'Alege cea mai bună opțiune pentru tine.',
+              'el': 'Επίλεξε την καλύτερη επιλογή για σένα.',
+              'cs': 'Vyberte si pro sebe tu nejlepší možnost.',
+              'sv': 'Välj det bästa alternativet för dig.',
+              'hu': 'Válaszd ki a számodra legjobb lehetőséget.',
+              'he': 'בחרו את האפשרות המתאימה ביותר עבורכם.',
+              'ms': 'Pilih pilihan terbaik untuk anda.',
+              'ta': 'உங்களுக்கு சிறந்த விருப்பத்தைத் தேர்ந்தெடுக்கவும்.',
+              'sw': 'Chagua chaguo bora zaidi kwako.',
+              'da': 'Vælg den bedste mulighed for dig.',
+              'no': 'Velg det beste alternativet for deg.',
+              'fi': 'Valitse sinulle paras vaihtoehto.',
+              'bg': 'Изберете най-добрия вариант за вас.',
+              'tl': 'Piliin ang pinakamagandang opsyon para sa iyo.',
+          }
+
+          text = I18N.read_text(encoding='utf-8')
+          km = re.search(r"const KEYS = \[(.*?)\];", text, re.S)
+          if not km:
+              raise SystemExit('KEYS not found')
+          keys = ast.literal_eval('[' + km.group(1) + ']')
+          h1b = keys.index('h1b')
+
+          changed = 0
+          for code, new in hero.items():
+              pat = re.compile(rf"(?m)^{re.escape(code)}:(\[[^\n]*\]),$")
+              m = pat.search(text)
+              if not m:
+                  raise SystemExit(f'language row not found: {code}')
+              row = ast.literal_eval(m.group(1))
+              if len(row) != len(keys):
+                  raise SystemExit(f'key count mismatch: {code}')
+              old = row[h1b]
+              old_lit = repr(old)
+              new_lit = repr(new)
+              line = m.group(0)
+              if old_lit not in line:
+                  raise SystemExit(f'hero literal not found in row: {code}')
+              line2 = line.replace(old_lit, new_lit, 1)
+              text = text[:m.start()] + line2 + text[m.end():]
+              changed += 1
+
+          if changed != 36:
+              raise SystemExit(f'expected 36 hero translations, changed {changed}')
+          I18N.write_text(text, encoding='utf-8')
+
+          app = APP.read_text(encoding='utf-8')
+          replacements = {
+              '.picklist{max-height:190px;overflow-y:auto;border:1px solid var(--rule);':
+              '.picklist{max-height:190px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--rule);',
+              '.geo{padding:0}':
+              '.geo{padding:0;overflow:hidden}',
+              '.geo-globe{position:relative;border-inline-end:1px solid var(--rule);padding:10px 10px 6px;min-width:0}':
+              '.geo-globe{position:relative;border-inline-end:1px solid var(--rule);padding:10px 10px 6px;min-width:0;overflow:hidden}',
+              '.globe-wrap{position:relative}':
+              '.globe-wrap{position:relative;overflow:hidden;contain:paint}',
+          }
+          for old, new in replacements.items():
+              if old not in app:
+                  raise SystemExit(f'CSS anchor not found: {old}')
+              app = app.replace(old, new, 1)
+          APP.write_text(app, encoding='utf-8')
+          PY
+
+      - name: Rebuild and validate
+        run: |
+          python scripts/build.py
+          python scripts/build_pages.py
+          python scripts/check_build.py
+          python - <<'PY'
+          import ast, re
+          from pathlib import Path
+          text = Path('src/i18n.js').read_text(encoding='utf-8')
+          km = re.search(r"const KEYS = \[(.*?)\];", text, re.S)
+          keys = ast.literal_eval('[' + km.group(1) + ']')
+          pos = keys.index('h1b')
+          rows = re.findall(r'(?m)^([a-z]{2}):(\[[^\n]*\]),$', text)
+          assert len(rows) == 36, len(rows)
+          values = {code: ast.literal_eval(row)[pos] for code, row in rows}
+          assert values['en'] == 'Choose the best option for you.'
+          assert values['it'] == "Scegli l'opzione migliore per te."
+          assert values['ja'] == 'あなたにぴったりの選択肢を選ぼう。'
+          assert values['tl'] == 'Piliin ang pinakamagandang opsyon para sa iyo.'
+          app = Path('src/app.html').read_text(encoding='utf-8')
+          assert '.globe-wrap{position:relative;overflow:hidden;contain:paint}' in app
+          assert 'overflow-y:auto;overflow-x:hidden' in app
+          print('hero translations: 36/36; mobile containment: OK')
+          PY
+
+      - name: Commit generated site and remove one-shot workflow
+        run: |
+          rm .github/workflows/one-shot-mobile-copy-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Fix mobile airport overflow and update hero copy'
+          git push origin HEAD:main
