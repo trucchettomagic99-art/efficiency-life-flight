@@ -128,6 +128,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
   color:var(--signal);font-weight:500;margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .step > h3 em{font-style:normal;color:var(--ink-3);letter-spacing:.1em;font-size:10px}
 .step > h3 .sp{margin-inline-start:auto;display:flex;gap:6px}
+.step .hint{margin:0 0 10px;color:var(--ink-3);font-size:12px;line-height:1.5;max-width:64ch}
 
 .segbar{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:11px}
 .seg{border:1px solid var(--rule-hi);background:transparent;padding:5px 10px;cursor:pointer;border-radius:2px;
@@ -578,7 +579,8 @@ footer a{color:var(--ink-2)}
       </div>
 
       <div class="step full">
-        <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Finestra di partenza (giorni)</em></h3>
+        <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Giorni alla partenza</em></h3>
+        <p class="hint" data-k="f_window_h">Fra quanti giorni parti, contati da oggi. Puoi scegliere piu' intervalli.</p>
         <div class="segbar" id="winChips"></div>
         <div class="lbl" style="margin-top:16px" data-k="f_shape">Forma del viaggio</div>
         <div class="segbar" id="shapeChips"></div>
@@ -704,7 +706,7 @@ const TXT   = Object.fromEntries(KEYS.map((k,i) => [k, i]));
 /* ── stato ──────────────────────────────────────────────── */
 const WINDOWS = [30,60,90,120,150,180,999];
 const S = {
-  lang:'it', cur:'EUR',
+  lang:'it', cur:'EUR', langSet:false, curSet:false,
   geo:'from',
   oCont:'', oCountries:new Set(), origins:new Set(), oFind:'',
   dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
@@ -1079,11 +1081,15 @@ function renderShapes(){
       S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`;
   }).join('');
 }
+/* I riquadri non sono soglie ma intervalli: 30 significava "fra 1 e 30 giorni"
+   e nessuno poteva indovinarlo. Ora lo scrivono. Il conteggio delle rotte e'
+   sparito: qui il numero accanto a un intervallo veniva letto come "30 giorni,
+   12" invece che come quante tariffe cadono in quel periodo. */
+const winLabel = (w,i) => w === 999 ? '180+' : `${(WINDOWS[i-1]||0)+1}\u2013${w}`;
 function renderWindows(){
-  const c = S.origins.size ? windowCounts() : {};
-  $('#winChips').innerHTML = WINDOWS.map(w =>
-    `<button class="seg${S.windows.has(w)?' on':''}" data-act="win" data-v="${w}">${w===999?'180+':w}${
-      S.origins.size ? `<em>· ${c[w]||0}</em>` : ''}</button>`).join('');
+  $('#winChips').innerHTML = WINDOWS.map((w,i) =>
+    `<button class="seg${S.windows.has(w)?' on':''}" data-act="win" data-v="${w}">${
+      winLabel(w,i)}</button>`).join('');
 }
 
 function renderList(){
@@ -1422,6 +1428,14 @@ function pickOnGlobe(e){
   if(!cc || !CTRY[cc]) return;
   toggleCountry(cc);
 }
+/* Gli aeroporti che accende l'accensione di un paese: quelli con tariffe
+   nell'indice, o il primo se il paese non ne ha nessuna. La stessa regola
+   serve all'indirizzo condivisibile, che scrive "IT" invece di venti sigle. */
+function autoAirports(cc){
+  const c = CTRY[cc]; if(!c) return [];
+  const withData = c.a.filter(i => dealsFrom[i]);
+  return withData.length ? withData : c.a.slice(0,1);
+}
 /* un paese acceso o spento, sul globo o nell'elenco, e' la stessa cosa */
 function toggleCountry(cc){
   const c = CTRY[cc]; if(!c) return;
@@ -1430,8 +1444,7 @@ function toggleCountry(cc){
       S.oCountries.delete(cc); c.a.forEach(i => S.origins.delete(i));
     }else{
       S.oCountries.add(cc);
-      const withData = c.a.filter(i => dealsFrom[i]);
-      (withData.length ? withData : c.a.slice(0,1)).forEach(i => S.origins.add(i));
+      autoAirports(cc).forEach(i => S.origins.add(i));
     }
   }else{
     if(S.dMode !== 'pick'){ S.dMode = 'pick'; renderSegs(); }
@@ -1598,7 +1611,7 @@ const PROSE = {
    ['06','Soggiorno proporzionato','Le notti suggerite scalano con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. La colonna "soggiorno" mostra invece le notti reali della tariffa trovata.'],
    ['07','Bagaglio','Nessuna fonte dichiara se il bagaglio da stiva è incluso: non viene ipotizzato. Il cursore in ricerca applica un supplemento uniforme a tutte le tariffe e ricalcola la classifica, così confronti a parità di condizioni.'],
    ['08','Valuta','I prezzi nascono in euro. Quando cambi valuta vengono convertiti con i cambi del ' + FX_DATE + ', che servono a rendere leggibile un ordine di grandezza: il prezzo su cui prenoti resta quello dell\'operatore. In modalità LIVE la conversione la fa direttamente la fonte.'],
-   ['09','Finestra di partenza','La fonte restituisce <b>una sola data per destinazione</b>: la più economica dell\'anno. Perciò la finestra non è una ricerca fra tante date, è una fetta di un insieme che ne ha già una sola. Da Fiumicino le 60 destinazioni dell\'indice si distribuiscono così: 12 entro 30 giorni, 13 a 60, 20 a 90, 3 a 120, 11 a 150, 1 a 180. Se selezioni solo <code>120</code> trovi tre rotte, e non è un errore: sono le uniche la cui data migliore cade lì. Il numero piccolo su ogni pulsante te lo dice prima di cercare.'],
+   ['09','Finestra di partenza','La fonte restituisce <b>una sola data per destinazione</b>: la più economica dell\'anno. Perciò la finestra non è una ricerca fra tante date, è una fetta di un insieme che ne ha già una sola. Da Fiumicino le 60 destinazioni dell\'indice si distribuiscono così: 12 entro 30 giorni, 13 a 60, 20 a 90, 3 a 120, 11 a 150, 1 a 180. Se selezioni solo <code>91–120</code> trovi tre rotte, e non è un errore: sono le uniche la cui data migliore cade lì. Ogni pulsante copre una fascia di giorni contati da oggi — 1–30, 31–60, e così via fino a 180+ — e puoi selezionarne più d\'una.'],
    ['10','Indice e live','<b>INDEX</b> significa che stai guardando la fotografia incorporata nella pagina, con la sua data. <b>LIVE</b> significa che i prezzi sono stati chiesti in questo momento. Il passaggio è automatico: se il servizio prezzi risponde, il sito lo usa e basta.'],
   ],
   priv:[
@@ -1626,7 +1639,7 @@ const PROSE = {
    ['06','Proportionate stay','Suggested nights scale with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. The "stay" column shows the actual nights of the fare found.'],
    ['07','Baggage','No source states whether a checked bag is included, so it is not guessed. The slider in the search panel adds a uniform supplement to every fare and re-scores the board, so you compare like with like.'],
    ['08','Currency','Prices originate in euro. Switching currency converts them at the ' + FX_DATE + ' rates, which exist to make an order of magnitude readable: the price you book at is the operator\'s. In LIVE mode the source converts directly.'],
-   ['09','Departure window','The source returns <b>one date per destination</b>: the cheapest of the year. So the window is not a search across many dates, it is a slice of a set that already has only one. From Rome Fiumicino the 60 destinations in the index fall out like this: 12 within 30 days, 13 at 60, 20 at 90, 3 at 120, 11 at 150, 1 at 180. Pick <code>120</code> alone and you get three routes — not a bug: they are the only ones whose best date lands there. The small number on each button tells you before you search.'],
+   ['09','Departure window','The source returns <b>one date per destination</b>: the cheapest of the year. So the window is not a search across many dates, it is a slice of a set that already has only one. From Rome Fiumicino the 60 destinations in the index fall out like this: 12 within 30 days, 13 at 60, 20 at 90, 3 at 120, 11 at 150, 1 at 180. Pick <code>91–120</code> alone and you get three routes — not a bug: they are the only ones whose best date lands there. Each button covers a band of days counted from today — 1–30, 31–60, and so on up to 180+ — and you can select more than one.'],
    ['10','Index and live','<b>INDEX</b> means you are looking at the snapshot embedded in the page, with its date. <b>LIVE</b> means prices were requested just now. The switch is automatic: if the price service answers, the site simply uses it.'],
   ],
   priv:[
@@ -1679,27 +1692,56 @@ function fillSelectors(){
 }
 
 /* ── URL condivisibile ──────────────────────────────────── */
-function writeURL(){
+/* L'indirizzo porta solo cio' che si discosta dai valori predefiniti: se non
+   hai toccato nulla resta pulito, senza frammento. Lingua e valuta entrano
+   soltanto se le hai scelte tu (dal selettore o da un link ricevuto): chi apre
+   un link condiviso vede il sito nella propria lingua, non nella nostra.
+   Il collegamento da "Condividi" invece porta lo stato per intero, perche' li'
+   lo scopo e' far vedere all'altro esattamente la stessa schermata. */
+const CLEAN = () => location.origin + location.pathname + location.search;
+function urlParams(full){
   const h = new URLSearchParams();
-  h.set('o', [...S.origins].join('.'));
+  /* Un paese acceso vale una sigla sola. Accendere l'Italia significava
+     ventidue codici di aeroporto nell'indirizzo, che cresceva a ogni tocco:
+     qui torna a essere "n=IT", e restano scritti a parte solo gli aeroporti
+     scelti a mano fuori da quell'insieme. */
+  const nats = [], soli = new Set(S.origins);
+  for(const k of S.oCountries){
+    const a = autoAirports(k);
+    if(a.length && a.every(i => soli.has(i))){ nats.push(k); a.forEach(i => soli.delete(i)); }
+  }
+  if(nats.length)        h.set('n', nats.join('.'));
+  if(soli.size)          h.set('o', [...soli].join('.'));
   if(S.dMode==='pick' && S.dCountries.size) h.set('c', [...S.dCountries].join('.'));
-  h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
+  if(full || S.windows.size !== WINDOWS.length)
+                         h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
   if(S.shapes.size)      h.set('k', [...S.shapes].join('.'));
   if(S.minDist || S.maxDist!==18000) h.set('d', S.minDist + '.' + S.maxDist);
   if(S.maxBudget!==2000) h.set('b', S.maxBudget);
   if(S.bagFee)           h.set('g', S.bagFee);
   if(S.sort!=='score')   h.set('s', S.sort + (S.dir>0?'+':''));
-  h.set('l', S.lang); h.set('m', S.cur);
-  try{ history.replaceState(null,'','#'+h.toString()); }catch(_){}
+  if(full || S.langSet)  h.set('l', S.lang);
+  if(full || S.curSet)   h.set('m', S.cur);
+  return h;
+}
+function writeURL(){
+  const q = urlParams(false).toString();
+  try{ history.replaceState(null,'', q ? '#'+q : CLEAN()); }catch(_){}
   return location.href;
 }
+const shareURL = () => { const q = urlParams(true).toString(); return CLEAN() + (q?'#'+q:''); };
 function readURL(){
   const h = new URLSearchParams(location.hash.slice(1));
-  const l = h.get('l'); if(l && LANG_META.some(x => x[0]===l)) S.lang = l;
-  const m = (h.get('m')||'').toUpperCase(); if(CURBY[m]) S.cur = m;
+  const l = h.get('l'); if(l && LANG_META.some(x => x[0]===l)){ S.lang = l; S.langSet = true; }
+  const m = (h.get('m')||'').toUpperCase(); if(CURBY[m]){ S.cur = m; S.curSet = true; }
+  const n = (h.get('n')||'').toUpperCase().split('.').filter(x => CTRY[x]);
   const o = (h.get('o')||'').toUpperCase().split('.').filter(x => AP[x]);
-  if(o.length){ S.origins = new Set(o); S.oCountries = new Set(o.map(i => AP[i].k));
-    S.oCont = REG_OF[CTRY[AP[o[0]].k].g] || '150'; }
+  if(n.length || o.length){
+    S.origins = new Set(o); S.oCountries = new Set(o.map(i => AP[i].k));
+    for(const k of n){ S.oCountries.add(k); autoAirports(k).forEach(i => S.origins.add(i)); }
+    const primo = n[0] || AP[o[0]].k;
+    S.oCont = REG_OF[CTRY[primo].g] || '150';
+  }
   const c = (h.get('c')||'').toUpperCase().split('.').filter(x => CTRY[x]);
   if(c.length){ S.dCountries = new Set(c); S.dMode = 'pick'; }
   const w = h.get('w');
@@ -1713,8 +1755,10 @@ function readURL(){
   }
   const b = num('b',20,2000);    if(b!==null) S.maxBudget = b;
   const g = num('g',0,150);      if(g!==null) S.bagFee = g;
+  /* il "+" che segna l'ordine crescente viaggia codificato, ma un indirizzo
+     scritto a mano lo porta com'e' e URLSearchParams lo legge come spazio */
   const s = h.get('s');
-  if(s){ const asc = s.endsWith('+'), k = asc ? s.slice(0,-1) : s;
+  if(s){ const asc = /[+\s]$/.test(s), k = s.replace(/[+\s]+$/, '');
          if(['score','price','dist','kmpe','deal','stay'].includes(k)){ S.sort = k; S.dir = asc ? 1 : -1; } }
   S.pin = h.get('f') || '';
 }
@@ -1846,9 +1890,8 @@ document.addEventListener('click', async e => {
     renderBoard(); writeURL();
   }
   else if(act === 'copy'){
-    const base = writeURL().split('#')[0];
-    const h = new URLSearchParams(location.hash.slice(1)); h.set('f', v);
-    const link = base + '#' + h.toString();
+    const h = urlParams(true); h.set('f', v);
+    const link = CLEAN() + '#' + h.toString();
     try{ await navigator.clipboard.writeText(link); }
     catch(_){ try{ prompt(T('copylink'), link); }catch(__){} }
     const old = el.textContent; el.textContent = T('copied'); el.classList.add('done');
@@ -1904,18 +1947,19 @@ $('#panelToggle').addEventListener('click', () => {
   if(closed) setTimeout(frame, 60);
 });
 $('#selLang').addEventListener('change', e => {
-  S.lang = e.target.value;
+  S.lang = e.target.value; S.langSet = true;
   try{ localStorage.setItem('elf-lang', S.lang); }catch(_){}
   applyLang(); fillSelectors(); renderPanel(); renderTicker(); renderBoard(); writeURL();
 });
 $('#selCur').addEventListener('change', e => {
-  S.cur = e.target.value;
+  S.cur = e.target.value; S.curSet = true;
   try{ localStorage.setItem('elf-cur', S.cur); }catch(_){}
   renderLimits(); renderTicker(); renderBoard(); writeURL();
   if(S.live) fetchLive(true).then(() => { runSearch(); renderBoard(); });
 });
 $('#shareBtn').addEventListener('click', async () => {
-  const url = writeURL(), btn = $('#shareBtn'), old = btn.textContent;
+  writeURL();
+  const url = shareURL(), btn = $('#shareBtn'), old = btn.textContent;
   try{
     if(navigator.share && matchMedia('(pointer:coarse)').matches){
       await navigator.share({title:'Efficiency Life Flight', url}); return;
