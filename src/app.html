@@ -247,12 +247,18 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
   letter-spacing:-.035em;line-height:.95;text-transform:uppercase;margin:10px 0 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .apex .meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-2);letter-spacing:.04em}
 .apex .meta i{font-style:normal;color:var(--signal)}
-.apex-nums{display:grid;grid-template-columns:repeat(3,1fr);border-inline-start:1px solid var(--rule)}
-.apex-nums div{border-inline-end:1px solid var(--rule);padding:2px 14px}
-.apex-nums b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(17px,2.2vw,28px);
+.apex-nums{display:grid;grid-template-columns:repeat(4,1fr);border-inline-start:1px solid var(--rule)}
+.apex-nums div{border-inline-end:1px solid var(--rule);padding:2px 12px;min-width:0}
+.apex-nums b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(17px,2.05vw,26px);
   font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
 .apex-nums div:nth-child(3) b{color:var(--alert)}
+.apex-nums div:nth-child(4) b{color:var(--signal)}
 .apex-nums span{display:block;margin-top:5px}
+.apex-nums .lbl u{text-decoration:none}
+@media(max-width:520px){.apex-nums .lbl u{display:none}}
+.apex-nums .abar{height:3px;background:var(--deck3);position:relative;overflow:hidden;margin-top:7px;max-width:74px}
+.apex-nums .abar i{position:absolute;inset:0 auto 0 0;display:block;
+  background:linear-gradient(90deg,var(--signal-deep),var(--signal-2))}
 .apex-acts{display:flex;flex-direction:column;gap:6px}
 
 /* ── sezioni ──────────────────────────────────────────────── */
@@ -294,6 +300,22 @@ section{scroll-margin-top:64px}
 .meter .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--signal-deep),var(--signal-2));display:block}
 .mrow.hot .meter .bar i{background:linear-gradient(90deg,var(--alert),#FF7A45)}
 .meter .val{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px}
+/* Il punteggio in miniatura, dentro la cella rotta. Resta invisibile finche'
+   la colonna PUNTEGGIO c'e'; quando lo schermo si stringe e quella colonna
+   cade, questo prende il suo posto senza aggiungere una colonna alla griglia:
+   il numero che ordina la classifica non deve sparire proprio sul telefono. */
+.mini-score{display:none;align-items:center;gap:8px;margin-top:5px;max-width:250px}
+.mini-score .mbar{flex:1 1 auto;min-width:40px;height:3px;background:var(--deck3);position:relative;overflow:hidden}
+.mini-score .mbar i{position:absolute;inset:0 auto 0 0;display:block;
+  background:linear-gradient(90deg,var(--signal-deep),var(--signal-2))}
+.mrow.hot .mini-score .mbar i{background:linear-gradient(90deg,var(--alert),#FF7A45)}
+.mini-score s{text-decoration:none;flex:none;white-space:nowrap;font-family:"JetBrains Mono",monospace;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+/* .route b e' un flex a 16.5px: qui serve un numero in linea, non un blocco */
+.mini-score s u{text-decoration:none}
+.mini-score s b{display:inline;font-family:inherit;font-size:11.5px;font-weight:700;
+  letter-spacing:0;color:var(--signal)}
+.mrow.hot .mini-score s b{color:var(--alert)}
 .acts{display:flex;flex-direction:column;gap:5px;align-items:stretch}
 .btn{display:block;text-align:center;text-decoration:none;border:1px solid var(--rule-hi);padding:6px 8px;
   font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
@@ -366,6 +388,11 @@ footer a{color:var(--ink-2)}
 @media(max-width:1240px){
   .mrow,.mhead{grid-template-columns:44px minmax(0,2fr) minmax(74px,.78fr) minmax(68px,.66fr) minmax(66px,.62fr) minmax(70px,.62fr) minmax(104px,.86fr) 116px}
   .c-stay{display:none}
+  /* nella colonna stretta di destra quattro numeri in fila si spezzerebbero:
+     vanno a due per riga, che e' anche piu' leggibile */
+  .apex-nums{grid-template-columns:repeat(2,1fr)}
+  .apex-nums div{padding-block:7px}
+  .apex-nums div:nth-child(2n){border-inline-end:0}
 }
 @media(max-width:900px){
   .geo-body{grid-template-columns:1fr}
@@ -376,11 +403,16 @@ footer a{color:var(--ink-2)}
   .panel-body{grid-template-columns:1fr}
   .mrow,.mhead{grid-template-columns:40px minmax(0,2fr) minmax(72px,.8fr) minmax(68px,.7fr) minmax(66px,.7fr) 112px}
   .c-score,.c-deal{display:none}
+  .mini-score{display:flex}
 }
 @media(max-width:1000px){
   .apex-in{grid-template-columns:1fr;gap:20px}
-  .apex-nums{border-inline-start:0;border-top:1px solid var(--rule);padding-top:14px}
-  .apex-nums div{padding-inline-start:0}
+  /* la banda diventa larga quanto lo schermo: i quattro numeri tornano in fila */
+  .apex-nums{border-inline-start:0;border-top:1px solid var(--rule);padding-top:14px;
+    grid-template-columns:repeat(4,1fr)}
+  .apex-nums div{padding:2px 10px;border-inline-end:1px solid var(--rule)}
+  .apex-nums div:first-child{padding-inline-start:0}
+  .apex-nums div:last-child{border-inline-end:0}
   .apex-acts{flex-direction:row}
   .apex-acts .btn{flex:1}
 }
@@ -440,6 +472,14 @@ footer a{color:var(--ink-2)}
   .c-dist{display:none}
   .mrow > *{padding:11px 7px}
   .acts .btn{padding:5px 4px;font-size:9px;letter-spacing:.06em}
+  /* colonna rotta stretta: etichetta sopra, barra a tutta larghezza sotto */
+  .mini-score{flex-direction:column;align-items:stretch;gap:3px;max-width:none;margin-top:6px}
+  .mini-score s{font-size:9.5px;letter-spacing:.06em}
+  .mini-score .mbar{width:100%}
+}
+/* sotto i 380 px la parola non ci sta: restano il numero e la barra */
+@media(max-width:380px){
+  .mini-score s u{display:none}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
@@ -1455,6 +1495,8 @@ function apexCard(r){
       <div><b>${money(r.price)}</b><span class="lbl">${esc(T('rt'))}</span></div>
       <div><b>${fmtN(r.km*2)}</b><span class="lbl">km</span></div>
       <div><b>${ratio(r.km*2/toCur(r.price))}</b><span class="lbl">km/${esc(sym())}</span></div>
+      <div><b>${r.score}</b><span class="lbl">${esc(T('th_score'))}<u> /100</u></span>
+        <div class="abar"><i style="width:${r.score}%"></i></div></div>
     </div>
     <div class="apex-acts">${actions(r, true)}
       ${ACT_ON() ? `<a class="btn stay" target="_blank" rel="noopener sponsored"
@@ -1502,6 +1544,8 @@ function renderBoard(){
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
         <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span>${histTag(r)}
+        <div class="mini-score"><s><u>${esc(T('th_score'))}</u> <b>${r.score}</b>/100</s>
+          <div class="mbar"><i style="width:${r.score}%"></i></div></div>
       </div>
       <div class="num price c-price"><b>${money(r.price)}</b><span>${esc(T('rt'))}</span></div>
       <div class="num c-dist"><b>${fmtN(r.km)}</b><span>km</span></div>
