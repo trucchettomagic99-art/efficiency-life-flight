@@ -381,6 +381,14 @@ section{scroll-margin-top:64px}
 footer{border-top:1px solid var(--rule);padding:30px 0 44px;color:var(--ink-3);font-size:12.5px}
 footer .cols{display:flex;flex-wrap:wrap;gap:32px;justify-content:space-between;align-items:flex-start}
 footer a{color:var(--ink-2)}
+.hub{margin-top:16px;line-height:1.9}
+.hub .lbl{display:block;margin-bottom:6px}
+.hub a{color:var(--ink-3);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;
+  text-decoration:none;border-bottom:1px solid transparent}
+.hub a:hover{color:var(--signal);border-bottom-color:var(--signal)}
+.trust{margin:8px 0 0;max-width:76ch;font-family:"JetBrains Mono",monospace;font-size:11.5px;
+  line-height:1.7;letter-spacing:.02em;color:var(--ink-3);border-inline-start:2px solid var(--ok);
+  padding-inline-start:11px}
 .empty{padding:44px 20px;text-align:center;color:var(--ink-3);border-bottom:1px solid var(--rule)}
 .empty b{display:block;color:var(--ink);font-family:Archivo,sans-serif;font-size:19px;text-transform:uppercase;margin-bottom:8px}
 
@@ -493,7 +501,7 @@ footer a{color:var(--ink-2)}
       <span class="mod">Stay</span><span class="mod">Rail</span>
       <span class="mod">Drive</span><span class="mod">Energy</span>
     </nav>
-    <span class="lbl mod-note" data-k="soon">In arrivo</span>
+    <span class="lbl mod-note" data-k="plat_note">Efficiency Life e' la piattaforma. Flight e' il suo primo modulo.</span>
   </div>
 </div>
 
@@ -617,8 +625,9 @@ footer a{color:var(--ink-2)}
     <div class="sec-head">
       <div>
         <div class="lbl lbl-sig">02</div>
-        <h2 id="boardTitle">—</h2>
+        <h2 id="boardTitle"></h2>
         <p id="boardNote"></p>
+        <p class="trust" id="trustNote"></p>
       </div>
       <div style="text-align:end">
         <div class="lbl" data-k="b_found">Rotte trovate</div>
@@ -630,7 +639,6 @@ footer a{color:var(--ink-2)}
     <div style="padding:16px 0;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" id="btnMore" style="display:none;padding:9px 22px" data-k="more">Mostra tutte</button>
     </div>
-    <div class="bay bay-lg" data-label="Sponsor · 970×90" id="ad-leaderboard"><em>Ad slot — see README</em></div>
   </section>
 
   <section id="method">
@@ -666,6 +674,7 @@ footer a{color:var(--ink-2)}
     </div>
     <div style="max-width:46ch">
       <div class="mono" id="footNote"></div>
+      <!--HUB-->
       <button class="tiny" id="ccOpen" style="margin-top:12px" hidden></button>
     </div>
   </div>
@@ -705,6 +714,7 @@ const TXT   = Object.fromEntries(KEYS.map((k,i) => [k, i]));
 
 /* ── stato ──────────────────────────────────────────────── */
 const WINDOWS = [30,60,90,120,150,180,999];
+let booting = true;
 const S = {
   lang:'it', cur:'EUR', langSet:false, curSet:false,
   geo:'from',
@@ -712,7 +722,7 @@ const S = {
   dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
   windows:new Set(WINDOWS), shapes:new Set(), minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
   sort:'score', dir:-1, showAll:false,
-  live:false, liveRows:null, pin:'', results:[]
+  live:false, liveRows:null, pin:'', results:[], auto:false
 };
 /* I pesi del punteggio. "deal" e' lo scarto dal prezzo atteso per quella
    distanza: e' la voce che distingue un affare da un volo semplicemente lungo,
@@ -1439,6 +1449,7 @@ function autoAirports(cc){
 /* un paese acceso o spento, sul globo o nell'elenco, e' la stessa cosa */
 function toggleCountry(cc){
   const c = CTRY[cc]; if(!c) return;
+  if(!booting) S.auto = false;
   if(FROM()){
     if(S.oCountries.has(cc)){
       S.oCountries.delete(cc); c.a.forEach(i => S.origins.delete(i));
@@ -1508,7 +1519,7 @@ function apexCard(r){
       <div><b>${money(r.price)}</b><span class="lbl">${esc(T('rt'))}</span></div>
       <div><b>${fmtN(r.km*2)}</b><span class="lbl">km</span></div>
       <div><b>${ratio(r.km*2/toCur(r.price))}</b><span class="lbl">km/${esc(sym())}</span></div>
-      <div><b>${r.score}</b><span class="lbl">${esc(T('th_score'))}<u> /100</u></span>
+      <div><b>${r.score}</b><span class="lbl">${esc(T('escore'))}<u> /100</u></span>
         <div class="abar"><i style="width:${r.score}%"></i></div></div>
     </div>
     <div class="apex-acts">${actions(r, true)}
@@ -1532,7 +1543,7 @@ function renderBoard(){
       <div style="max-width:56ch;margin:0 auto 16px">${esc(T('f_globe'))}</div>
       <button class="btn pri" style="display:inline-block;padding:9px 22px" data-act="goSearch">${esc(T('nav_search'))}</button></div>`;
     $('#btnMore').style.display = 'none';
-    $('#boardTitle').textContent = '—';
+    $('#boardTitle').textContent = T('everywhere').replace(/[:：]$/, '');
     arcs = []; marks = []; frame();
     return;
   }
@@ -1557,7 +1568,7 @@ function renderBoard(){
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
         <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span>${histTag(r)}
-        <div class="mini-score"><s><u>${esc(T('th_score'))}</u> <b>${r.score}</b>/100</s>
+        <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
           <div class="mbar"><i style="width:${r.score}%"></i></div></div>
       </div>
       <div class="num price c-price"><b>${money(r.price)}</b><span>${esc(T('rt'))}</span></div>
@@ -1572,7 +1583,7 @@ function renderBoard(){
       <div class="acts">${actions(r, false)}
         <button class="btn" data-act="copy" data-v="${r.id}">${esc(T('copylink'))}</button>
       </div>
-    </div>` + (i===3 || i===8 ? `<div class="bay" data-label="Sponsor" data-slot="${esc(ADS.slot)}"><em>${esc(ADS_ON()?'':PROSE[EN_OR_IT()].adFree)}</em></div>` : '');
+    </div>` + ((ADS_ON() && (i===3 || i===8)) ? `<div class="bay" data-label="Sponsor" data-slot="${esc(ADS.slot)}"></div>` : '');
   }).join('');
   $('#btnMore').style.display = list.length > 10 ? '' : 'none';
   $('#btnMore').textContent = S.showAll ? `${T('b_found')} · ${list.length}` : `${T('more')} (${list.length-10})`;
@@ -1652,10 +1663,15 @@ const PROSE = {
 };
 function renderProse(){
   const p = PROSE[EN_OR_IT()];
-  $('#lede').innerHTML       = p.lede;
-  $('#boardNote').textContent= p.boardNote;
-  $('#methodLede').textContent = p.methodLede;
-  $('#privLede').textContent = p.privLede;
+  /* Questi quattro capoversi si leggono prima ancora di capire cos'e' il
+     sito: restare in inglese per chi legge in giapponese era un difetto, non
+     una scelta. Ora vengono dalla tabella delle lingue. I testi lunghi del
+     Metodo restano in italiano e inglese. */
+  $('#lede').textContent     = T('lede');
+  $('#boardNote').textContent= T('boardNote');
+  $('#methodLede').textContent = T('methodLede');
+  $('#privLede').textContent = T('privLede');
+  $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
   $('#footTag').textContent  = p.footTag;
   const cell = ([n,h,b]) => `<div class="mcell"><span class="lbl lbl-sig">${n}</span><h4>${h}</h4><p>${b}</p></div>`;
   $('#methodGrid').innerHTML = p.method.map(cell).join('');
@@ -1666,7 +1682,6 @@ function renderProse(){
     : `<b>What this index contains.</b> ${fmtN(IDX.deals.length)} non-stop return fares recorded on ${IDX.observed} from <b>${nOri} departure airports</b> to <b>${NDEST} destinations</b>. The interface is translated into ${LANG_META.length} languages and prices read in ${CUR.length} currencies; the long-form text in this section stays in Italian and English. Every row is an observation — none is modelled.`;
   $('#footNote').textContent = `${T('obs')} ${IDX.observed} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
   ccRender();
-  document.querySelectorAll('.bay em').forEach(e => { e.textContent = AFFIL() || ADS_ON() ? '' : p.adFree; });
 }
 
 /* ── lingua applicata al DOM ────────────────────────────── */
@@ -1680,6 +1695,9 @@ function applyLang(){
   $('#heroEyebrow').textContent = `${T('obs')} ${IDX.observed} · ${T('direct')} · ${Object.keys(IDX.counts).length} ${T('st_air')}`;
   $('#panelHint').textContent = T('f_globe');
   $('#srcPill').title = S.live ? 'LIVE' : 'INDEX';
+  /* l'indice degli scali esiste in due lingue: a schermo si vede quello
+     giusto, ma entrambi restano nel sorgente perche' Google li segua */
+  document.querySelectorAll('.hub').forEach(el => { el.hidden = (el.lang === 'it') !== IT(); });
   renderProse();
 }
 function fillSelectors(){
@@ -1705,6 +1723,9 @@ function urlParams(full){
      ventidue codici di aeroporto nell'indirizzo, che cresceva a ogni tocco:
      qui torna a essere "n=IT", e restano scritti a parte solo gli aeroporti
      scelti a mano fuori da quell'insieme. */
+  /* la partenza suggerita all'apertura non e' una scelta dell'utente e non
+     entra nell'indirizzo: appena tocca qualcosa, l'indirizzo la registra */
+  if(S.auto && !full) return h;
   const nats = [], soli = new Set(S.origins);
   for(const k of S.oCountries){
     const a = autoAirports(k);
@@ -1903,6 +1924,7 @@ document.addEventListener('change', e => {
   const act = el.dataset.act, v = el.dataset.v;
   if(act === 'ctry'){ toggleCountry(v); }
   else if(act === 'origin'){
+    S.auto = false;
     el.checked ? S.origins.add(v) : S.origins.delete(v);
     el.closest('.pk').classList.toggle('sel', el.checked);
     renderTabs(); frame(); markDirty();
@@ -1995,9 +2017,23 @@ addEventListener('resize', () => frame());
   const bb = IDX.deals.reduce((m,r) => Math.max(m, r.km*2/r.p), 0);
   $('#stBest').textContent = ratio(bb) + ' km/€';
 
+  /* Il cuore del sito sono i risultati, non il modulo: aprire su "rotte
+     trovate 0" e' chiedere lavoro prima di dare qualcosa. Se non arrivi da un
+     link, la partenza la sceglie il sito — il tuo paese se l'indice lo copre,
+     altrimenti lo scalo con piu' rotte — e la classifica c'e' gia'. Sono
+     tariffe vere, non una vetrina finta: appena cerchi, vengono sostituite. */
+  if(!S.origins.size){
+    const reg = (navigator.language||'').split('-')[1];
+    const cand = reg && CTRY[reg.toUpperCase()] ? reg.toUpperCase() : '';
+    const top  = Object.keys(IDX.counts).sort((a,b) => IDX.counts[b]-IDX.counts[a])[0];
+    const casa = cand && autoAirports(cand).some(i => dealsFrom[i]) ? cand
+               : (AP[top] ? AP[top].k : '');
+    if(casa){ S.auto = true; toggleCountry(casa); }
+  }
   const o = AP[[...S.origins][0]];
   if(o) focusGlobe(o.la, o.lo); else { rot = -rad(12); tilt = rad(22); }
   runSearch(); renderBoard(); writeURL();
+  booting = false;
   ccInit();
   loop();
   if(location.protocol.startsWith('http')) fetchLive(true).then(() => { runSearch(); renderBoard(); });
