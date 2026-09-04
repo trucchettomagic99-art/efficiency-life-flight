@@ -63,6 +63,10 @@ button,select,input{font:inherit;color:inherit}
 .mod.on{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft);box-shadow:inset 0 -2px 0 var(--signal)}
 .mod.on s{text-decoration:none;color:var(--signal)}
 .mod-note{margin-left:auto;flex:none;color:var(--ink-3)}
+.mod i{font-style:normal;display:inline-block;margin-inline-start:6px;font-size:7.5px;letter-spacing:.14em;
+  color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;vertical-align:1px;
+  white-space:nowrap}
+.mod.on i{display:none}
 
 /* ── barra strumenti ──────────────────────────────────────── */
 .rail{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 90%,transparent);
@@ -498,10 +502,9 @@ footer a{color:var(--ink-2)}
     <span class="lbl" data-k="platform">Piattaforma</span>
     <nav class="mods" aria-label="Moduli">
       <span class="mod on"><s>▲</s> Flight</span>
-      <span class="mod">Stay</span><span class="mod">Rail</span>
-      <span class="mod">Drive</span><span class="mod">Energy</span>
+      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
+      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
     </nav>
-    <span class="lbl mod-note" data-k="plat_note">Efficiency Life e' la piattaforma. Flight e' il suo primo modulo.</span>
   </div>
 </div>
 
