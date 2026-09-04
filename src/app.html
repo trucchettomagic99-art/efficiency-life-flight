@@ -71,6 +71,11 @@ button,select,input{font:inherit;color:inherit}
 .mark{display:flex;align-items:center;gap:9px;font-family:Archivo,sans-serif;font-weight:800;
   font-size:16px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
 .mark s{text-decoration:none;color:var(--signal);font-size:14px}
+/* Il marchio e' la lettera eta: in fisica e' il simbolo del rendimento, quanto
+   ottieni diviso quanto spendi — che e' esattamente cio' che ordina questo
+   sito. La barra sotto l'arco e' la linea del rapporto. E' disegnata, non e'
+   un carattere di sistema: resta identica su qualunque dispositivo. */
+.mark .glyph{color:var(--signal);flex:none;margin-inline-end:3px}
 .mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
 .mark em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;
   color:var(--signal-2);font-weight:700;border:1px solid var(--rule-hi);padding:2px 7px;border-radius:2px;
@@ -453,7 +458,7 @@ footer a{color:var(--ink-2)}
 
 <div class="rail">
   <div class="wrap rail-in">
-    <div class="mark"><s>▲</s>Efficiency <u>Life</u><em>Flight</em></div>
+    <div class="mark"><svg class="glyph" width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></div>
     <nav>
       <a id="navSearch" data-k="nav_search">Ricerca</a>
       <a href="#method" data-k="nav_method">Metodo</a>
@@ -609,7 +614,7 @@ footer a{color:var(--ink-2)}
 <footer>
   <div class="wrap cols">
     <div>
-      <div class="mark" style="font-size:15px"><s>▲</s>Efficiency <u>Life</u><em>Flight</em></div>
+      <div class="mark" style="font-size:15px"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></div>
       <div style="margin-top:8px;max-width:44ch" id="footTag"></div>
       <!-- Un indirizzo raggiungibile: lo chiede AdSense, lo guardano i circuiti
            di affiliazione quando esaminano il sito, e serve a chi arriva qui e
@@ -663,7 +668,7 @@ const S = {
   geo:'from',
   oCont:'', oCountries:new Set(), origins:new Set(), oFind:'',
   dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
-  windows:new Set(WINDOWS), shape:'any', minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
+  windows:new Set(WINDOWS), shapes:new Set(), minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
   sort:'score', dir:-1, showAll:false,
   live:false, liveRows:null, pin:'', results:[]
 };
@@ -677,9 +682,15 @@ const WEIGHTS = { kmpe:32, deal:30, price:15, minpe:13, itin:5, rel:5 };
    settimana in UTC, 0 = domenica. */
 const SHAPES = { fsm:[5,1], fss:[5,0], ss:[6,0] };
 const dow = s => new Date(s + 'T00:00:00Z').getUTCDay();
-function shapeOk(r, k){
-  const s = SHAPES[k];
-  return !s || (dow(r.dep) === s[0] && dow(r.ret) === s[1]);
+/* Una riga corrisponde a una forma se parte e rientra in quei giorni.
+   Si possono spuntare piu' forme insieme, come per le finestre: l'insieme
+   vuoto vuol dire "qualsiasi", ed e' lo stato di partenza. */
+const isShape = (r, k) => { const s = SHAPES[k];
+  return !!s && dow(r.dep) === s[0] && dow(r.ret) === s[1]; };
+function shapeOk(r, set){
+  if(!set || !set.size) return true;
+  for(const k of set) if(isShape(r, k)) return true;
+  return false;
 }
 
 /* ── lingua, valuta, formati ────────────────────────────── */
@@ -939,7 +950,7 @@ function score(list){
 function runSearch(){
   let l = rawPool().map(enrich).filter(Boolean);
   if(S.dMode === 'pick' && S.dCountries.size) l = l.filter(r => S.dCountries.has(r.ck));
-  l = l.filter(r => S.windows.has(r.win) && shapeOk(r, S.shape)
+  l = l.filter(r => S.windows.has(r.win) && shapeOk(r, S.shapes)
                  && r.km >= S.minDist && r.km <= S.maxDist && r.price <= S.maxBudget);
   const best = {};                                  // una riga per destinazione: la migliore
   for(const r of l){ const k = r.dc; if(!best[k] || r.price < best[k].price) best[k] = r; }
@@ -1008,7 +1019,7 @@ function poolStats(){
   for(const r of rawPool()){
     const k = windowOf(daysOut(r.dep)); w[k] = (w[k]||0)+1;
     s.any++;
-    for(const t in SHAPES) if(shapeOk(r, t)) s[t]++;
+    for(const t in SHAPES) if(isShape(r, t)) s[t]++;
   }
   _statsKey = key; _stats = {w, s};
   return _stats;
@@ -1022,9 +1033,11 @@ function shapeCounts(){ return poolStats().s; }
 function renderShapes(){
   const c = S.origins.size ? shapeCounts() : {};
   const items = [['any','sh_any'],['fsm','sh_long'],['fss','sh_mid'],['ss','sh_short']];
-  $('#shapeChips').innerHTML = items.map(([v,k]) =>
-    `<button class="seg${S.shape===v?' on':''}" data-act="shape" data-v="${v}">${esc(T(k))}${
-      S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`).join('');
+  $('#shapeChips').innerHTML = items.map(([v,k]) => {
+    const on = v === 'any' ? !S.shapes.size : S.shapes.has(v);
+    return `<button class="seg${on?' on':''}" data-act="shape" data-v="${v}">${esc(T(k))}${
+      S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`;
+  }).join('');
 }
 function renderWindows(){
   const c = S.origins.size ? windowCounts() : {};
@@ -1627,7 +1640,7 @@ function writeURL(){
   h.set('o', [...S.origins].join('.'));
   if(S.dMode==='pick' && S.dCountries.size) h.set('c', [...S.dCountries].join('.'));
   h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
-  if(S.shape !== 'any')  h.set('k', S.shape);
+  if(S.shapes.size)      h.set('k', [...S.shapes].join('.'));
   if(S.minDist || S.maxDist!==18000) h.set('d', S.minDist + '.' + S.maxDist);
   if(S.maxBudget!==2000) h.set('b', S.maxBudget);
   if(S.bagFee)           h.set('g', S.bagFee);
@@ -1647,7 +1660,8 @@ function readURL(){
   if(c.length){ S.dCountries = new Set(c); S.dMode = 'pick'; }
   const w = h.get('w');
   if(w){ const set = new Set(w.split('.').map(Number).filter(n => WINDOWS.includes(n))); if(set.size) S.windows = set; }
-  const sh = h.get('k'); if(sh && SHAPES[sh]) S.shape = sh;
+  const sh = (h.get('k')||'').split('.').filter(x => SHAPES[x]);
+  if(sh.length) S.shapes = new Set(sh);
   const num = (k,lo,hi) => { const v = +h.get(k); return h.has(k) && Number.isFinite(v) && v>=lo && v<=hi ? v : null; };
   const dr = (h.get('d')||'').split('.').map(Number);
   if(dr.length===2 && dr.every(v => Number.isFinite(v) && v>=0 && v<=18000) && dr[0] < dr[1]){
@@ -1767,7 +1781,11 @@ document.addEventListener('click', async e => {
     S.windows.has(w) ? (S.windows.size>1 && S.windows.delete(w)) : S.windows.add(w);
     renderSegs(); markDirty();
   }
-  else if(act === 'shape'){ S.shape = v; renderShapes(); markDirty(); }
+  else if(act === 'shape'){
+    if(v === 'any') S.shapes.clear();
+    else S.shapes.has(v) ? S.shapes.delete(v) : S.shapes.add(v);
+    renderShapes(); markDirty();
+  }
   else if(act === 'all'){
     if(FROM()) for(const k of S.oCountries){ const c = CTRY[k]; if(c) c.a.forEach(i => S.origins.add(i)); }
     else { S.dMode = 'pick'; countriesOf(S.dCont).forEach(c => S.dCountries.add(c.k)); renderSegs(); }
