@@ -99,6 +99,7 @@ a{color:var(--signal)}
 .mark{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-weight:800;font-size:15px;
 letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
 .mark s{text-decoration:none;color:var(--signal)}
+.mark .glyph{color:var(--signal);vertical-align:-5px}
 .mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
 .mark em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;
 letter-spacing:.18em;color:var(--signal-2);border:1px solid var(--rule-hi);padding:2px 6px;
@@ -325,7 +326,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="{SITE}/"><s>▲</s> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
   <a class="alt" href="{alt}">{t['lang_other']}</a>
 </div></div>
 

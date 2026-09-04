@@ -65,9 +65,7 @@ ADS_SLOT   = ''
 DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
-FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
-           "%3Crect width='32' height='32' fill='%2303070E'/%3E"
-           "%3Cpath d='M16 6 L26 25 L16 20 L6 25 Z' fill='%232E8DFF'/%3E%3C/svg%3E")
+FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2303070E'/><path d='M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z' fill='%232E8DFF'/><path d='M3.5 23.9h25' stroke='%235FE3FF' stroke-width='2.2' stroke-linecap='round'/></svg>"
 
 
 def history_stats(days: int = 90, min_obs: int = 5) -> dict:
