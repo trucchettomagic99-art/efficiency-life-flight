@@ -5,7 +5,7 @@ Non tocca la rete: prende quello che c'e' in data/ e produce il sito. Puo'
 girare in locale (`python scripts/build.py`) o dentro GitHub Actions subito
 dopo fetch_prices.py.
 """
-import json, pathlib, shutil, sys
+import datetime, json, pathlib, shutil, sys
 
 ROOT   = pathlib.Path(__file__).resolve().parent.parent
 DATA   = ROOT / 'data'
@@ -70,12 +70,52 @@ FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox
            "%3Cpath d='M16 6 L26 25 L16 20 L6 25 Z' fill='%232E8DFF'/%3E%3C/svg%3E")
 
 
+def history_stats(days: int = 90, min_obs: int = 5) -> dict:
+    """Riassume lo storico dei prezzi in una mappa rotta -> [n, p10, mediana].
+
+    Ogni notte `fetch_prices.py` aggiunge una riga per rotta in data/history/.
+    Qui si guardano gli ultimi tre mesi e si calcolano due numeri per rotta: il
+    decimo percentile e la mediana. Servono al sito per dire "questo prezzo e'
+    nel 10% piu' basso degli ultimi 90 giorni" — l'unica informazione che
+    nessun aggregatore mostra, e che non si puo' copiare in fretta perche' non
+    si compra: si accumula una notte alla volta.
+
+    Finche' lo storico e' corto la mappa esce quasi vuota e il sito non mostra
+    nulla: meglio niente che una statistica su tre osservazioni.
+    """
+    d = DATA / 'history'
+    if not d.is_dir():
+        return {}
+    limite = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    serie: dict[str, list[int]] = {}
+    for f in sorted(d.glob('*.csv')):
+        for ln in f.read_text().splitlines():
+            parti = ln.split(',')
+            if len(parti) != 4 or parti[0] < limite:
+                continue
+            try:
+                serie.setdefault(f'{parti[1]}-{parti[2]}', []).append(int(parti[3]))
+            except ValueError:
+                continue
+    out = {}
+    for rotta, v in serie.items():
+        if len(v) < min_obs:
+            continue
+        v.sort()
+        n = len(v)
+        p10 = v[max(0, int(round(0.10 * (n - 1))))]
+        med = v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) // 2
+        out[rotta] = [n, p10, med]
+    return out
+
+
 def main() -> int:
     tpl = (ROOT / 'src' / 'app.html').read_text()
     cat = (DATA / 'catalog.json').read_text()
     idx = (DATA / 'index.json').read_text()
     wld = (DATA / 'world.json').read_text()
     i18 = (ROOT / 'src' / 'i18n.js').read_text()
+    hist = json.dumps(history_stats(), separators=(',', ':'))
 
     for name, blob in (('catalog.json', cat), ('index.json', idx),
                        ('world.json', wld), ('i18n.js', i18)):
@@ -84,6 +124,7 @@ def main() -> int:
 
     body = (tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
                .replace('__WORLD__', wld).replace('__I18N__', i18)
+               .replace('__HIST__', hist)
                .replace('__TP_MARKER__', TP_MARKER).replace('__TP_LINK__', TP_LINK)
                .replace('__TP_TRS__', TP_TRS).replace('__TP_CAMPAIGN__', TP_CAMPAIGN)
                .replace('__TP_P_FLIGHT__', TP_P_FLIGHT).replace('__TP_P_HOTEL__', TP_P_HOTEL)
@@ -92,7 +133,7 @@ def main() -> int:
                .replace('__TP_ACT_URL__', TP_ACT_URL)
                .replace('__TP_DRIVE_URL__', TP_DRIVE_URL)
                .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
-    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__',
+    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__', '__HIST__',
                '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
                '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
                '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
@@ -144,6 +185,8 @@ def main() -> int:
             shutil.copy2(f, DIST / f.name)
 
     d = json.loads(idx)
+    nh = len(json.loads(hist))
+    print(f"storico: {nh} rotte con almeno 5 rilevazioni negli ultimi 90 giorni")
     print(f"dist/index.html · {len(full):,} byte · {len(d['deals']):,} tariffe "
           f"· {len(d['counts'])} origini · rilevate il {d['observed']}")
     return 0

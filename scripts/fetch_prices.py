@@ -35,7 +35,7 @@ API   = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices'
 CITIES   = 'https://api.travelpayouts.com/data/en/cities.json'
 AIRPORTS = 'https://api.travelpayouts.com/data/en/airports.json'
 
-MIN_NIGHTS, MAX_NIGHTS = 2, 30      # esclude same-day e soggiorni assurdi
+MIN_NIGHTS, MAX_NIGHTS = 1, 30      # 1 notte serve al filtro sab-dom; 0 sarebbe same-day
 MIN_PRICE  = 10                     # sotto i 10 EUR sono errori di prezzo
 PER_ORIGIN = 60                     # destinazioni tenute per aeroporto
 WORKERS    = 3                      # richieste in parallelo
@@ -98,9 +98,12 @@ def fetch_origin(iata: str):
         except ValueError:                    continue
         nights = (d1 - d0).days
         if not (MIN_NIGHTS <= nights <= MAX_NIGHTS): continue
+        # niente campo 's': la fonte e' una sola e ripeterlo su ogni riga
+        # costava 40 KB di pagina. Chi legge l'indice tratta l'assenza come
+        # 'tp' — l'unica fonte che c'e'.
         rows.append({'o': iata, 'd': x['destination'], 'p': int(round(price)),
                      'dep': dep, 'ret': ret, 'dur': int(x.get('duration') or 0),
-                     'km': int(dist), 'n': nights, 's': 'tp'})
+                     'km': int(dist), 'n': nights})
 
     # una riga per destinazione, la piu' economica; poi le migliori per km/euro
     best = {}
@@ -108,9 +111,108 @@ def fetch_origin(iata: str):
         k = r['d']
         if k not in best or r['p'] < best[k]['p']:
             best[k] = r
-    out = sorted(best.values(), key=lambda r: -(r['km'] * 2 / r['p']))[:PER_ORIGIN]
+    # Niente selezione qui: la curva del prezzo atteso si puo' stimare solo
+    # sull'insieme completo, e la scrematura per km/euro da sola butterebbe via
+    # proprio gli affari brevi — un volo di 400 km a 19 euro ha un km/euro
+    # mediocre ed e' comunque l'occasione migliore della lista.
+    out = list(best.values())
     print(f'  {iata}: {len(out)} rotte', flush=True)
     return iata, out
+
+
+def fit_curve(rows):
+    """Stima la curva prezzo-distanza dell'intero indice: p ~ a * km^b.
+
+    In scala logaritmica e' una retta, quindi bastano i minimi quadrati; il
+    problema sono le tariffe anomale, che in un listino aereo abbondano. Tre
+    passate, e a ogni passata si scartano i punti che distano piu' di 2,5
+    deviazioni robuste dalla retta (mediana e MAD, non media e sigma: la media
+    la sposta proprio l'anomalia che vogliamo escludere).
+
+    Serve a rispondere a una domanda che il km/euro non pone: non "quanti
+    chilometri mi da questo prezzo", ma "quanto costa di solito volare cosi'
+    lontano, e questa tariffa quanto sta sotto".
+    """
+    import math
+    pts = [(math.log(r['km']), math.log(r['p'])) for r in rows if r['km'] > 80 and r['p'] > 0]
+    if len(pts) < 200:
+        return None
+    def med(v):
+        s = sorted(v); n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+    use, a, b = pts, 0.0, 0.0
+    for _ in range(3):
+        n = len(use)
+        mx = sum(x for x, _ in use) / n
+        my = sum(y for _, y in use) / n
+        sxy = sum((x - mx) * (y - my) for x, y in use)
+        sxx = sum((x - mx) ** 2 for x, _ in use)
+        if not sxx:
+            return None
+        b = sxy / sxx
+        a = my - b * mx
+        res = [y - (a + b * x) for x, y in pts]
+        m = med(res)
+        mad = med([abs(r - m) for r in res]) or 1e-9
+        cut = 2.5 * 1.4826 * mad
+        nxt = [pt for pt, r in zip(pts, res) if abs(r - m) <= cut]
+        if len(nxt) < 200:
+            break
+        use = nxt
+    return (a, b)
+
+
+def deal_ratio(r, curve):
+    """Quanto la tariffa sta sotto il prezzo atteso per quella distanza.
+    1.0 = in linea con il mercato, 1.8 = costa il 44% meno del previsto."""
+    import math
+    if not curve or r['km'] <= 0:
+        return 1.0
+    a, b = curve
+    return math.exp(a + b * math.log(r['km'])) / max(r['p'], 1)
+
+
+def pick(rows, curve, limit):
+    """Le righe da tenere per un aeroporto di partenza.
+
+    Meta' per chilometri per euro — il segnale storico del sito — e meta' per
+    scarto dal prezzo atteso, che pesca le occasioni corte che il km/euro
+    condanna. L'unione, non la somma: una rotta che vince su entrambi occupa
+    un posto solo, e resta spazio per l'altra meta'.
+    """
+    by_km = sorted(rows, key=lambda r: -(r['km'] * 2 / r['p']))[:limit * 2 // 3]
+    by_deal = sorted(rows, key=lambda r: -deal_ratio(r, curve))[:limit * 2 // 3]
+    seen, out = set(), []
+    for r in [x for pair in zip(by_km, by_deal) for x in pair]:   # alternati
+        k = r['d']
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(r)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def append_history(deals, today):
+    """Aggiunge la fotografia di oggi allo storico: un file per mese, una riga
+    per rotta. Sono i dati che fra un mese permetteranno di dire "questo prezzo
+    e' basso" invece di "questo prezzo e' 40 euro" — e non si possono
+    recuperare a posteriori, si accumulano soltanto. Circa 200 KB al mese.
+    """
+    d = DATA / 'history'
+    d.mkdir(exist_ok=True)
+    f = d / f'{today[:7]}.csv'
+    righe = {}
+    if f.exists():
+        for ln in f.read_text().splitlines():
+            if ln.startswith(today + ','):        # gia' passato oggi: si riscrive
+                continue
+            righe[ln] = None
+    for r in deals:
+        righe[f"{today},{r['o']},{r['d']},{r['p']}"] = None
+    f.write_text('\n'.join(righe) + '\n')
+    return f, len(deals)
 
 
 def main() -> int:
@@ -121,8 +223,15 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         results = list(pool.map(fetch_origin, origins))
 
+    tutte = [r for _, rows in results for r in rows]
+    curve = fit_curve(tutte)
+    if curve:
+        print(f'Curva prezzo-distanza: p ~ {2.718281828 ** curve[0]:.2f} * km^{curve[1]:.3f} '
+              f'(su {len(tutte)} tariffe)', flush=True)
+
     deals, counts = [], {}
     for iata, rows in results:
+        rows = pick(rows, curve, PER_ORIGIN)
         if rows:
             deals += rows
             counts[iata] = len(rows)
@@ -169,6 +278,12 @@ def main() -> int:
            'sources': {'tp': 'travelpayouts/aviasales · get_latest_prices'},
            'places': places, 'deals': deals, 'counts': counts}
     (DATA / 'index.json').write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')))
+
+    try:
+        f, n = append_history(deals, out['observed'])
+        print(f"Storico: +{n} righe in {f.relative_to(ROOT)}")
+    except Exception as e:
+        print(f'! storico non aggiornato ({safe(e)})', file=sys.stderr)
 
     dest = len({r['d'] for r in deals})
     paesi = len({places[r['d']]['k'] for r in deals})

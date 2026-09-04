@@ -132,6 +132,7 @@ td.r{font-family:ui-monospace,monospace;color:var(--ink-3);width:44px}
 tr:first-child td.r{color:var(--alert)}
 td.p{color:var(--signal);font-weight:600}
 td.k{color:var(--signal-2)}
+s.deal{display:block;text-decoration:none;font-size:10.5px;letter-spacing:.06em;color:var(--ok,#37D399);margin-top:2px}
 .dest{font-weight:600}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--ink-3);
 margin-inline-start:8px;letter-spacing:.06em}
@@ -191,6 +192,56 @@ def act_url(city: str) -> str:
                    .replace('{url}', quote(url, safe='')))
 
 
+def fit_curve(rows):
+    """p ~ a * km^b sull'intero indice, minimi quadrati nei logaritmi con tre
+    passate di sfoltimento robusto (mediana e MAD). E' la stessa curva che usa
+    l'applicazione: le pagine per aeroporto devono dire la stessa cosa."""
+    import math
+    pts = [(math.log(r['km']), math.log(r['p'])) for r in rows if r['km'] > 80 and r['p'] > 0]
+    if len(pts) < 200:
+        return None
+    def med(v):
+        s = sorted(v); n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+    use, a, b = pts, 0.0, 0.0
+    for _ in range(3):
+        n = len(use)
+        mx = sum(x for x, _ in use) / n
+        my = sum(y for _, y in use) / n
+        sxy = sum((x - mx) * (y - my) for x, y in use)
+        sxx = sum((x - mx) ** 2 for x, _ in use)
+        if not sxx:
+            return None
+        b = sxy / sxx
+        a = my - b * mx
+        res = [y - (a + b * x) for x, y in pts]
+        m = med(res)
+        mad = med([abs(r - m) for r in res]) or 1e-9
+        nxt = [pt for pt, r in zip(pts, res) if abs(r - m) <= 2.5 * 1.4826 * mad]
+        if len(nxt) < 200:
+            break
+        use = nxt
+    return (a, b)
+
+
+CURVE = None
+
+
+def deal_badge(r) -> str:
+    v = deal_pct(r)
+    return f'<s class="deal">\u2212{v}%</s>' if v and v >= 25 else ''
+
+
+def deal_pct(r):
+    """Quanto la tariffa sta sotto il prezzo atteso per la sua distanza, in
+    percento. Vuoto se la curva non e' stimabile."""
+    import math
+    if not CURVE or r['km'] <= 0:
+        return None
+    exp = math.exp(CURVE[0] + CURVE[1] * math.log(r['km']))
+    return round((1 - r['p'] / exp) * 100)
+
+
 def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) -> str:
     t = L[lang]
     other = 'en' if lang == 'it' else 'it'
@@ -219,7 +270,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
             f'<td><span class="dest">{esc(cityname(pl["n"], lang))}</span><span class="code">{r["d"]}</span></td>'
             f'<td>{esc(CN.get(pl["k"], pl["k"]))}</td>'
             f'<td class="n">{date(r["dep"])} – {date(r["ret"])}</td>'
-            f'<td class="n p">{r["p"]} €</td>'
+            f'<td class="n p">{r["p"]} €{deal_badge(r)}</td>'
             f'<td class="n">{r["km"]*2:,}</td>'.replace(',', '.') +
             f'<td class="n k">{r["km"]*2/r["p"]:.1f}</td>'
             f'<td class="n">{r["n"]}</td>'
@@ -376,6 +427,11 @@ def main() -> int:
     for c in cat['countries']:
         COUNTRY[c['k']] = c.get('it') or c.get('en') or c['k']
         COUNTRY_EN[c['k']] = c.get('en') or c.get('it') or c['k']
+
+    global CURVE
+    CURVE = fit_curve(idx['deals'])
+    if CURVE:
+        print(f'curva prezzo-distanza: p ~ {2.718281828 ** CURVE[0]:.2f} * km^{CURVE[1]:.3f}')
 
     by = {}
     for r in idx['deals']:
