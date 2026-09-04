@@ -143,7 +143,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 
 .finder input[type=text]{width:100%;background:var(--deck2);border:1px solid var(--rule-hi);padding:7px 10px;
   font-family:"JetBrains Mono",monospace;font-size:12px;border-radius:2px;margin-bottom:8px}
-.picklist{max-height:190px;overflow-y:auto;border:1px solid var(--rule);background:var(--deck2);border-radius:2px}
+.picklist{max-height:190px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--rule);background:var(--deck2);border-radius:2px}
 .picklist::-webkit-scrollbar{width:8px}
 .picklist::-webkit-scrollbar-thumb{background:var(--rule-hi);border-radius:8px}
 .pk{display:flex;align-items:center;gap:9px;padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--rule);
@@ -167,7 +167,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .tiny:hover{border-color:var(--signal);color:var(--ink)}
 
 /* ── console geografica: un solo posto per partenza e destinazione ── */
-.geo{padding:0}
+.geo{padding:0;overflow:hidden}
 .geo-head{display:flex;align-items:stretch;border-bottom:1px solid var(--rule);flex-wrap:wrap}
 .tab{background:transparent;border:0;border-inline-end:1px solid var(--rule);padding:13px 22px;cursor:pointer;
   font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
@@ -179,7 +179,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .tab .pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:9px;vertical-align:1px}
 .geo-head .sp{margin-inline-start:auto;display:flex;align-items:center;gap:6px;padding-inline:16px}
 .geo-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.86fr)}
-.geo-globe{position:relative;border-inline-end:1px solid var(--rule);padding:10px 10px 6px;min-width:0}
+.geo-globe{position:relative;border-inline-end:1px solid var(--rule);padding:10px 10px 6px;min-width:0;overflow:hidden}
 .geo-side{padding:14px 16px 16px;min-width:0;display:flex;flex-direction:column;gap:9px}
 #ctryList{max-height:206px}
 .geo-side .lbl{display:block}
@@ -188,7 +188,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .legend i{width:8px;height:8px;border-radius:50%;display:block;flex:none}
 .legend b{color:var(--ink-2);font-weight:500}
-.globe-wrap{position:relative}
+.globe-wrap{position:relative;overflow:hidden;contain:paint}
 #globe{width:100%;height:clamp(300px,34vw,500px);display:block;cursor:grab;touch-action:none}
 #globe.drag{cursor:grabbing}
 .globe-tip{position:absolute;pointer-events:none;transform:translate(-50%,-150%);padding:4px 8px;
