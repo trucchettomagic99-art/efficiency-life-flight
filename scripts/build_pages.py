@@ -12,7 +12,7 @@ Da ciascuna si entra nell'applicazione con l'aeroporto gia' impostato.
 Gira dopo build.py, dallo stesso indice. Non tocca la rete.
 """
 from __future__ import annotations
-import json, pathlib, sys, datetime, html, importlib.util
+import json, pathlib, sys, datetime, html, importlib.util, shutil
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / 'data'
@@ -24,6 +24,7 @@ B = importlib.util.module_from_spec(spec); spec.loader.exec_module(B)
 SITE, TP_MARKER, TP_LINK = B.SITE, B.TP_MARKER, B.TP_LINK
 TP_TRS, TP_CAMPAIGN, TP_P_FLIGHT = B.TP_TRS, B.TP_CAMPAIGN, B.TP_P_FLIGHT
 TP_P_ACT, TP_C_ACT, TP_ACT_URL = B.TP_P_ACT, B.TP_C_ACT, B.TP_ACT_URL
+PROSE = B.prose_data()['locales']
 
 MIN_ROUTES = 6          # sotto questa soglia la pagina sarebbe povera: non la creo
 TOP        = 12         # righe in tabella
@@ -362,6 +363,119 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 """
 
 
+def fill(text: str, values: dict[str, object]) -> str:
+    """Sostituisce solo i segnaposto noti, lasciando intatto l'HTML tradotto."""
+    out = text
+    for key, value in values.items():
+        out = out.replace('{' + key + '}', esc(value))
+    return out
+
+
+def alternate_links() -> str:
+    rows = [
+        f'<link rel="alternate" hreflang="{esc(meta["hreflang"])}" '
+        f'href="{SITE}/lang/{esc(meta["path"])}/">'
+        for meta in PROSE.values()
+    ]
+    rows.append(f'<link rel="alternate" hreflang="x-default" href="{SITE}/">')
+    return '\n'.join(rows)
+
+
+def locale_page(code: str, rows: list, places: dict, airports: dict,
+                obs: str, fare_count: int, origin_count: int, dest_count: int) -> str:
+    """Landing leggera e indicizzabile per una delle lingue dell'app."""
+    meta = PROSE[code]
+    title = meta['seo']['title']
+    desc = meta['seo']['description']
+    url = f'{SITE}/lang/{meta["path"]}/'
+    values = {
+        'fareCount': fare_count, 'originCount': origin_count, 'destCount': dest_count,
+        'languageCount': len(PROSE), 'currencyCount': 59, 'observed': obs,
+        'fxDate': B.FX_DATE,
+    }
+    summary = fill(meta['indexNote'], values)
+    warning = fill(meta['privacy'][3][1], values)
+    cards = ''.join(
+        f'<div class="best"><b>{esc(head)}</b><br>{fill(body, values)}</div>'
+        for head, body in meta['method'][:2])
+    body = []
+    items = []
+    for i, r in enumerate(rows, 1):
+        op = airports.get(r['o'], {'c': r['o']})
+        dp = places.get(r['d'], {'n': r['d']})
+        route_name = f'{op.get("c", r["o"])} ({r["o"]}) → {dp.get("n", r["d"])} ({r["d"]})'
+        body.append(
+            f'<tr><td class="r">{i:02d}</td><td><span class="dest">{esc(route_name)}</span></td>'
+            f'<td class="n p">{r["p"]} €</td>'
+            f'<td class="n">{r["km"] * 2:,}</td>'.replace(',', ' ') +
+            f'<td class="n k">{r["km"] * 2 / r["p"]:.1f}</td></tr>')
+        items.append({'@type':'ListItem', 'position':i, 'name':route_name})
+
+    language_nav = ''.join(
+        f'<a lang="{esc(other["hreflang"])}" hreflang="{esc(other["hreflang"])}" '
+        f'href="{SITE}/lang/{esc(other["path"])}/">{esc(other["name"])}</a>'
+        for other in PROSE.values())
+    schema = json.dumps({
+        '@context':'https://schema.org', '@type':'ItemList', 'name':title,
+        'description':desc, 'url':url, 'numberOfItems':len(items),
+        'itemListElement':items,
+    }, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+
+    return f"""<!doctype html>
+<html lang="{esc(meta['hreflang'])}" dir="{esc(meta['dir'])}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="{url}">
+{alternate_links()}
+<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark light">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Efficiency Life">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(desc)}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{SITE}/og.png">
+<meta property="og:locale" content="{esc(meta['locale'])}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(title)}">
+<meta name="twitter:description" content="{esc(desc)}">
+<meta name="twitter:image" content="{SITE}/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>{CSS}</style>
+<script type="application/ld+json">{schema}</script>
+</head>
+<body>
+<div class="rail"><div class="wrap">
+  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+</div></div>
+<header><div class="wrap">
+  <p class="lbl sig">EFFICIENCY LIFE · FLIGHT</p>
+  <h1>{esc(title)}</h1>
+  <p class="intro">{esc(desc)}</p>
+  <p class="best">{summary}</p>
+</div></header>
+<main class="wrap">
+  <div class="tw"><table aria-label="Efficiency Life Flight">
+    <thead><tr><th>#</th><th>IATA</th><th class="n">€</th><th class="n">KM ↔</th><th class="n">KM/€</th></tr></thead>
+    <tbody>{''.join(body)}</tbody>
+  </table></div>
+  <a class="go" href="{SITE}/#l={code}"><b>Efficiency Life Flight →</b></a>
+  {cards}
+  <p class="note">{warning}</p>
+  <nav class="near" aria-label="Language">{language_nav}</nav>
+</main>
+<footer><div class="wrap">Travelpayouts / Aviasales · OurAirports · Natural Earth · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a></div></footer>
+</body>
+</html>
+"""
+
+
 
 # Le citta' nel catalogo sono in inglese. Per le pagine italiane conta:
 # nessuno cerca "voli economici da Rome". Copro l'Italia per intero e le mete
@@ -457,11 +571,37 @@ def main() -> int:
             (d / 'index.html').write_text(page(lang, AP[o], good[o], places, obs, others))
             made.append(f"/{L[lang]['dir']}/{o.lower()}/")
 
+    # Una landing statica per ciascuna lingua dell'app. Non moltiplico ogni
+    # pagina aeroporto per 36 (creerebbe migliaia di duplicati): queste pagine
+    # danno a ogni lingua un URL canonico, contenuto reale, hreflang e una
+    # porta d'ingresso indicizzabile verso il motore interattivo.
+    ranked = sorted(idx['deals'], key=lambda r: -(r['km'] * 2 / r['p']))
+    showcase, seen_origins = [], set()
+    for r in ranked:
+        if r['o'] in seen_origins or r['o'] not in AP or r['d'] not in places:
+            continue
+        showcase.append(r); seen_origins.add(r['o'])
+        if len(showcase) == TOP:
+            break
+    locale_root = DIST / 'lang'
+    if locale_root.is_dir():
+        shutil.rmtree(locale_root)
+    locale_made = []
+    for code, meta in PROSE.items():
+        d = locale_root / meta['path']
+        d.mkdir(parents=True, exist_ok=True)
+        (d / 'index.html').write_text(locale_page(
+            code, showcase, places, AP, obs, len(idx['deals']), len(idx['counts']),
+            len({r['d'] for r in idx['deals']})))
+        locale_made.append(f"/lang/{meta['path']}/")
+
     # sitemap: la radice piu' tutte le pagine appena scritte
     today = datetime.date.today().isoformat()
     urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>']
     urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.7</priority></url>'
              for u in made]
+    urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.8</priority></url>'
+             for u in locale_made]
     (DIST / 'sitemap.xml').write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -488,11 +628,17 @@ def main() -> int:
                     f'{"Voli diretti da" if lang == "it" else "Direct flights from"} '
                     f'{len(order)} {"aeroporti" if lang == "it" else "airports"}</span>'
                     f'{link}</nav>')
+            lingue = ''.join(
+                f'<a lang="{esc(meta["hreflang"])}" hreflang="{esc(meta["hreflang"])}" '
+                f'href="/lang/{esc(meta["path"])}/">{esc(meta["name"])}</a> '
+                for meta in PROSE.values())
+            voci.append(f'<nav class="locale-index" aria-label="Language">{lingue}</nav>')
             home.write_text(h.replace('<!--HUB-->', ''.join(voci)))
-            print(f'indice nella home: {len(order) * 2} collegamenti interni')
+            print(f'indice nella home: {len(order) * 2} aeroporti + {len(PROSE)} lingue')
 
     size = sum(f.stat().st_size for f in DIST.rglob('index.html') if f.parent != DIST)
-    print(f'{len(made)} pagine ({len(order)} aeroporti × 2 lingue) · {size/1024/1024:.1f} MB '
+    print(f'{len(made) + len(locale_made)} pagine ({len(order)} aeroporti × 2 + '
+          f'{len(locale_made)} landing lingua) · {size/1024/1024:.1f} MB '
           f'· sitemap con {len(urls)} indirizzi')
     if TP_MARKER:
         print('link di prenotazione: affiliati')
