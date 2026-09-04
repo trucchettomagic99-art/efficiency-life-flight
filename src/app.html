@@ -261,7 +261,7 @@ section{scroll-margin-top:64px}
 
 /* ── classifica ───────────────────────────────────────────── */
 .mrow,.mhead{display:grid;
-  grid-template-columns:50px minmax(0,2.1fr) minmax(78px,.8fr) minmax(74px,.7fr) minmax(70px,.66fr) minmax(74px,.66fr) minmax(112px,.95fr) 122px;
+  grid-template-columns:50px minmax(0,2.1fr) minmax(76px,.78fr) minmax(70px,.66fr) minmax(68px,.62fr) minmax(72px,.62fr) minmax(66px,.6fr) minmax(104px,.9fr) 122px;
   align-items:center;border-bottom:1px solid var(--rule);position:relative}
 .mhead{border-bottom:1px solid var(--rule-hi)}
 .mrow:hover{background:var(--deck2)}
@@ -281,6 +281,9 @@ section{scroll-margin-top:64px}
 .num b{display:block;font-size:15px;font-weight:700;white-space:nowrap}
 .num span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
 .price b{color:var(--signal);font-size:16.5px}
+.num.good b{color:var(--ok)}
+.num.meh b{color:var(--ink-3)}
+.tagline.hot-tag{border-color:var(--ok);color:var(--ok)}
 .meter{display:flex;flex-direction:column;gap:6px}
 .meter .bar{height:4px;background:var(--deck3);position:relative;overflow:hidden}
 .meter .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--signal-deep),var(--signal-2));display:block}
@@ -356,7 +359,7 @@ footer a{color:var(--ink-2)}
 /* stringendo cadono prima le colonne accessorie: km/EUR resta fino in fondo,
    perche' e' il numero per cui esiste questo sito */
 @media(max-width:1240px){
-  .mrow,.mhead{grid-template-columns:44px minmax(0,2fr) minmax(74px,.8fr) minmax(70px,.7fr) minmax(66px,.66fr) minmax(108px,.9fr) 116px}
+  .mrow,.mhead{grid-template-columns:44px minmax(0,2fr) minmax(74px,.78fr) minmax(68px,.66fr) minmax(66px,.62fr) minmax(70px,.62fr) minmax(104px,.86fr) 116px}
   .c-stay{display:none}
 }
 @media(max-width:900px){
@@ -367,7 +370,7 @@ footer a{color:var(--ink-2)}
 @media(max-width:1040px){
   .panel-body{grid-template-columns:1fr}
   .mrow,.mhead{grid-template-columns:40px minmax(0,2fr) minmax(72px,.8fr) minmax(68px,.7fr) minmax(66px,.7fr) 112px}
-  .c-score{display:none}
+  .c-score,.c-deal{display:none}
 }
 @media(max-width:1000px){
   .apex-in{grid-template-columns:1fr;gap:20px}
@@ -532,6 +535,8 @@ footer a{color:var(--ink-2)}
       <div class="step full">
         <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Finestra di partenza (giorni)</em></h3>
         <div class="segbar" id="winChips"></div>
+        <div class="lbl" style="margin-top:16px" data-k="f_shape">Forma del viaggio</div>
+        <div class="segbar" id="shapeChips"></div>
         <div class="limits" style="margin-top:16px">
           <div><span class="lbl" id="lblDist">Distanza</span>
             <div class="rangeRow">
@@ -643,6 +648,11 @@ const PL    = IDX.places;
 const AP    = Object.fromEntries(CAT.airports.map(a => [a.i, a]));
 const CTRY  = Object.fromEntries(CAT.countries.map(c => [c.k, c]));
 const NDEST = new Set(IDX.deals.map(d => d.d)).size;
+/* Storico dei prezzi: rotta -> [rilevazioni, decimo percentile, mediana] sugli
+   ultimi 90 giorni. Lo riempie build.py leggendo data/history/, che cresce di
+   una riga per rotta ogni notte. Finche' e' corto resta vuoto e il sito non
+   mostra niente: una statistica su tre osservazioni e' peggio del silenzio. */
+const HIST = __HIST__;
 const CURBY = Object.fromEntries(CUR.map(c => [c[0], c]));
 const TXT   = Object.fromEntries(KEYS.map((k,i) => [k, i]));
 
@@ -653,11 +663,24 @@ const S = {
   geo:'from',
   oCont:'', oCountries:new Set(), origins:new Set(), oFind:'',
   dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
-  windows:new Set(WINDOWS), minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
+  windows:new Set(WINDOWS), shape:'any', minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
   sort:'score', dir:-1, showAll:false,
   live:false, liveRows:null, pin:'', results:[]
 };
-const WEIGHTS = { kmpe:45, minpe:25, price:15, itin:10, rel:5 };
+/* I pesi del punteggio. "deal" e' lo scarto dal prezzo atteso per quella
+   distanza: e' la voce che distingue un affare da un volo semplicemente lungo,
+   e vale quanto il chilometro per euro. */
+const WEIGHTS = { kmpe:32, deal:30, price:15, minpe:13, itin:5, rel:5 };
+
+/* Forma del viaggio: giorno di partenza e giorno di rientro.
+   fri-mon 3 notti · fri-sun 2 · sat-sun 1. Il numero e' il giorno della
+   settimana in UTC, 0 = domenica. */
+const SHAPES = { fsm:[5,1], fss:[5,0], ss:[6,0] };
+const dow = s => new Date(s + 'T00:00:00Z').getUTCDay();
+function shapeOk(r, k){
+  const s = SHAPES[k];
+  return !s || (dow(r.dep) === s[0] && dow(r.ret) === s[1]);
+}
 
 /* ── lingua, valuta, formati ────────────────────────────── */
 let RTL = false;
@@ -698,6 +721,15 @@ const fmtN  = n => n.toLocaleString(S.lang);
 const fmtDate = s => new Date(s+'T00:00:00Z').toLocaleDateString(S.lang,{day:'2-digit',month:'short',timeZone:'UTC'});
 const dur = m => `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`;
 const ratio = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+/* Scarto dal prezzo atteso, in percento: -48% = costa quasi la meta' di
+   quanto costa di norma volare cosi' lontano. */
+const dealPct = r => r.exp ? Math.round((1 - r.price/r.exp) * 100) : 0;
+function dealCell(r){
+  const v = dealPct(r);
+  const txt = v > 0 ? '\u2212' + v + '%' : v < 0 ? '+' + (-v) + '%' : '—';
+  return `<div class="num c-deal${v >= 25 ? ' good' : v < 0 ? ' meh' : ''}">` +
+         `<b>${txt}</b><span>${esc(T('deal_u'))}</span></div>`;
+}
 
 /* bandiere: su alcuni sistemi (Windows) il font non ha le bandiere emoji.
    Si verifica una volta sola disegnandone una e cercando il colore. */
@@ -799,30 +831,107 @@ function enrich(raw){
   if(!o || !d || d.k === o.k) return null;
   const price = raw.p + S.bagFee;
   const [s1,s2] = stayFor(raw.km);
-  return { ...raw, o, d, oc:raw.o, dc:raw.d, price, base:raw.p,
+  const exp = expectedPrice(raw.km);
+  return { ...raw, o, d, oc:raw.o, dc:raw.d, price, base:raw.p, exp,
+    deal: exp ? exp/price : 1,
     kmpe:(raw.km*2)/price, minpe:raw.dur/price,
     win: windowOf(daysOut(raw.dep)), stay:[s1,s2], ck:d.k,
     id: `${raw.o}-${raw.d}-${yymmdd(raw.dep)}` };
 }
+/* ══════════════════════════════════════════════════════════
+   IL PREZZO ATTESO — il motore che distingue un affare da un volo lungo
+   ══════════════════════════════════════════════════════════
+   Il chilometro per euro ha un difetto strutturale: premia sempre la
+   distanza. Un intercontinentale a 400 euro fa 45 km/EUR e sembra un affare;
+   un volo di 600 km a 19 euro ne fa 63 e passa inosservato, benche' costi
+   un terzo di quanto costa di norma quella tratta.
+
+   Qui si stima come il prezzo cresce con la distanza sull'intero indice —
+   circa cinquemila tariffe reali — con una retta nei logaritmi, cioe' una
+   legge di potenza p = a * km^b. Le tariffe anomale (errori di prezzo,
+   promozioni irripetibili) sposterebbero la retta, quindi si scartano in tre
+   passate quelle che distano piu' di 2,5 deviazioni robuste: mediana e MAD,
+   non media e sigma, perche' la media la sposta proprio il valore da
+   escludere.
+
+   Il risultato per ogni riga e' un numero solo: quanto quella tariffa sta
+   sotto il prezzo atteso per la sua distanza. Non e' copiabile in un
+   pomeriggio non perche' la formula sia segreta — e' scritta qui — ma perche'
+   senza un indice quotidiano di migliaia di tariffe la retta non si stima. */
+let CURVE = null;
+function fitCurve(rows, gk, gp){
+  const pts = [];
+  for(const r of rows){
+    const km = gk(r), p = gp(r);
+    if(km > 80 && p > 0) pts.push([Math.log(km), Math.log(p)]);
+  }
+  if(pts.length < 200) return null;
+  const med = v => { const s = [...v].sort((x,y)=>x-y), n = s.length;
+                     return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; };
+  let use = pts, a = 0, b = 0;
+  for(let pass = 0; pass < 3; pass++){
+    const n = use.length;
+    let sx = 0, sy = 0;
+    for(const [x,y] of use){ sx += x; sy += y; }
+    const mx = sx/n, my = sy/n;
+    let sxy = 0, sxx = 0;
+    for(const [x,y] of use){ sxy += (x-mx)*(y-my); sxx += (x-mx)*(x-mx); }
+    if(!sxx) return null;
+    b = sxy/sxx; a = my - b*mx;
+    const res = pts.map(([x,y]) => y - (a + b*x));
+    const m = med(res), mad = med(res.map(r => Math.abs(r-m))) || 1e-9;
+    const cut = 2.5 * 1.4826 * mad;
+    const nxt = pts.filter((_,i) => Math.abs(res[i]-m) <= cut);
+    if(nxt.length < 200) break;
+    use = nxt;
+  }
+  return {a, b};
+}
+function marketCurve(){
+  if(!CURVE) CURVE = fitCurve(IDX.deals, r => r.km, r => r.p);
+  return CURVE;
+}
+const expectedPrice = km => {
+  const c = marketCurve();
+  return c && km > 0 ? Math.exp(c.a + c.b*Math.log(km)) : 0;
+};
+
+/* Lo storico, quando c'e': dice se questo prezzo e' basso per questa rotta,
+   non solo per questa distanza. Due domande diverse, due risposte diverse. */
+function histTag(r){
+  const h = HIST[r.oc + '-' + r.dc];
+  if(!h || h[0] < 5) return '';
+  if(r.base <= h[1]) return `<span class="tagline hot-tag">${esc(T('hist_low'))} · ${h[0]}g</span>`;
+  if(r.base <  h[2]) return `<span class="tagline">${esc(T('hist_med'))} · ${h[0]}g</span>`;
+  return '';
+}
+
+/* Le tariffe raggruppate per scalo di partenza una volta sola, all'avvio.
+   Prima ogni chiamata rifaceva un filter sull'intero indice per ogni
+   aeroporto selezionato: con venti scali erano centomila confronti a ogni
+   ridisegno dei chip. */
+const IDX_BY_O = {};
+for(const r of IDX.deals) (IDX_BY_O[r.o] ||= []).push(r);
+
 function rawPool(){
   const out = [];
   const liveBy = {};
   if(S.liveRows) for(const r of S.liveRows) (liveBy[r.o] ||= []).push(r);
   for(const o of S.origins){
-    if(liveBy[o]) out.push(...liveBy[o]);
-    else out.push(...IDX.deals.filter(r => r.o === o));
+    const rows = liveBy[o] || IDX_BY_O[o];
+    if(rows) out.push(...rows);
   }
   return out;
 }
 function score(list){
   if(!list.length) return list;
   const mk = k => { const v = list.map(x=>x[k]); return [Math.min(...v), Math.max(...v)]; };
-  const [kl,kh]=mk('kmpe'), [ml,mh]=mk('minpe'), [pl,ph]=mk('price');
+  const [kl,kh]=mk('kmpe'), [ml,mh]=mk('minpe'), [pl,ph]=mk('price'), [dl,dh]=mk('deal');
   const nz = (v,lo,hi) => hi===lo ? 1 : (v-lo)/(hi-lo);
   const tot = Object.values(WEIGHTS).reduce((a,b)=>a+b,0);
   for(const r of list){
     const p = { kmpe:nz(r.kmpe,kl,kh), minpe:nz(r.minpe,ml,mh), price:1-nz(r.price,pl,ph),
-                itin:1, rel:r.s==='gf'?1:.9 };
+                deal:nz(r.deal,dl,dh), itin:1, rel:r.s==='gf'?1:.9 };
     r.score = Math.round(100 * Object.entries(WEIGHTS).reduce((s,[k,w])=>s+w*p[k],0)/tot);
   }
   return list;
@@ -830,7 +939,8 @@ function score(list){
 function runSearch(){
   let l = rawPool().map(enrich).filter(Boolean);
   if(S.dMode === 'pick' && S.dCountries.size) l = l.filter(r => S.dCountries.has(r.ck));
-  l = l.filter(r => S.windows.has(r.win) && r.km >= S.minDist && r.km <= S.maxDist && r.price <= S.maxBudget);
+  l = l.filter(r => S.windows.has(r.win) && shapeOk(r, S.shape)
+                 && r.km >= S.minDist && r.km <= S.maxDist && r.price <= S.maxBudget);
   const best = {};                                  // una riga per destinazione: la migliore
   for(const r of l){ const k = r.dc; if(!best[k] || r.price < best[k].price) best[k] = r; }
   S.results = score(Object.values(best));
@@ -839,7 +949,8 @@ function runSearch(){
 }
 function sorted(){
   const k = S.sort, d = S.dir;
-  const key = { score:r=>r.score, price:r=>-r.price, dist:r=>r.km, kmpe:r=>r.kmpe, stay:r=>r.n }[k] || (r=>r.score);
+  const key = { score:r=>r.score, price:r=>-r.price, dist:r=>r.km, kmpe:r=>r.kmpe,
+                deal:r=>r.deal, stay:r=>r.n }[k] || (r=>r.score);
   return [...S.results].sort((a,b) => (key(a)-key(b)) * (d<0 ? -1 : 1) || a.price-b.price);
 }
 
@@ -882,14 +993,38 @@ function renderSegs(){
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === S.geo));
   $('#find').value = findOf();
   renderWindows();
+  renderShapes();
 }
 /* Ogni destinazione ha una sola data osservata: la piu' economica dell'anno.
    Quindi una finestra non e' una ricerca, e' una fetta. Il numero sul pulsante
    dice quante rotte cadono davvero li' dentro, cosi' non si cerca al buio. */
-function windowCounts(){
-  const c = {};
-  for(const r of rawPool()){ const w = windowOf(daysOut(r.dep)); c[w] = (c[w]||0)+1; }
-  return c;
+let _stats = null, _statsKey = '';
+/* Finestre e forme del viaggio si contano insieme, in un giro solo, e il
+   risultato resta valido finche' non cambiano gli aeroporti o la sorgente. */
+function poolStats(){
+  const key = [...S.origins].join('.') + '|' + (S.liveRows ? 'live' : 'idx');
+  if(_statsKey === key && _stats) return _stats;
+  const w = {}, s = {any:0, fsm:0, fss:0, ss:0};
+  for(const r of rawPool()){
+    const k = windowOf(daysOut(r.dep)); w[k] = (w[k]||0)+1;
+    s.any++;
+    for(const t in SHAPES) if(shapeOk(r, t)) s[t]++;
+  }
+  _statsKey = key; _stats = {w, s};
+  return _stats;
+}
+function windowCounts(){ return poolStats().w; }
+/* Come per le finestre, il numero sul pulsante e' quante rotte hanno davvero
+   quella forma fra gli aeroporti scelti. La fonte da' una sola data per
+   destinazione: chiedere "solo venerdi-lunedi" e' una fetta stretta, e vederlo
+   prima di premere Cerca evita la classifica vuota. */
+function shapeCounts(){ return poolStats().s; }
+function renderShapes(){
+  const c = S.origins.size ? shapeCounts() : {};
+  const items = [['any','sh_any'],['fsm','sh_long'],['fss','sh_mid'],['ss','sh_short']];
+  $('#shapeChips').innerHTML = items.map(([v,k]) =>
+    `<button class="seg${S.shape===v?' on':''}" data-act="shape" data-v="${v}">${esc(T(k))}${
+      S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`).join('');
 }
 function renderWindows(){
   const c = S.origins.size ? windowCounts() : {};
@@ -1261,6 +1396,7 @@ const COLS = [
   ['price','th_price','r c-price'],
   ['dist','th_dist','r c-dist'],
   ['kmpe','','r c-kmpe'],
+  ['deal','th_deal','r c-deal'],
   ['stay','th_stay','r c-stay'],
   ['score','th_score','c-score'],
 ];
@@ -1296,6 +1432,11 @@ function apexCard(r){
       <h3>${flag(r.ck)}<span>${esc(r.d.n)}</span></h3>
       <div class="meta">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}
         · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · ${r.n} ${esc(T('nights'))}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${r.exp ? `<span class="tagline${dealPct(r) >= 25 ? ' hot-tag' : ''}">${
+          dealPct(r) > 0 ? '\u2212' + dealPct(r) + '%' : '+' + (-dealPct(r)) + '%'} ${esc(T('deal_u'))} · ${money(r.exp)}</span>` : ''}
+        ${histTag(r)}
+      </div>
     </div>
     <div class="apex-nums">
       <div><b>${money(r.price)}</b><span class="lbl">${esc(T('rt'))}</span></div>
@@ -1347,11 +1488,12 @@ function renderBoard(){
       <div class="route">
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
-        <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span>
+        <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span>${histTag(r)}
       </div>
       <div class="num price c-price"><b>${money(r.price)}</b><span>${esc(T('rt'))}</span></div>
       <div class="num c-dist"><b>${fmtN(r.km)}</b><span>km</span></div>
       <div class="num c-kmpe"><b>${ratio(r.km*2/toCur(r.price))}</b><span>km/${esc(sym())}</span></div>
+      ${dealCell(r)}
       <div class="num c-stay"><b>${r.n}</b><span>${esc(T('nights'))}</span></div>
       <div class="meter c-score">
         <div class="bar"><i style="width:${r.score}%"></i></div>
@@ -1391,13 +1533,16 @@ const PROSE = {
   ccYes:'Accetta', ccNo:'Rifiuta', ccOpen:'Preferenze cookie',
   cookie:'<b>Un attimo di chiarezza.</b> Il sito si mantiene con le prenotazioni che partono da qui: il circuito di affiliazione usa cookie per riconoscere che il viaggiatore è arrivato dal nostro motore, e se un giorno accenderemo la pubblicità userebbe i suoi per misurarne il rendimento. Se rifiuti, il sito funziona esattamente uguale — nessuna funzione viene tolta, i prezzi e i collegamenti restano tutti — semplicemente non caricheremo nulla di terze parti. La scelta resta nel tuo browser e la puoi cambiare quando vuoi dal piè di pagina. <a href="#privacy">Come trattiamo i dati</a>.',
   method:[
-   ['01','Distanza per euro','Distanza ortodromica fra i due scali, raddoppiata per il ritorno, divisa per la tariffa. Un a/r di 4.300 km a 62 € vale 138 km/€: è il segnale principale, e pesa il 45% del punteggio.'],
-   ['02','Minuti di volo per euro','Tempo di volo andata e ritorno dichiarato dalla fonte, diviso per la tariffa. Distingue un volo davvero lungo da una tratta breve che copre terreno in fretta. Pesa il 25%.'],
-   ['03','Soggiorno proporzionato','Le notti suggerite scalano con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. La colonna "soggiorno" mostra invece le notti reali della tariffa trovata.'],
-   ['04','Bagaglio','Nessuna fonte dichiara se il bagaglio da stiva è incluso: non viene ipotizzato. Il cursore in ricerca applica un supplemento uniforme a tutte le tariffe e ricalcola la classifica, così confronti a parità di condizioni.'],
-   ['05','Valuta','I prezzi nascono in euro. Quando cambi valuta vengono convertiti con i cambi del ' + FX_DATE + ', che servono a rendere leggibile un ordine di grandezza: il prezzo su cui prenoti resta quello dell\'operatore. In modalità LIVE la conversione la fa direttamente la fonte.'],
-   ['06','Finestra di partenza','La fonte restituisce <b>una sola data per destinazione</b>: la più economica dell\'anno. Perciò la finestra non è una ricerca fra tante date, è una fetta di un insieme che ne ha già una sola. Da Fiumicino le 60 destinazioni dell\'indice si distribuiscono così: 12 entro 30 giorni, 13 a 60, 20 a 90, 3 a 120, 11 a 150, 1 a 180. Se selezioni solo <code>120</code> trovi tre rotte, e non è un errore: sono le uniche la cui data migliore cade lì. Il numero piccolo su ogni pulsante te lo dice prima di cercare.'],
-   ['07','Indice e live','<b>INDEX</b> significa che stai guardando la fotografia incorporata nella pagina, con la sua data. <b>LIVE</b> significa che i prezzi sono stati chiesti in questo momento. Il passaggio è automatico: se il servizio prezzi risponde, il sito lo usa e basta.'],
+   ['01','Distanza per euro','Distanza ortodromica fra i due scali, raddoppiata per il ritorno, divisa per la tariffa. Un a/r di 4.300 km a 62 € vale 138 km/€. Pesa il 32% del punteggio.'],
+   ['02','Prezzo atteso','Il km/€ ha un difetto: premia sempre la distanza. Un intercontinentale a 400 € sembra un affare, un volo di 600 km a 19 € passa inosservato benché costi un terzo del normale per quella tratta. Allora stimiamo, sull\'intero indice, <b>come il prezzo cresce con la distanza</b> — una legge di potenza <code>p = a · km^b</code>, adattata nei logaritmi e ripulita in tre passate dalle tariffe anomale con mediana e MAD. La colonna <b>Affare</b> mostra quanto una tariffa sta sotto il prezzo atteso per la sua distanza. Pesa il 30%: quanto il chilometro per euro.'],
+   ['03','Minuti di volo per euro','Tempo di volo andata e ritorno dichiarato dalla fonte, diviso per la tariffa. Distingue un volo davvero lungo da una tratta breve che copre terreno in fretta. Pesa il 13%.'],
+   ['04','Forma del viaggio','I chip <i>weekend lungo</i> (ven→lun), <i>weekend</i> (ven→dom) e <i>mordi e fuggi</i> (sab→dom) filtrano sui giorni reali di partenza e rientro. Il numero sul pulsante dice quante rotte hanno davvero quella forma fra gli aeroporti scelti: la fonte dà una sola data per destinazione, quindi è una fetta stretta, ed è giusto saperlo prima di cercare.'],
+   ['05','Storico dei prezzi','Ogni notte l\'indice viene archiviato. Quando una rotta ha almeno cinque rilevazioni, il sito può dire una cosa che nessun aggregatore dice: se questo prezzo è <b>nel 10% più basso degli ultimi 90 giorni</b>, non solo se è basso in assoluto. Lo storico non si compra e non si recupera a posteriori: si accumula una notte alla volta, ed è cominciato il 4 settembre 2026.'],
+   ['06','Soggiorno proporzionato','Le notti suggerite scalano con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. La colonna "soggiorno" mostra invece le notti reali della tariffa trovata.'],
+   ['07','Bagaglio','Nessuna fonte dichiara se il bagaglio da stiva è incluso: non viene ipotizzato. Il cursore in ricerca applica un supplemento uniforme a tutte le tariffe e ricalcola la classifica, così confronti a parità di condizioni.'],
+   ['08','Valuta','I prezzi nascono in euro. Quando cambi valuta vengono convertiti con i cambi del ' + FX_DATE + ', che servono a rendere leggibile un ordine di grandezza: il prezzo su cui prenoti resta quello dell\'operatore. In modalità LIVE la conversione la fa direttamente la fonte.'],
+   ['09','Finestra di partenza','La fonte restituisce <b>una sola data per destinazione</b>: la più economica dell\'anno. Perciò la finestra non è una ricerca fra tante date, è una fetta di un insieme che ne ha già una sola. Da Fiumicino le 60 destinazioni dell\'indice si distribuiscono così: 12 entro 30 giorni, 13 a 60, 20 a 90, 3 a 120, 11 a 150, 1 a 180. Se selezioni solo <code>120</code> trovi tre rotte, e non è un errore: sono le uniche la cui data migliore cade lì. Il numero piccolo su ogni pulsante te lo dice prima di cercare.'],
+   ['10','Indice e live','<b>INDEX</b> significa che stai guardando la fotografia incorporata nella pagina, con la sua data. <b>LIVE</b> significa che i prezzi sono stati chiesti in questo momento. Il passaggio è automatico: se il servizio prezzi risponde, il sito lo usa e basta.'],
   ],
   priv:[
    ['01','Nessun account','Non c\'è registrazione, non si raccolgono email, non si chiede nulla. Le uniche cose che restano nel tuo browser sono il tema, la lingua e la valuta che hai scelto.'],
@@ -1416,13 +1561,16 @@ const PROSE = {
   ccYes:'Accept', ccNo:'Decline', ccOpen:'Cookie preferences',
   cookie:'<b>One moment of clarity.</b> The site is funded by the bookings that start here: the affiliate network uses cookies to recognise that a traveller came from our engine, and if we ever switch advertising on, it would use its own to measure how it performs. If you decline, the site works exactly the same — nothing is taken away, every price and link stays — we simply load nothing from third parties. Your choice stays in your browser and you can change it any time from the footer. <a href="#privacy">How we handle data</a>.',
   method:[
-   ['01','Distance per euro','Great-circle distance between the two airports, doubled for the round trip, divided by the fare. A 4,300 km return for €62 is 138 km/€ — the primary signal, worth 45% of the score.'],
-   ['02','Flight minutes per euro','Round-trip block time as published by the source, divided by the fare. It separates a genuinely long flight from a short hop that merely covers ground fast. Worth 25%.'],
-   ['03','Proportionate stay','Suggested nights scale with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. The "stay" column shows the actual nights of the fare found.'],
-   ['04','Baggage','No source states whether a checked bag is included, so it is not guessed. The slider in the search panel adds a uniform supplement to every fare and re-scores the board, so you compare like with like.'],
-   ['05','Currency','Prices originate in euro. Switching currency converts them at the ' + FX_DATE + ' rates, which exist to make an order of magnitude readable: the price you book at is the operator\'s. In LIVE mode the source converts directly.'],
-   ['06','Departure window','The source returns <b>one date per destination</b>: the cheapest of the year. So the window is not a search across many dates, it is a slice of a set that already has only one. From Rome Fiumicino the 60 destinations in the index fall out like this: 12 within 30 days, 13 at 60, 20 at 90, 3 at 120, 11 at 150, 1 at 180. Pick <code>120</code> alone and you get three routes — not a bug: they are the only ones whose best date lands there. The small number on each button tells you before you search.'],
-   ['07','Index and live','<b>INDEX</b> means you are looking at the snapshot embedded in the page, with its date. <b>LIVE</b> means prices were requested just now. The switch is automatic: if the price service answers, the site simply uses it.'],
+   ['01','Distance per euro','Great-circle distance between the two airports, doubled for the round trip, divided by the fare. A 4,300 km return for €62 is 138 km/€. Worth 32% of the score.'],
+   ['02','Expected price','Kilometres per euro has a flaw: it always rewards distance. A long-haul at €400 looks like a bargain, while a 600 km hop at €19 goes unnoticed even though it costs a third of what that leg normally costs. So we estimate, across the whole index, <b>how price grows with distance</b> — a power law <code>p = a · km^b</code>, fitted in logs and cleaned in three passes of median-and-MAD trimming. The <b>Deal</b> column shows how far below the expected price for its distance a fare sits. Worth 30% — as much as kilometres per euro.'],
+   ['03','Flight minutes per euro','Round-trip block time as published by the source, divided by the fare. It separates a genuinely long flight from a short hop that merely covers ground fast. Worth 13%.'],
+   ['04','Trip shape','The <i>long weekend</i> (Fri→Mon), <i>weekend</i> (Fri→Sun) and <i>quick trip</i> (Sat→Sun) chips filter on the actual departure and return weekdays. The number on each button says how many routes really have that shape among the airports you picked: the source gives one date per destination, so it is a narrow slice, and you deserve to know before searching.'],
+   ['05','Price history','Every night the index is archived. Once a route has at least five observations, the site can say something no aggregator says: whether this price is <b>in the lowest 10% of the last 90 days</b>, not merely low in absolute terms. History cannot be bought or backfilled: it accrues one night at a time, and it started on 4 September 2026.'],
+   ['06','Proportionate stay','Suggested nights scale with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. The "stay" column shows the actual nights of the fare found.'],
+   ['07','Baggage','No source states whether a checked bag is included, so it is not guessed. The slider in the search panel adds a uniform supplement to every fare and re-scores the board, so you compare like with like.'],
+   ['08','Currency','Prices originate in euro. Switching currency converts them at the ' + FX_DATE + ' rates, which exist to make an order of magnitude readable: the price you book at is the operator\'s. In LIVE mode the source converts directly.'],
+   ['09','Departure window','The source returns <b>one date per destination</b>: the cheapest of the year. So the window is not a search across many dates, it is a slice of a set that already has only one. From Rome Fiumicino the 60 destinations in the index fall out like this: 12 within 30 days, 13 at 60, 20 at 90, 3 at 120, 11 at 150, 1 at 180. Pick <code>120</code> alone and you get three routes — not a bug: they are the only ones whose best date lands there. The small number on each button tells you before you search.'],
+   ['10','Index and live','<b>INDEX</b> means you are looking at the snapshot embedded in the page, with its date. <b>LIVE</b> means prices were requested just now. The switch is automatic: if the price service answers, the site simply uses it.'],
   ],
   priv:[
    ['01','No account','There is no sign-up, no email collected, nothing asked. The only things kept in your browser are the theme, language and currency you picked.'],
@@ -1479,6 +1627,7 @@ function writeURL(){
   h.set('o', [...S.origins].join('.'));
   if(S.dMode==='pick' && S.dCountries.size) h.set('c', [...S.dCountries].join('.'));
   h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
+  if(S.shape !== 'any')  h.set('k', S.shape);
   if(S.minDist || S.maxDist!==18000) h.set('d', S.minDist + '.' + S.maxDist);
   if(S.maxBudget!==2000) h.set('b', S.maxBudget);
   if(S.bagFee)           h.set('g', S.bagFee);
@@ -1498,6 +1647,7 @@ function readURL(){
   if(c.length){ S.dCountries = new Set(c); S.dMode = 'pick'; }
   const w = h.get('w');
   if(w){ const set = new Set(w.split('.').map(Number).filter(n => WINDOWS.includes(n))); if(set.size) S.windows = set; }
+  const sh = h.get('k'); if(sh && SHAPES[sh]) S.shape = sh;
   const num = (k,lo,hi) => { const v = +h.get(k); return h.has(k) && Number.isFinite(v) && v>=lo && v<=hi ? v : null; };
   const dr = (h.get('d')||'').split('.').map(Number);
   if(dr.length===2 && dr.every(v => Number.isFinite(v) && v>=0 && v<=18000) && dr[0] < dr[1]){
@@ -1507,7 +1657,7 @@ function readURL(){
   const g = num('g',0,150);      if(g!==null) S.bagFee = g;
   const s = h.get('s');
   if(s){ const asc = s.endsWith('+'), k = asc ? s.slice(0,-1) : s;
-         if(['score','price','dist','kmpe','stay'].includes(k)){ S.sort = k; S.dir = asc ? 1 : -1; } }
+         if(['score','price','dist','kmpe','deal','stay'].includes(k)){ S.sort = k; S.dir = asc ? 1 : -1; } }
   S.pin = h.get('f') || '';
 }
 
@@ -1617,6 +1767,7 @@ document.addEventListener('click', async e => {
     S.windows.has(w) ? (S.windows.size>1 && S.windows.delete(w)) : S.windows.add(w);
     renderSegs(); markDirty();
   }
+  else if(act === 'shape'){ S.shape = v; renderShapes(); markDirty(); }
   else if(act === 'all'){
     if(FROM()) for(const k of S.oCountries){ const c = CTRY[k]; if(c) c.a.forEach(i => S.origins.add(i)); }
     else { S.dMode = 'pick'; countriesOf(S.dCont).forEach(c => S.dCountries.add(c.k)); renderSegs(); }
