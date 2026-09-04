@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "locales": {
+    "en": {
+      "name": "English",
+      "path": "en",
+      "hreflang": "en",
+      "locale": "en_GB",
+      "dir": "ltr",
+      "consent": {
+        "accept": "Accept",
+        "decline": "Decline",
+        "preferences": "Cookie preferences",
+        "body": "<b>Your choice.</b> If you accept, optional third-party tools may measure affiliate referrals and, if advertising is activated, ad performance. If you decline, search, prices and links work normally and no optional third-party script is loaded. The choice stays in this browser and can be changed in the footer. <a href=\"#privacy\">How we handle data</a>."
+      },
+      "indexNote": "<b>About this index.</b> {fareCount} observed non-stop return fares on {observed}, from <b>{originCount} departure airports</b> to <b>{destCount} destinations</b>. The interface covers {languageCount} languages and {currencyCount} currencies. Every fare is observed; none is modelled.",
+      "method": [
+        ["Distance per euro", "Round-trip great-circle distance divided by the fare. If the one-way distance is 4,300 km, a €62 return yields 139 km/€. Weight: 32%."],
+        ["Expected price", "A robust curve <code>p = a · km^b</code> estimates price by distance across the full index. <b>Deal</b> measures how far a fare is below that expectation. Weight: 30%."],
+        ["Flight minutes per euro", "Published round-trip flight minutes divided by the fare. It rewards useful time in the air, not only distance. Weight: 13%."],
+        ["Trip shape", "Filters use the actual departure and return weekdays: long weekend (Fri→Mon), weekend (Fri→Sun) and quick trip (Sat→Sun). Counts reflect the one observed date per destination."],
+        ["Price history", "The index is archived nightly. After at least five observations, a route can be marked in the <b>lowest 10% of its last 90 days</b>. History began on 4 September 2026."],
+        ["Proportionate stay", "Suggested nights rise with distance: <code>≤800 km → 3–4</code>, <code>≤2,000 → 5–7</code>, <code>≤4,000 → 8–10</code>, <code>≤7,000 → 12–14</code>, <code>&gt;7,000 → 15–21</code>. Results also show the observed stay."],
+        ["Baggage", "Sources do not state whether checked baggage is included, so we do not guess. The slider adds the same assumed fee to every fare and recalculates the ranking."],
+        ["Currency", "Source prices are in euro. Other currencies use rates dated {fxDate} for display only; the operator’s checkout price is authoritative. LIVE prices are converted by the source."],
+        ["Departure window", "The source supplies one cheapest date per destination, not a full calendar search. Bands cover 1–30, 31–60 and so on to 180+ days, and can be combined."],
+        ["Index and live", "<b>INDEX</b> is the dated snapshot embedded in the page. <b>LIVE</b> is a fresh request to the price service. The switch is automatic when live data is available."]
+      ],
+      "privacy": [
+        ["No account", "There is no sign-up and no email is collected. This browser stores only your theme, language, currency and consent choice."],
+        ["We do not sell tickets", "Efficiency Life Flight is a research tool. Booking happens with the operator or comparison service; we never see payment data."],
+        ["Affiliate links", "Booking and activity links may be affiliate links. A purchase can earn us a commission without changing your price or the ranking. Google Flights remains an independent check."],
+        ["Prices are indicative", "Every fare is a dated observation, not guaranteed availability. Verify the current price and conditions with the operator before booking."]
+      ],
+      "seo": {
+        "title": "Best-value direct flights | Efficiency Life Flight",
+        "description": "Choose a departure airport, travel period and budget. Compare observed non-stop return fares by kilometres per euro, price and Efficiency Score."
+      }
+    },
+    "it": {
+      "name": "Italiano",
+      "path": "it",
+      "hreflang": "it",
+      "locale": "it_IT",
+      "dir": "ltr",
+      "consent": {
+        "accept": "Accetta",
+        "decline": "Rifiuta",
+        "preferences": "Preferenze cookie",
+        "body": "<b>La scelta è tua.</b> Se accetti, strumenti facoltativi di terze parti possono misurare le segnalazioni di affiliazione e, se verrà attivata la pubblicità, il rendimento degli annunci. Se rifiuti, ricerca, prezzi e collegamenti funzionano normalmente e non viene caricato alcuno script facoltativo di terze parti. La scelta resta in questo browser e può essere cambiata dal piè di pagina. <a href=\"#privacy\">Come trattiamo i dati</a>."
+      },
+      "indexNote": "<b>Cosa contiene questo indice.</b> {fareCount} tariffe osservate per voli diretti andata e ritorno, rilevate il {observed}, da <b>{originCount} aeroporti di partenza</b> verso <b>{destCount} destinazioni</b>. L’interfaccia copre {languageCount} lingue e {currencyCount} valute. Ogni tariffa è osservata; nessuna è modellata.",
+      "method": [
+        ["Distanza per euro", "Distanza ortodromica di andata e ritorno divisa per la tariffa. Se la distanza di sola andata è 4.300 km, un a/r da 62 € vale 139 km/€. Peso: 32%."],
+        ["Prezzo atteso", "Una curva robusta <code>p = a · km^b</code> stima il prezzo in funzione della distanza sull’intero indice. <b>Affare</b> misura quanto una tariffa è sotto tale attesa. Peso: 30%."],
+        ["Minuti di volo per euro", "Minuti di volo andata e ritorno pubblicati dalla fonte, divisi per la tariffa. Premia il tempo utile in volo, non soltanto la distanza. Peso: 13%."],
+        ["Forma del viaggio", "I filtri usano i giorni reali di partenza e rientro: weekend lungo (ven→lun), weekend (ven→dom) e mordi e fuggi (sab→dom). I conteggi riflettono l’unica data osservata per destinazione."],
+        ["Storico dei prezzi", "L’indice viene archiviato ogni notte. Dopo almeno cinque osservazioni, una rotta può essere indicata nel <b>10% più basso degli ultimi 90 giorni</b>. Lo storico è iniziato il 4 settembre 2026."],
+        ["Soggiorno proporzionato", "Le notti suggerite crescono con la distanza: <code>≤800 km → 3–4</code>, <code>≤2.000 → 5–7</code>, <code>≤4.000 → 8–10</code>, <code>≤7.000 → 12–14</code>, <code>&gt;7.000 → 15–21</code>. I risultati mostrano anche il soggiorno osservato."],
+        ["Bagaglio", "Le fonti non indicano se il bagaglio da stiva è incluso, quindi non lo ipotizziamo. Il cursore aggiunge lo stesso costo presunto a ogni tariffa e ricalcola la classifica."],
+        ["Valuta", "I prezzi sorgente sono in euro. Le altre valute usano i cambi del {fxDate} solo per la visualizzazione; fa fede il prezzo al pagamento dell’operatore. In modalità LIVE la conversione arriva dalla fonte."],
+        ["Finestra di partenza", "La fonte fornisce una sola data, la più economica, per ciascuna destinazione: non è una ricerca su un calendario completo. Le fasce coprono 1–30, 31–60 e così via fino a 180+ giorni e si possono combinare."],
+        ["Indice e live", "<b>INDEX</b> è la fotografia datata incorporata nella pagina. <b>LIVE</b> è una nuova richiesta al servizio prezzi. Il passaggio è automatico quando i dati live sono disponibili."]
+      ],
+      "privacy": [
+        ["Nessun account", "Non c’è registrazione e non vengono raccolte email. Questo browser conserva soltanto tema, lingua, valuta e scelta del consenso."],
+        ["Non vendiamo biglietti", "Efficiency Life Flight è uno strumento di ricerca. La prenotazione avviene presso l’operatore o il comparatore; non vediamo mai i dati di pagamento."],
+        ["Link di affiliazione", "I link di prenotazione e attività possono essere affiliati. Un acquisto può generarci una commissione senza cambiare il tuo prezzo o la classifica. Google Flights resta un controllo indipendente."],
+        ["Prezzi indicativi", "Ogni tariffa è un’osservazione datata, non una disponibilità garantita. Verifica prezzo e condizioni attuali presso l’operatore prima di prenotare."]
+      ],
+      "seo": {
+        "title": "Voli diretti con il miglior rapporto qualità-prezzo | Efficiency Life Flight",
+        "description": "Scegli aeroporto di partenza, periodo e budget. Confronta tariffe reali per voli diretti andata e ritorno usando chilometri per euro, prezzo ed Efficiency Score."
+      }
+    }
+  }
+}
