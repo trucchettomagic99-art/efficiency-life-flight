@@ -467,6 +467,30 @@ def main() -> int:
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + '\n'.join(urls) + '\n</urlset>\n')
 
+    # ── l'indice degli aeroporti dentro la home ────────────────────────
+    # Senza un collegamento dalla radice queste pagine sono orfane: la
+    # sitemap dice a Google che esistono, ma un indirizzo che nessuna pagina
+    # collega vale poco e viene scansionato tardi o mai. Qui il piede della
+    # home elenca tutti gli scali, nella lingua del percorso.
+    home = DIST / 'index.html'
+    if home.is_file():
+        h = home.read_text()
+        if '<!--HUB-->' in h:
+            voci = []
+            for lang in ('it', 'en'):
+                link = ''.join(
+                    f'<a href="/{L[lang]["dir"]}/{o.lower()}/">{o}</a> '
+                    for o in order)
+                voci.append(
+                    f'<nav class="hub" lang="{lang}" aria-label="'
+                    f'{"Voli diretti da" if lang == "it" else "Direct flights from"}">'
+                    f'<span class="lbl">'
+                    f'{"Voli diretti da" if lang == "it" else "Direct flights from"} '
+                    f'{len(order)} {"aeroporti" if lang == "it" else "airports"}</span>'
+                    f'{link}</nav>')
+            home.write_text(h.replace('<!--HUB-->', ''.join(voci)))
+            print(f'indice nella home: {len(order) * 2} collegamenti interni')
+
     size = sum(f.stat().st_size for f in DIST.rglob('index.html') if f.parent != DIST)
     print(f'{len(made)} pagine ({len(order)} aeroporti × 2 lingue) · {size/1024/1024:.1f} MB '
           f'· sitemap con {len(urls)} indirizzi')
