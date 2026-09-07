@@ -278,7 +278,13 @@ section{scroll-margin-top:64px}
 /* ── classifica ───────────────────────────────────────────── */
 .mrow,.mhead{display:grid;
   grid-template-columns:50px minmax(0,2.1fr) minmax(76px,.78fr) minmax(70px,.66fr) minmax(68px,.62fr) minmax(72px,.62fr) minmax(66px,.6fr) minmax(104px,.9fr) 122px;
-  align-items:center;border-bottom:1px solid var(--rule);position:relative}
+  /* Le colonne si appoggiano in alto, non al centro. Bastava un nome di
+     destinazione lungo per far crescere una cella e mandare prezzo e
+     punteggio a quote diverse riga per riga: la classifica perdeva la
+     rigatura, ed e' la cosa che piu' fa sembrare disordinata una tabella. */
+  align-items:start;border-bottom:1px solid var(--rule);position:relative}
+.mhead{align-items:end}
+.mrow .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mhead{border-bottom:1px solid var(--rule-hi)}
 .mrow:hover{background:var(--deck2)}
 .mrow > *{padding:13px 11px;min-width:0}
@@ -428,6 +434,12 @@ footer a{color:var(--ink-2)}
   .mrow,.mhead{grid-template-columns:40px minmax(0,2fr) minmax(72px,.8fr) minmax(68px,.7fr) minmax(66px,.7fr) 112px}
   .c-score,.c-deal{display:none}
   .mini-score{display:flex}
+  /* da qui in giu' la cella della rotta e' piu' alta delle altre: le
+     colonne si appoggiano in alto, non al centro, o i numeri ballano */
+  .mrow{align-items:start}
+  .mrow .rk{padding-top:13px}
+  .num b{line-height:1.15}
+  .route .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
 @media(max-width:1000px){
   .apex-in{grid-template-columns:1fr;gap:20px}
@@ -499,6 +511,15 @@ footer a{color:var(--ink-2)}
   .c-dist{display:none}
   .mrow > *{padding:11px 7px}
   .acts .btn{padding:5px 4px;font-size:9px;letter-spacing:.06em}
+  /* Sotto gli 860 px la cella della rotta e' alta due o tre righe e le
+     altre colonne, centrate, finivano a quote diverse riga per riga. Da
+     qui in giu' tutte le colonne partono dalla stessa riga d'appoggio. */
+  .mrow{align-items:start}
+  .mrow .rk{padding-top:13px}
+  .num b{line-height:1.15}
+  /* un nome di paese lungo mandava a capo la riga delle date e faceva una
+     riga piu' alta delle altre: qui si tronca invece di spezzarsi */
+  .route .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* colonna rotta stretta: etichetta sopra, barra a tutta larghezza sotto */
   .mini-score{flex-direction:column;align-items:stretch;gap:3px;max-width:none;margin-top:6px}
   .mini-score s{font-size:9.5px;letter-spacing:.06em}
@@ -523,6 +544,19 @@ footer a{color:var(--ink-2)}
   .num span{font-size:9px;letter-spacing:.06em}
   /* "andata e ritorno" si spezzava in tre righe sotto il prezzo */
   .num.price span.rt{letter-spacing:0;font-size:8.5px;line-height:1.35}
+  /* Le celle erano centrate verticalmente: con una cella rotta alta, il
+     numero d'ordine e il prezzo galleggiavano a quote diverse in ogni riga
+     e il numero finiva addosso alla data andata a capo. Adesso tutte le
+     colonne partono dalla stessa riga d'appoggio, e la classifica ha una
+     rigatura sola dall'alto in basso. */
+  .mrow > *{padding-top:13px;padding-bottom:13px}
+  .mrow .rk{padding-top:15px;font-size:13px}
+  .route b{margin-top:-1px}
+  /* il paese sta gia' nella bandiera: senza, le date stanno su una riga */
+  .route .path .cty{display:none}
+  /* la barra del punteggio larga quanto la targhetta sopra: due bordi
+     allineati invece di due larghezze diverse */
+  .mini-score{margin-top:7px}
   /* la fonte e la data sono gia' scritte in grande sopra la classifica:
      su un telefono quello spazio serve alla rotta */
   .tagline .src{display:none}
@@ -1585,7 +1619,7 @@ function renderBoard(){
       <div class="rk">${String(i+1).padStart(2,'0')}</div>
       <div class="route">
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
-        <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
+        <div class="path">${r.oc} <i>→</i> ${r.dc}<span class="cty"> · ${esc(cname(r.ck))}</span> · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
         <span class="tagline"><b class="dir">${esc(T('direct'))}</b> · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} <span class="src"> · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span></span>${histTag(r)}
         <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
           <div class="mbar"><i style="width:${r.score}%"></i></div></div>
