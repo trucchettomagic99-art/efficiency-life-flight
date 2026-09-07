@@ -5,7 +5,7 @@ Non tocca la rete: prende quello che c'e' in data/ e produce il sito. Puo'
 girare in locale (`python scripts/build.py`) o dentro GitHub Actions subito
 dopo fetch_prices.py.
 """
-import datetime, json, pathlib, re, shutil, sys
+import datetime, json, math, pathlib, re, shutil, sys
 
 ROOT   = pathlib.Path(__file__).resolve().parent.parent
 DATA   = ROOT / 'data'
@@ -163,6 +163,138 @@ def prose_data() -> dict:
     return data
 
 
+# ══════════════════════════════════════════════════════════════════════
+# IL MODELLO — vive qui, non nel browser
+# ══════════════════════════════════════════════════════════════════════
+# Prima la curva prezzo-distanza, le scale del punteggio e i pesi stavano
+# nel sorgente della pagina: chiunque aprisse "visualizza sorgente" li
+# leggeva. Adesso il calcolo si fa qui, una volta a notte, dentro GitHub
+# Actions, e alla pagina arrivano soltanto due numeri gia' pronti per riga:
+# il prezzo atteso e il punteggio. Il browser ordina e filtra, non modella.
+#
+# Non e' solo riservatezza: e' anche piu' veloce. Il browser non stima piu'
+# una regressione su cinquemila punti a ogni apertura, e non ricalcola il
+# punteggio a ogni ricerca.
+
+STAY = [(800, 3, 4), (2000, 5, 7), (4000, 8, 10), (7000, 12, 14), (10**9, 15, 21)]
+PESI = {'kmpe': 32, 'deal': 30, 'price': 15, 'minpe': 13, 'itin': 5, 'rel': 5}
+
+
+def _mediana(v: list) -> float:
+    s = sorted(v); n = len(s)
+    return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def curva(deals: list) -> tuple[float, float] | None:
+    """Legge di potenza p = a * km^b, stimata nei logaritmi.
+
+    Tre passate di potatura con mediana e MAD: un errore di prezzo, che nei
+    dati aerei c'e' sempre, altrimenti piega la retta per tutti.
+    """
+    pts = [(math.log(r['km']), math.log(r['p']))
+           for r in deals if r.get('km', 0) > 80 and r.get('p', 0) > 0]
+    if len(pts) < 200:
+        return None
+    uso, a, b = pts, 0.0, 0.0
+    for _ in range(3):
+        n = len(uso)
+        mx = sum(x for x, _ in uso) / n
+        my = sum(y for _, y in uso) / n
+        sxy = sum((x - mx) * (y - my) for x, y in uso)
+        sxx = sum((x - mx) ** 2 for x, _ in uso)
+        if not sxx:
+            return None
+        b = sxy / sxx; a = my - b * mx
+        res = [y - (a + b * x) for x, y in pts]
+        m = _mediana(res)
+        mad = _mediana([abs(r - m) for r in res]) or 1e-9
+        taglio = 2.5 * 1.4826 * mad
+        nxt = [pt for pt, r in zip(pts, res) if abs(r - m) <= taglio]
+        if len(nxt) < 200:
+            break
+        uso = nxt
+    return a, b
+
+
+def _q(v: list, k: float) -> float:
+    v = sorted(v)
+    return v[min(len(v) - 1, max(0, round(k * (len(v) - 1))))]
+
+
+def modello(deals: list, hist: dict) -> dict:
+    """Curva, scale e pesi: tutto quello che serve per dare un voto."""
+    c = curva(deals)
+    a, b = c if c else (0.0, 0.0)
+    kmpe, minpe, price, deal = [], [], [], []
+    for r in deals:
+        if not r.get('p'):
+            continue
+        atteso = math.exp(a + b * math.log(r['km'])) if c and r['km'] > 0 else 0
+        kmpe.append(r['km'] * 2 / r['p']); minpe.append(r['dur'] / r['p'])
+        price.append(r['p']); deal.append(atteso / r['p'] if atteso else 1)
+    banda = lambda v: [_q(v, .02), _q(v, .98)] if v else [0, 1]
+    return {'a': a, 'b': b, 'curva': bool(c), 'pesi': PESI,
+            'scale': {'kmpe': banda(kmpe), 'minpe': banda(minpe),
+                      'price': banda(price), 'deal': banda(deal)}}
+
+
+def valuta(deals: list, m: dict, hist: dict) -> None:
+    """Scrive su ogni riga il prezzo atteso (x) e il punteggio (sc)."""
+    a, b, sc, pesi = m['a'], m['b'], m['scale'], m['pesi']
+    tot = sum(pesi.values())
+
+    def nz(v, banda):
+        lo, hi = banda
+        return 1.0 if hi == lo else max(0.0, min(1.0, (v - lo) / (hi - lo)))
+
+    for r in deals:
+        p = r.get('p') or 0
+        atteso = math.exp(a + b * math.log(r['km'])) if m['curva'] and r['km'] > 0 and p else 0
+        r['x'] = round(atteso) if atteso else 0
+        if not p:
+            r['sc'] = 0
+            continue
+        for limite, s1, s2 in STAY:
+            if r['km'] <= limite:
+                break
+        fuori = s1 - r['n'] if r['n'] < s1 else r['n'] - s2 if r['n'] > s2 else 0
+        h = hist.get(f"{r['o']}-{r['d']}")
+        parti = {'kmpe': nz(r['km'] * 2 / p, sc['kmpe']),
+                 'minpe': nz(r['dur'] / p, sc['minpe']),
+                 'price': 1 - nz(p, sc['price']),
+                 'deal': nz(atteso / p if atteso else 1, sc['deal']),
+                 'itin': max(0.0, 1 - fuori / 7),
+                 'rel': 1.0 if h and h[0] >= 5 else .8}
+        r['sc'] = round(100 * sum(pesi[k] * v for k, v in parti.items()) / tot)
+
+
+MARCA_A = '/* === MODELLO GENERATO DA build.py — non modificare a mano === */'
+MARCA_B = '/* === fine modello generato === */'
+
+
+def inietta_modello(m: dict) -> bool:
+    """Mette le stesse costanti nella funzione Cloudflare.
+
+    Le tariffe in tempo reale non passano da qui: arrivano all'utente
+    dall'API attraverso /api/prices, e vanno valutate la'. Stesso modello,
+    stesso codice, ma su un server: nel browser non ci arriva comunque.
+    """
+    f = ROOT / 'functions' / 'api' / 'prices.js'
+    if not f.is_file():
+        return False
+    src = f.read_text()
+    if MARCA_A not in src or MARCA_B not in src:
+        return False
+    blocco = (MARCA_A + '\nconst MODELLO = ' +
+              json.dumps(m, separators=(',', ':')) + ';\n' + MARCA_B)
+    i, j = src.index(MARCA_A), src.index(MARCA_B) + len(MARCA_B)
+    nuovo = src[:i] + blocco + src[j:]
+    if nuovo == src:
+        return False
+    f.write_text(nuovo)
+    return True
+
+
 def main() -> int:
     tpl = (ROOT / 'src' / 'app.html').read_text()
     cat = (DATA / 'catalog.json').read_text()
@@ -171,7 +303,21 @@ def main() -> int:
     i18 = (ROOT / 'src' / 'i18n.js').read_text()
     prose_obj = prose_data()
     prose = json.dumps(prose_obj, ensure_ascii=False, separators=(',', ':'))
-    hist = json.dumps(history_stats(), separators=(',', ':'))
+    storico = history_stats()
+    hist = json.dumps(storico, separators=(',', ':'))
+
+    # Il modello si stima qui e i suoi due risultati — prezzo atteso e
+    # punteggio — entrano nella pagina come numeri. La formula no.
+    dati = json.loads(idx)
+    M = modello(dati['deals'], storico)
+    valuta(dati['deals'], M, storico)
+    idx = json.dumps(dati, separators=(',', ':'))
+    if M['curva']:
+        print(f"curva prezzo-distanza: p ~ {math.exp(M['a']):.2f} * km^{M['b']:.3f}")
+    else:
+        print('curva non stimabile: prezzo atteso assente su tutte le righe')
+    print('modello nella funzione live:',
+          'aggiornato' if inietta_modello(M) else 'invariato')
 
     for name, blob in (('catalog.json', cat), ('index.json', idx),
                        ('world.json', wld), ('i18n.js', i18), ('prose.json', prose)):
