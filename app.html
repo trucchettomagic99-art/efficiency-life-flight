@@ -1,0 +1,2098 @@
+<title>Efficiency Life Flight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   EFFICIENCY LIFE — FLIGHT · flight-deck theme
+   NIGHT (default): blu quasi nero, segnale ciano, rosso Delta
+   riservato al rango 01 e agli avvisi. DAY: stesso sistema invertito.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --void:#03070E; --deck:#071120; --deck2:#0C1B2E; --deck3:#132844;
+  --rule:rgba(120,170,235,.16); --rule-hi:rgba(120,170,235,.36);
+  --ink:#EAF2FB; --ink-2:#9EB3CC; --ink-3:#66809D;
+  --signal:#2E8DFF; --signal-2:#5FE3FF; --signal-deep:#0B4FCC;
+  --signal-soft:rgba(46,141,255,.14);
+  --alert:#FF2E46; --alert-soft:rgba(255,46,70,.14);
+  --ok:#37D39B; --warn:#FFB020;
+  --land:#12233A; --land-hi:#1B3A5E; --limb:rgba(0,0,0,.34);
+  --shadow:0 24px 60px -30px rgba(0,0,0,.9);
+  --maxw:1480px;
+  color-scheme:dark;
+}
+:root[data-day]{
+  --void:#EDF2F8; --deck:#FFFFFF; --deck2:#F4F8FD; --deck3:#E4EEF9;
+  --rule:rgba(0,45,100,.14); --rule-hi:rgba(0,45,100,.30);
+  --ink:#04121F; --ink-2:#3B5570; --ink-3:#68809A;
+  --signal:#0A54D6; --signal-2:#0B6F9C; --signal-deep:#062F86;
+  --signal-soft:rgba(10,84,214,.09);
+  --alert:#C8102E; --alert-soft:rgba(200,16,46,.09);
+  --ok:#0E8A5F; --warn:#9A6200;
+  --land:#C2D7EE; --land-hi:#A4C3E2; --limb:rgba(16,58,112,.13);
+  --shadow:0 20px 50px -32px rgba(10,40,80,.45);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--void); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55; letter-spacing:.005em; overflow-x:hidden;
+}
+h1,h2,h3,h4{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.02em;font-weight:700}
+a{color:inherit}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(16px,3.2vw,48px)}
+[dir=rtl] .mono{direction:ltr;unicode-bidi:embed}
+
+.lbl{font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.lbl-sig{color:var(--signal)}
+
+/* ── barra moduli ─────────────────────────────────────────── */
+.modules{border-bottom:1px solid var(--rule);background:var(--deck)}
+.mod-in{display:flex;align-items:center;gap:18px;height:34px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.mod-in::-webkit-scrollbar{display:none}
+.mod-in > .lbl{flex:none;letter-spacing:.26em}
+.mods{display:flex;gap:2px;flex:1;min-width:0}
+.mod{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);padding:4px 11px;border:1px solid transparent;white-space:nowrap;border-radius:2px}
+.mod.on{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft);box-shadow:inset 0 -2px 0 var(--signal)}
+.mod.on s{text-decoration:none;color:var(--signal)}
+.mod-note{margin-left:auto;flex:none;color:var(--ink-3)}
+.mod i{font-style:normal;display:inline-block;margin-inline-start:6px;font-size:7.5px;letter-spacing:.14em;
+  color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;vertical-align:1px;
+  white-space:nowrap}
+.mod.on i{display:none}
+
+/* ── barra strumenti ──────────────────────────────────────── */
+.rail{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 90%,transparent);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--rule)}
+.rail-in{display:flex;align-items:center;gap:16px;height:60px}
+.mark{display:flex;align-items:center;gap:9px;font-family:Archivo,sans-serif;font-weight:800;
+  font-size:16px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.mark s{text-decoration:none;color:var(--signal);font-size:14px}
+/* Il marchio e' la lettera eta: in fisica e' il simbolo del rendimento, quanto
+   ottieni diviso quanto spendi — che e' esattamente cio' che ordina questo
+   sito. La barra sotto l'arco e' la linea del rapporto. E' disegnata, non e'
+   un carattere di sistema: resta identica su qualunque dispositivo. */
+.mark .glyph{color:var(--signal);flex:none;margin-inline-end:3px}
+.mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
+.mark em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;
+  color:var(--signal-2);font-weight:700;border:1px solid var(--rule-hi);padding:2px 7px;border-radius:2px;
+  background:var(--signal-soft)}
+.rail nav{display:flex;gap:18px;margin-left:10px}
+.rail nav a{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;cursor:pointer}
+.rail nav a:hover,.rail nav a.on{color:var(--ink);border-bottom-color:var(--signal)}
+.rail-right{margin-inline-start:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule-hi);
+  padding:5px 10px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2);background:transparent;cursor:pointer;border-radius:2px;white-space:nowrap}
+.pill:hover{border-color:var(--signal);color:var(--ink)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent)}
+.dot.idle{background:var(--ink-3);box-shadow:none}
+select.pill{-webkit-appearance:none;appearance:none;padding-inline-end:20px;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:right 9px center,right 5px center;background-size:4px 4px,4px 4px;background-repeat:no-repeat;
+  max-width:150px;text-overflow:ellipsis}
+[dir=rtl] select.pill{background-position:left 9px center,left 5px center}
+select.pill option{background:var(--deck);color:var(--ink);text-transform:none;letter-spacing:0}
+
+/* ── hero ─────────────────────────────────────────────────── */
+.hero{border-bottom:1px solid var(--rule);background:linear-gradient(180deg,var(--deck2),transparent)}
+.hero-in{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(20px,4vw,60px);
+  align-items:end;padding-block:clamp(28px,4.4vw,58px) clamp(22px,3vw,34px)}
+.h1{font-size:clamp(30px,4.5vw,58px);line-height:.95;letter-spacing:-.035em;font-weight:800;
+  text-transform:uppercase;margin:14px 0 0}
+.h1 span{display:block}
+.h1 span:last-child{color:var(--signal)}
+.lede{max-width:54ch;color:var(--ink-2);font-size:clamp(14.5px,1.1vw,16.5px);margin:16px 0 0}
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--rule)}
+.hstat{padding:13px 14px 11px 0;border-inline-end:1px solid var(--rule);min-width:0}
+.hstat:last-child{border-inline-end:0}
+.hstat b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(18px,2vw,27px);
+  font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
+.hstat span{display:block;margin-top:4px;line-height:1.3}
+
+/* ── pannello ricerca ─────────────────────────────────────── */
+.panel{border-bottom:1px solid var(--rule);background:var(--deck);scroll-margin-top:62px}
+.panel-head{display:flex;align-items:center;gap:14px;padding:16px 0 14px;flex-wrap:wrap}
+.panel-head h2{font-size:clamp(18px,2vw,24px);text-transform:uppercase;letter-spacing:-.02em}
+.panel-head .lbl{flex:none}
+.panel-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;
+  border-top:1px solid var(--rule);border-inline-start:1px solid var(--rule)}
+.panel[data-closed] .panel-body,.panel[data-closed] .panel-foot{display:none}
+.step{border-inline-end:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:16px 18px 18px;min-width:0}
+.step.full{grid-column:1 / -1}
+.step > h3{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--signal);font-weight:500;margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step > h3 em{font-style:normal;color:var(--ink-3);letter-spacing:.1em;font-size:10px}
+.step > h3 .sp{margin-inline-start:auto;display:flex;gap:6px}
+.step .hint{margin:0 0 10px;color:var(--ink-3);font-size:12px;line-height:1.5;max-width:64ch}
+
+.segbar{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:11px}
+.seg{border:1px solid var(--rule-hi);background:transparent;padding:5px 10px;cursor:pointer;border-radius:2px;
+  font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.seg:hover{border-color:var(--signal);color:var(--ink)}
+.seg.on{background:var(--signal);border-color:var(--signal);color:var(--void);font-weight:700}
+:root[data-day] .seg.on{color:#fff}
+
+.finder input[type=text]{width:100%;background:var(--deck2);border:1px solid var(--rule-hi);padding:7px 10px;
+  font-family:"JetBrains Mono",monospace;font-size:12px;border-radius:2px;margin-bottom:8px}
+.picklist{max-height:190px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--rule);background:var(--deck2);border-radius:2px}
+.picklist::-webkit-scrollbar{width:8px}
+.picklist::-webkit-scrollbar-thumb{background:var(--rule-hi);border-radius:8px}
+.pk{display:flex;align-items:center;gap:9px;padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--rule);
+  font-size:13px;line-height:1.3}
+.pk:last-child{border-bottom:0}
+.pk:hover{background:var(--deck3)}
+.pk input{accent-color:var(--signal);width:14px;height:14px;flex:none;margin:0}
+.pk .fl{flex:none;width:22px;text-align:center;font-size:15px;line-height:1}
+.pk .cc{flex:none;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--void);background:var(--ink-3);
+  padding:1px 4px;border-radius:2px;letter-spacing:.04em;font-weight:700}
+:root[data-day] .pk .cc{color:#fff}
+.pk .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk .qt{flex:none;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+.pk.has .qt{color:var(--signal)}
+.pk.sel{background:var(--signal-soft);box-shadow:inset 2px 0 0 var(--signal)}
+.pk .sub{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-3);letter-spacing:.05em}
+.selnote{margin-top:8px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-3);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tiny{border:1px solid var(--rule-hi);background:transparent;color:var(--ink-2);cursor:pointer;border-radius:2px;
+  font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px}
+.tiny:hover{border-color:var(--signal);color:var(--ink)}
+
+/* ── console geografica: un solo posto per partenza e destinazione ── */
+.geo{padding:0;overflow:hidden}
+.geo-head{display:flex;align-items:stretch;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.tab{background:transparent;border:0;border-inline-end:1px solid var(--rule);padding:13px 22px;cursor:pointer;
+  font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap;transition:color .15s,background .15s}
+.tab em{font-style:normal;color:var(--ink-3);margin-inline-start:9px;font-size:10px;letter-spacing:.06em}
+.tab:hover{color:var(--ink-2)}
+.tab.on{color:var(--ink);background:var(--deck2);box-shadow:inset 0 -2px 0 var(--signal)}
+.tab.on em{color:var(--signal)}
+.tab .pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:9px;vertical-align:1px}
+.geo-head .sp{margin-inline-start:auto;display:flex;align-items:center;gap:6px;padding-inline:16px}
+.geo-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.86fr)}
+.geo-globe{position:relative;border-inline-end:1px solid var(--rule);padding:10px 10px 6px;min-width:0;overflow:hidden}
+.geo-side{padding:14px 16px 16px;min-width:0;display:flex;flex-direction:column;gap:9px}
+#ctryList{max-height:206px}
+.geo-side .lbl{display:block}
+.legend{display:flex;gap:18px;justify-content:center;padding:2px 0 6px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:7px;font-family:"JetBrains Mono",monospace;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.legend i{width:8px;height:8px;border-radius:50%;display:block;flex:none}
+.legend b{color:var(--ink-2);font-weight:500}
+.globe-wrap{position:relative;overflow:hidden;contain:paint}
+#globe{width:100%;height:clamp(300px,34vw,500px);display:block;cursor:grab;touch-action:none}
+#globe.drag{cursor:grabbing}
+.globe-tip{position:absolute;pointer-events:none;transform:translate(-50%,-150%);padding:4px 8px;
+  background:var(--deck);border:1px solid var(--rule-hi);border-radius:2px;font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;color:var(--ink);white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5}
+.globe-tip.on{opacity:1}
+.globe-cap{position:absolute;inset-inline-start:2px;bottom:2px;pointer-events:none}
+
+.rangeRow{display:flex;align-items:center;gap:10px;min-width:0}
+.rangeRow input[type=range]{flex:1 1 0;min-width:0;-webkit-appearance:none;appearance:none;height:2px;background:var(--rule-hi);outline:0}
+.rangeRow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--signal);border-radius:50%;cursor:pointer}
+.rangeRow input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--signal);border:0;border-radius:50%;cursor:pointer}
+.rangeRow output{flex:none;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--signal);min-width:78px;text-align:end;white-space:nowrap}
+.dual{position:relative;flex:1 1 0;min-width:0;height:18px;display:flex;align-items:center}
+.dual .track{position:absolute;inset-inline:0;height:2px;background:var(--rule-hi)}
+.dual .track i{position:absolute;top:0;bottom:0;background:var(--signal);display:block}
+.dual input[type=range]{position:absolute;inset-inline:0;width:100%;margin:0;height:18px;
+  -webkit-appearance:none;appearance:none;background:transparent;pointer-events:none;outline:0}
+.dual input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;
+  width:13px;height:13px;border-radius:50%;background:var(--signal);border:2px solid var(--void);cursor:pointer}
+.dual input[type=range]::-moz-range-thumb{pointer-events:auto;
+  width:13px;height:13px;border-radius:50%;background:var(--signal);border:2px solid var(--void);cursor:pointer}
+.seg em{font-style:normal;opacity:.6;font-size:9px;margin-inline-start:5px}
+.seg.on em{opacity:.85}
+.limits{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 26px}
+.limits .lbl{display:block;margin-bottom:6px}
+
+.panel-foot{display:flex;align-items:center;gap:14px;padding-block:16px 20px;flex-wrap:wrap}
+.cta{border:0;background:var(--signal);color:var(--void);font-family:Archivo,sans-serif;font-weight:800;
+  font-size:15px;letter-spacing:.16em;text-transform:uppercase;padding:13px 34px;cursor:pointer;border-radius:2px;
+  display:inline-flex;align-items:center;gap:10px;transition:filter .15s,transform .1s}
+:root[data-day] .cta{color:#fff}
+.cta:hover{filter:brightness(1.12)}
+.cta:active{transform:translateY(1px)}
+.cta:disabled{background:var(--deck3);color:var(--ink-3);cursor:not-allowed;filter:none;transform:none}
+:root[data-day] .cta:disabled{color:var(--ink-3)}
+.cta s{text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:12px;opacity:.75}
+.foot-note{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-3);letter-spacing:.05em}
+
+/* ── ticker ───────────────────────────────────────────────── */
+.ticker{border-bottom:1px solid var(--rule);background:var(--deck);overflow:hidden;position:relative}
+.ticker::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,var(--deck),transparent 6%,transparent 94%,var(--deck))}
+.tick-track{display:flex;gap:0;white-space:nowrap;width:max-content;animation:tick 90s linear infinite}
+.ticker:hover .tick-track,.ticker:focus-within .tick-track{animation-play-state:paused}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tick{display:inline-flex;align-items:center;gap:9px;padding:9px 20px;border-inline-end:1px solid var(--rule);
+  font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.tick b{color:var(--ink);font-weight:700}
+.tick i{font-style:normal;color:var(--signal-2)}
+.tick s{text-decoration:none;color:var(--ink-3)}
+
+/* ── banda offerta di vertice ─────────────────────────────── */
+.apex{border-bottom:1px solid var(--rule);background:linear-gradient(180deg,var(--deck2),var(--deck));position:relative;overflow:hidden}
+.apex::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--alert)}
+.apex-in{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 178px;
+  gap:clamp(18px,3vw,48px);align-items:center;padding-block:clamp(22px,3vw,38px)}
+.apex .lbl-rank{display:flex;align-items:center;gap:10px}
+.apex .lbl-rank b{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--alert);letter-spacing:.2em}
+.apex h3{font-family:Archivo,sans-serif;font-size:clamp(28px,4.2vw,54px);font-weight:800;
+  letter-spacing:-.035em;line-height:.95;text-transform:uppercase;margin:10px 0 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.apex .meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+.apex .meta i{font-style:normal;color:var(--signal)}
+.apex-nums{display:grid;grid-template-columns:repeat(4,1fr);border-inline-start:1px solid var(--rule)}
+.apex-nums div{border-inline-end:1px solid var(--rule);padding:2px 12px;min-width:0}
+.apex-nums b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(17px,2.05vw,26px);
+  font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.apex-nums div:nth-child(3) b{color:var(--alert)}
+.apex-nums div:nth-child(4) b{color:var(--signal)}
+.apex-nums span{display:block;margin-top:5px}
+.apex-nums .lbl u{text-decoration:none}
+@media(max-width:520px){.apex-nums .lbl u{display:none}}
+.apex-nums .abar{height:3px;background:var(--deck3);position:relative;overflow:hidden;margin-top:7px;max-width:74px}
+.apex-nums .abar i{position:absolute;inset:0 auto 0 0;display:block;
+  background:linear-gradient(90deg,var(--signal-deep),var(--signal-2))}
+.apex-acts{display:flex;flex-direction:column;gap:6px}
+
+/* ── sezioni ──────────────────────────────────────────────── */
+section{scroll-margin-top:64px}
+.sec-head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;
+  padding:clamp(30px,4vw,54px) 0 16px;border-bottom:1px solid var(--rule)}
+.sec-head h2{font-size:clamp(22px,3vw,38px);text-transform:uppercase;letter-spacing:-.025em;line-height:1}
+.sec-head p{margin:0;color:var(--ink-2);max-width:62ch;font-size:14.5px}
+.sec-head .lbl{margin-bottom:6px}
+.sec-head > div:first-child{flex:1 1 340px}
+
+/* ── classifica ───────────────────────────────────────────── */
+.mrow,.mhead{display:grid;
+  grid-template-columns:50px minmax(0,2.1fr) minmax(76px,.78fr) minmax(70px,.66fr) minmax(68px,.62fr) minmax(72px,.62fr) minmax(66px,.6fr) minmax(104px,.9fr) 122px;
+  /* Le colonne si appoggiano in alto, non al centro. Bastava un nome di
+     destinazione lungo per far crescere una cella e mandare prezzo e
+     punteggio a quote diverse riga per riga: la classifica perdeva la
+     rigatura, ed e' la cosa che piu' fa sembrare disordinata una tabella. */
+  align-items:start;border-bottom:1px solid var(--rule);position:relative}
+.mhead{align-items:end}
+.mrow .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mhead{border-bottom:1px solid var(--rule-hi)}
+.mrow:hover{background:var(--deck2)}
+.mrow > *{padding:13px 11px;min-width:0}
+.mhead > *{padding:9px 11px}
+.mrow > *:first-child,.mhead > *:first-child{padding-inline-start:14px}
+.mrow .rk{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:700;color:var(--ink-3)}
+.mrow.hot .rk{color:var(--alert)}
+.mrow.hot{box-shadow:inset 3px 0 0 var(--alert)}
+.route{display:flex;flex-direction:column;gap:3px}
+.route b{font-family:Archivo,sans-serif;font-size:16.5px;font-weight:700;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:8px;min-width:0}
+.route b .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.route .path{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-3);letter-spacing:.05em}
+.route .path i{font-style:normal;color:var(--signal)}
+.num{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;text-align:end}
+.num b{display:block;font-size:15px;font-weight:700;white-space:nowrap}
+.num span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+.price b{color:var(--signal);font-size:16.5px}
+.num.good b{color:var(--ok)}
+.num.meh b{color:var(--ink-3)}
+.tagline.hot-tag{border-color:var(--ok);color:var(--ok)}
+/* "Diretto" e "andata e ritorno" non sono dettagli: sono le due condizioni
+   che rendono confrontabili i prezzi di questa classifica. In ambra si
+   leggono prima del resto della riga, senza rubare il posto al prezzo. */
+/* .route b e' il nome della destinazione: Archivo 16.5px, ed e' un flex.
+   Qui serve una parola in linea dentro la targhetta, non un titolo. */
+.tagline .dir{display:inline;font:inherit;font-weight:700;color:var(--warn);letter-spacing:.12em}
+.num.price span.rt,.apex-nums .lbl.rt{color:var(--warn)}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter .bar{height:4px;background:var(--deck3);position:relative;overflow:hidden}
+.meter .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--signal-deep),var(--signal-2));display:block}
+.mrow.hot .meter .bar i{background:linear-gradient(90deg,var(--alert),#FF7A45)}
+.meter .val{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px}
+/* Il punteggio in miniatura, dentro la cella rotta. Resta invisibile finche'
+   la colonna PUNTEGGIO c'e'; quando lo schermo si stringe e quella colonna
+   cade, questo prende il suo posto senza aggiungere una colonna alla griglia:
+   il numero che ordina la classifica non deve sparire proprio sul telefono. */
+.mini-score{display:none;align-items:center;gap:8px;margin-top:5px;max-width:250px}
+.mini-score .mbar{flex:1 1 auto;min-width:40px;height:3px;background:var(--deck3);position:relative;overflow:hidden}
+.mini-score .mbar i{position:absolute;inset:0 auto 0 0;display:block;
+  background:linear-gradient(90deg,var(--signal-deep),var(--signal-2))}
+.mrow.hot .mini-score .mbar i{background:linear-gradient(90deg,var(--alert),#FF7A45)}
+.mini-score s{text-decoration:none;flex:none;white-space:nowrap;font-family:"JetBrains Mono",monospace;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+/* .route b e' un flex a 16.5px: qui serve un numero in linea, non un blocco */
+.mini-score s u{text-decoration:none}
+.mini-score s b{display:inline;font-family:inherit;font-size:11.5px;font-weight:700;
+  letter-spacing:0;color:var(--signal)}
+.mrow.hot .mini-score s b{color:var(--alert)}
+.acts{display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.btn{display:block;text-align:center;text-decoration:none;border:1px solid var(--rule-hi);padding:6px 8px;
+  font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);border-radius:2px;background:transparent;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.btn:hover{border-color:var(--signal);color:var(--signal);background:var(--signal-soft)}
+.btn.pri{background:var(--signal);border-color:var(--signal);color:var(--void);font-weight:700}
+:root[data-day] .btn.pri{color:#fff}
+.btn.pri:hover{filter:brightness(1.12);color:var(--void)}
+:root[data-day] .btn.pri:hover{color:#fff}
+.btn.done{border-color:var(--ok);color:var(--ok)}
+.sortbtn{background:transparent;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;
+  display:inline-flex;align-items:center;gap:5px;letter-spacing:inherit;text-transform:inherit}
+.sortbtn:hover{color:var(--ink)}
+.sortbtn .ar{opacity:0;font-size:9px}
+.sortbtn.on{color:var(--signal)}
+.sortbtn.on .ar{opacity:1}
+.mhead .r{justify-content:flex-end;text-align:end}
+.mhead .r .sortbtn{justify-content:flex-end;width:100%}
+.tagline{display:inline-flex;gap:5px;align-items:center;font-family:"JetBrains Mono",monospace;font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--rule);
+  padding:1px 5px;border-radius:2px;margin-top:2px;width:max-content;max-width:100%}
+.flag{font-size:17px;line-height:1;flex:none}
+.flag.code{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.05em;
+  background:var(--signal-soft);border:1px solid var(--rule-hi);color:var(--signal);padding:2px 4px;border-radius:2px}
+@keyframes flash{0%,100%{background:transparent}30%{background:var(--signal-soft)}}
+.flash{animation:flash 1.4s ease}
+
+.bay{border-bottom:1px solid var(--rule);background:
+  repeating-linear-gradient(135deg,transparent 0 9px,var(--signal-soft) 9px 10px);
+  display:flex;align-items:center;justify-content:center;min-height:96px;position:relative}
+.bay::before{content:attr(data-label);position:absolute;top:8px;inset-inline-start:12px;
+  font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.bay-lg{min-height:120px}
+.bay em{font-style:normal;color:var(--ink-3);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em}
+
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));border-inline-start:1px solid var(--rule)}
+.mcell{border-inline-end:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 20px 24px}
+.mcell h4{font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:9px 0 8px}
+.mcell p{margin:0;color:var(--ink-2);font-size:13.5px;line-height:1.6}
+.mcell code{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--signal);
+  background:var(--signal-soft);padding:1px 5px;border-radius:2px}
+.note{border:1px solid var(--rule-hi);border-inline-start:3px solid var(--warn);padding:14px 18px;margin:24px 0 0;
+  color:var(--ink-2);font-size:13.5px;background:var(--deck)}
+.note b{color:var(--ink)}
+
+/* ── consenso ──────────────────────────────────────────────
+   Compare solo se c'e' davvero qualcosa da consentire, cioe' se
+   e' configurato un circuito pubblicitario. Finche' il sito non
+   traccia nessuno, chiedere il permesso sarebbe teatro. */
+.cc{position:fixed;inset-inline:0;bottom:0;z-index:200;background:var(--deck);
+  border-top:1px solid var(--rule-hi);box-shadow:0 -18px 40px -28px rgba(0,0,0,.9)}
+.cc-in{display:flex;align-items:center;gap:clamp(14px,2.4vw,34px);padding:16px 0;flex-wrap:wrap}
+.cc p{margin:0;flex:1 1 380px;color:var(--ink-2);font-size:13px;line-height:1.55;min-width:0}
+.cc p b{color:var(--ink)}
+.cc a{color:var(--signal)}
+.cc .acts2{display:flex;gap:8px;flex:none;flex-wrap:wrap}
+.cc .btn{padding:9px 20px}
+.btn.stay{border-color:color-mix(in srgb,var(--ok) 55%,transparent);color:var(--ok)}
+.btn.stay:hover{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
+.aff-note{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);padding:10px 0 0}
+footer{border-top:1px solid var(--rule);padding:30px 0 44px;color:var(--ink-3);font-size:12.5px}
+footer .cols{display:flex;flex-wrap:wrap;gap:32px;justify-content:space-between;align-items:flex-start}
+footer a{color:var(--ink-2)}
+.hub{margin-top:16px;line-height:1.9}
+.hub .lbl{display:block;margin-bottom:6px}
+.hub a{color:var(--ink-3);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;
+  text-decoration:none;border-bottom:1px solid transparent}
+.hub a:hover{color:var(--signal);border-bottom-color:var(--signal)}
+.locale-index{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--rule)}
+.locale-index a{color:var(--ink-3);font-size:11.5px;text-decoration:none;border-bottom:1px solid transparent}
+.locale-index a:hover{color:var(--signal);border-bottom-color:var(--signal)}
+.trust{margin:8px 0 0;max-width:76ch;font-family:"JetBrains Mono",monospace;font-size:11.5px;
+  line-height:1.7;letter-spacing:.02em;color:var(--ink-3);border-inline-start:2px solid var(--ok);
+  padding-inline-start:11px}
+.empty{padding:44px 20px;text-align:center;color:var(--ink-3);border-bottom:1px solid var(--rule)}
+.empty b{display:block;color:var(--ink);font-family:Archivo,sans-serif;font-size:19px;text-transform:uppercase;margin-bottom:8px}
+
+/* stringendo cadono prima le colonne accessorie: km/EUR resta fino in fondo,
+   perche' e' il numero per cui esiste questo sito */
+@media(max-width:1240px){
+  .mrow,.mhead{grid-template-columns:44px minmax(0,2fr) minmax(74px,.78fr) minmax(68px,.66fr) minmax(66px,.62fr) minmax(70px,.62fr) minmax(104px,.86fr) 116px}
+  .c-stay{display:none}
+  /* nella colonna stretta di destra quattro numeri in fila si spezzerebbero:
+     vanno a due per riga, che e' anche piu' leggibile */
+  .apex-nums{grid-template-columns:repeat(2,1fr)}
+  .apex-nums div{padding-block:7px}
+  .apex-nums div:nth-child(2n){border-inline-end:0}
+}
+@media(max-width:900px){
+  .geo-body{grid-template-columns:1fr}
+  .geo-globe{border-inline-end:0;border-bottom:1px solid var(--rule)}
+  #globe{height:clamp(260px,58vw,340px)}
+}
+@media(max-width:1040px){
+  .panel-body{grid-template-columns:1fr}
+  .mrow,.mhead{grid-template-columns:40px minmax(0,2fr) minmax(72px,.8fr) minmax(68px,.7fr) minmax(66px,.7fr) 112px}
+  .c-score,.c-deal{display:none}
+  .mini-score{display:flex}
+  /* da qui in giu' la cella della rotta e' piu' alta delle altre: le
+     colonne si appoggiano in alto, non al centro, o i numeri ballano */
+  .mrow{align-items:start}
+  .mrow .rk{padding-top:13px}
+  .num b{line-height:1.15}
+  .route .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:1000px){
+  .apex-in{grid-template-columns:1fr;gap:20px}
+  /* la banda diventa larga quanto lo schermo: i quattro numeri tornano in fila */
+  .apex-nums{border-inline-start:0;border-top:1px solid var(--rule);padding-top:14px;
+    grid-template-columns:repeat(4,1fr)}
+  .apex-nums div{padding:2px 10px;border-inline-end:1px solid var(--rule)}
+  .apex-nums div:first-child{padding-inline-start:0}
+  .apex-nums div:last-child{border-inline-end:0}
+  .apex-acts{flex-direction:row}
+  .apex-acts .btn{flex:1}
+}
+/* ── telefono ───────────────────────────────────────────────
+   La barra strumenti smette di essere appiccicata: su 844 px di
+   altezza tre righe fisse erano un quinto dello schermo, e lingua
+   e valuta si scelgono una volta sola. ------------------------ */
+@media(max-width:760px){
+  .geo-head{display:grid;grid-template-columns:1fr 1fr}
+  .tab{padding:11px 12px;font-size:10px;letter-spacing:.12em;text-align:start}
+  .tab em{display:block;margin:3px 0 0 16px}
+  .tab:last-of-type{border-inline-end:0}
+  .geo-head .sp{grid-column:1 / -1;margin:0;justify-content:flex-end;
+    padding:8px 14px;border-top:1px solid var(--rule)}
+  .legend{gap:12px}
+  .rail{position:static;backdrop-filter:none}
+  .rail-in{gap:7px;padding:8px 0}
+  .mark{font-size:14px;gap:7px;letter-spacing:.1em}
+  .mark em{font-size:9px;padding:1px 5px}
+  .pill{padding:5px 8px;font-size:9.5px;letter-spacing:.1em}
+  select.pill{max-width:112px}
+  section{scroll-margin-top:8px}
+  .panel{scroll-margin-top:8px}
+  .mod-note{display:none}
+  .hero-in{gap:18px}
+  .hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hstat{border-bottom:1px solid var(--rule);padding:11px 12px 9px 0}
+  .hstat:nth-child(2n){border-inline-end:0}
+  .hstat b{font-size:21px}
+  .apex h3{font-size:clamp(26px,9vw,40px)}
+  .apex-in{padding-block:20px}
+  .panel-head{padding:13px 0 11px;gap:10px}
+  .panel-head h2{font-size:20px}
+  .panel-head .lbl{display:none}
+  .step{padding:14px 14px 16px}
+  .picklist{max-height:232px}
+  #ctryList{max-height:210px!important}
+  #apList{max-height:190px!important}
+  #apList.ap-offscreen{visibility:hidden!important}
+  #apList .pk{position:relative;overflow:hidden}
+  #apList .pk .cc{display:none!important}
+  .globe-box{gap:10px}
+  #globe{height:270px}
+  .limits{gap:14px 0}
+  .cta{width:100%;justify-content:center;padding:15px 20px}
+  .sec-head{padding:26px 0 14px}
+  .bay{min-height:74px}
+  .bay-lg{min-height:84px}
+}
+@media(max-width:420px){
+  .seg{padding:5px 8px;font-size:10px;letter-spacing:.06em}
+  .pk{font-size:12.5px;padding:7px 8px}
+}
+@media(max-width:860px){
+  .hero-in{grid-template-columns:1fr;align-items:start}
+  .rail nav{display:none}
+  .rail-in{height:auto;padding:9px 0;flex-wrap:wrap;gap:9px}
+  /* Prezzo e km/valuta erano due colonne affiancate, strette, con la
+     seconda che rubava spazio alla rotta. Qui diventano una colonna sola
+     addossata ai pulsanti, uno sopra l'altro e allineati a destra: la
+     rotta si riprende la larghezza e i numeri leggono in verticale. */
+  .mrow,.mhead{grid-template-columns:40px minmax(0,1fr) 100px 96px;
+    grid-template-rows:auto 1fr}
+  .mrow .rk,   .mhead > :first-child   {grid-column:1;grid-row:1 / 3;align-self:center;justify-self:center}
+  .mrow .route,.mhead > :nth-child(2)  {grid-column:2;grid-row:1 / 3}
+  /* i due numeri sono una coppia, uno sotto l'altro e stretti: separati
+     dal mezzo della riga sembravano due informazioni diverse */
+  .c-price {grid-column:3;grid-row:1;align-self:start;padding-bottom:0}
+  .c-kmpe  {grid-column:3;grid-row:2;align-self:start;padding-top:9px}
+  .mrow .acts, .mhead > :last-child    {grid-column:4;grid-row:1 / 3}
+  .mhead .c-price,.mhead .c-kmpe{align-self:end}
+  .c-dist{display:none}
+  .mrow > *{padding:11px 7px}
+  .acts .btn{padding:5px 4px;font-size:9px;letter-spacing:.06em}
+  /* Sotto gli 860 px la cella della rotta e' alta due o tre righe e le
+     altre colonne, centrate, finivano a quote diverse riga per riga. Da
+     qui in giu' tutte le colonne partono dalla stessa riga d'appoggio. */
+  .mrow{align-items:start}
+  /* Il numero galleggiava in alto, disallineato da tutto. Adesso e' un
+     quadrato pieno al centro della sua colonna: si legge come un rango,
+     non come un avanzo di testo. Testo sul fondo della pagina invece che
+     bianco, perche' su ambra il bianco non si legge. */
+  .mrow .rk{padding:0;width:28px;height:28px;border-radius:5px;
+    display:grid;place-items:center;background:var(--warn);color:var(--void);
+    font-size:12.5px;font-weight:700;letter-spacing:0;line-height:1}
+  .mrow.hot .rk{background:var(--alert);color:#fff}
+  .num b{line-height:1.15}
+  /* un nome di paese lungo mandava a capo la riga delle date e faceva una
+     riga piu' alta delle altre: qui si tronca invece di spezzarsi */
+  .route .path{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* colonna rotta stretta: etichetta sopra, barra a tutta larghezza sotto */
+  .mini-score{flex-direction:column;align-items:stretch;gap:3px;max-width:none;margin-top:6px}
+  .mini-score s{font-size:9.5px;letter-spacing:.06em}
+  .mini-score .mbar{width:100%}
+}
+/* Sotto i 560 px la colonna della rotta scendeva a settanta pixel e la
+   riga "Diretto · 2h33 · Aviasales" usciva dalla cella passando sopra il
+   prezzo. Qui le colonne si stringono dove si puo' — numero, pulsanti,
+   spaziature — e quella riga va a capo dentro la sua cella invece di
+   scavalcarla. */
+@media(max-width:560px){
+  .mrow,.mhead{grid-template-columns:34px minmax(0,1fr) 84px 92px}
+  /* l'itinerario deve starci per intero: senza la data di rientro la riga
+     non dice niente, e i puntini di troncamento se la mangiavano */
+  .route .path{font-size:10px;letter-spacing:.01em}
+  .mrow > *{padding:10px 5px}
+  /* la targhetta e' un inline-flex: i suoi figli diventano blocchi e il
+     testo non va a capo come testo. Qui torna flusso normale e si spezza
+     dove serve, dentro la sua cella. */
+  .route .tagline{display:inline;width:auto;white-space:normal;line-height:1.7;max-width:100%}
+  .route b{font-size:14px}
+  .acts .btn{padding:5px 3px;font-size:8.5px;letter-spacing:.04em}
+  .num b{font-size:14px}
+  .num span{font-size:9px;letter-spacing:.06em}
+  /* "andata e ritorno" si spezzava in tre righe sotto il prezzo */
+  .num.price span.rt{letter-spacing:0;font-size:8px;line-height:1.3;white-space:nowrap}
+  /* Le celle erano centrate verticalmente: con una cella rotta alta, il
+     numero d'ordine e il prezzo galleggiavano a quote diverse in ogni riga
+     e il numero finiva addosso alla data andata a capo. Adesso tutte le
+     colonne partono dalla stessa riga d'appoggio, e la classifica ha una
+     rigatura sola dall'alto in basso. */
+  .mrow > *{padding-top:13px;padding-bottom:13px}
+  .route b{margin-top:-1px}
+  /* il paese sta gia' nella bandiera: senza, le date stanno su una riga */
+  .route .path .cty{display:none}
+  /* la barra del punteggio larga quanto la targhetta sopra: due bordi
+     allineati invece di due larghezze diverse */
+  .mini-score{margin-top:7px}
+  /* la fonte e la data sono gia' scritte in grande sopra la classifica:
+     su un telefono quello spazio serve alla rotta */
+  .tagline .src{display:none}
+}
+@media(max-width:400px){
+  /* telefoni stretti: le colonne dei numeri e dei pulsanti cedono qualche
+     pixel perche' l'itinerario resti leggibile per intero */
+  .mrow,.mhead{grid-template-columns:28px minmax(0,1fr) 72px 80px}
+  .route .path{font-size:9px;letter-spacing:0}
+  .mrow .rk{width:26px;height:26px;font-size:11.5px}
+  .acts .btn{font-size:8px}
+}
+/* sotto i 380 px la parola non ci sta: restano il numero e la barra */
+@media(max-width:380px){
+  .mini-score s u{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+
+<div class="modules">
+  <div class="wrap mod-in">
+    <span class="lbl" data-k="platform">Piattaforma</span>
+    <nav class="mods" aria-label="Moduli">
+      <span class="mod on"><s>▲</s> Flight</span>
+      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
+      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
+    </nav>
+  </div>
+</div>
+
+<div class="rail">
+  <div class="wrap rail-in">
+    <div class="mark"><svg class="glyph" width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></div>
+    <nav>
+      <a id="navSearch" data-k="nav_search">Ricerca</a>
+      <a href="#method" data-k="nav_method">Metodo</a>
+      <a href="#privacy" data-k="nav_priv">Trasparenza</a>
+    </nav>
+    <div class="rail-right">
+      <span class="pill" id="srcPill" title=""><span class="dot idle"></span><span id="srcTxt">INDEX</span></span>
+      <select class="pill" id="selLang" aria-label="Language"></select>
+      <select class="pill" id="selCur" aria-label="Currency"></select>
+      <button class="pill" id="shareBtn" data-k="share">Condividi</button>
+      <button class="pill" id="dayBtn" data-k="day">Giorno</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="lbl lbl-sig" id="heroEyebrow"></div>
+      <h1 class="h1"><span data-k="h1a">Non scegliere dove.</span><span data-k="h1b">Scegli quanto lontano.</span></h1>
+      <p class="lede" id="lede"></p>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><b id="stAir">—</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
+      <div class="hstat"><b id="stDest">—</b><span class="lbl" data-k="st_dest">Destinazioni</span></div>
+      <div class="hstat"><b id="stFare">—</b><span class="lbl" data-k="st_fare">Tariffe verificate</span></div>
+      <div class="hstat"><b id="stBest">—</b><span class="lbl" data-k="st_best">Miglior rapporto</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="panel" id="search">
+  <div class="wrap">
+    <div class="panel-head">
+      <span class="lbl lbl-sig">01</span>
+      <h2 data-k="nav_search">Ricerca</h2>
+      <span class="lbl" id="panelHint"></span>
+      <button class="tiny" id="panelToggle" style="margin-inline-start:auto">—</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-inline:0">
+    <div class="panel-body">
+
+      <div class="step full geo">
+        <div class="geo-head">
+          <button class="tab on" data-act="mode" data-v="from">
+            <i class="pip" style="background:var(--alert)"></i><span data-k="f_from">Partenza</span> <em id="oCount"></em></button>
+          <button class="tab" data-act="mode" data-v="to">
+            <i class="pip" style="background:var(--signal)"></i><span data-k="f_to">Destinazione</span> <em id="dCount"></em></button>
+          <span class="sp">
+            <button class="tiny" data-act="all" data-k="f_all">Tutti</button>
+            <button class="tiny" data-act="clear" data-k="f_clear">Azzera</button>
+          </span>
+        </div>
+        <div class="geo-body">
+          <div class="geo-globe">
+            <div class="globe-wrap">
+              <canvas id="globe"></canvas>
+            </div>
+            <div class="lbl" id="globeCap" style="text-align:center;padding-top:4px"></div>
+            <div class="legend">
+              <span><i style="background:var(--alert)"></i><span data-k="f_from">Partenza</span> <b id="legFrom">—</b></span>
+              <span><i style="background:var(--signal)"></i><span data-k="f_to">Destinazione</span> <b id="legTo">—</b></span>
+
+            </div>
+          </div>
+          <div class="geo-side">
+            <div class="segbar" id="dMode" hidden></div>
+            <div class="segbar" id="contBar"></div>
+            <input type="text" id="find" autocomplete="off" spellcheck="false"
+              style="width:100%;background:var(--deck2);border:1px solid var(--rule-hi);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px">
+            <div class="picklist" id="ctryList"></div>
+            <div class="lbl" id="apLbl" data-k="f_airport">Aeroporto</div>
+            <div class="picklist" id="apList" style="max-height:168px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step full">
+        <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Giorni alla partenza</em></h3>
+        <p class="hint" data-k="f_window_h">Fra quanti giorni parti, contati da oggi. Puoi scegliere piu' intervalli.</p>
+        <div class="segbar" id="winChips"></div>
+        <div class="lbl" style="margin-top:16px" data-k="f_shape">Forma del viaggio</div>
+        <div class="segbar" id="shapeChips"></div>
+        <div class="limits" style="margin-top:16px">
+          <div><span class="lbl" id="lblDist">Distanza</span>
+            <div class="rangeRow">
+              <div class="dual" id="dualDist">
+                <div class="track"><i id="distFill"></i></div>
+                <input type="range" id="rngDistMin" min="0" max="36000" step="500" value="0" aria-label="min">
+                <input type="range" id="rngDistMax" min="0" max="36000" step="500" value="36000" aria-label="max">
+              </div>
+              <output id="outDist"></output></div></div>
+          <div><span class="lbl" data-k="f_budget">Budget massimo</span>
+            <div class="rangeRow"><input type="range" id="rngBudget" min="20" max="2000" step="10" value="2000"><output id="outBudget"></output></div></div>
+          <div><span class="lbl" data-k="f_bag">Bagaglio in stiva</span>
+            <div class="rangeRow"><input type="range" id="rngBag" min="0" max="150" step="5" value="0"><output id="outBag"></output></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="wrap panel-foot">
+    <button class="cta" id="btnSearch"><s>▲</s><span data-k="btn_search">Cerca</span></button>
+    <span class="foot-note" id="searchNote"></span>
+  </div>
+</section>
+
+<div class="ticker" id="tickerWrap" aria-hidden="true"><div class="tick-track" id="tick"></div></div>
+
+<section class="apex" id="apex" hidden><div class="wrap apex-in" id="apexIn"></div></section>
+
+<main class="wrap">
+  <section id="board">
+    <div class="sec-head">
+      <div>
+        <div class="lbl lbl-sig">02</div>
+        <h2 id="boardTitle"></h2>
+        <p id="boardNote"></p>
+        <p class="trust" id="trustNote"></p>
+      </div>
+      <div style="text-align:end">
+        <div class="lbl" data-k="b_found">Rotte trovate</div>
+        <div class="mono" style="font-size:30px;font-weight:700;line-height:1" id="cntFound">0</div>
+      </div>
+    </div>
+    <div class="mhead" id="mhead"></div>
+    <div id="manifest"></div>
+    <div style="padding:16px 0;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnMore" style="display:none;padding:9px 22px" data-k="more">Mostra tutte</button>
+    </div>
+  </section>
+
+  <section id="method">
+    <div class="sec-head">
+      <div>
+        <div class="lbl lbl-sig">03</div>
+        <h2 data-k="nav_method">Metodo</h2>
+        <p id="methodLede"></p>
+      </div>
+    </div>
+    <div class="method" id="methodGrid"></div>
+    <div class="note" id="methodNote"></div>
+  </section>
+</main>
+
+<section id="privacy" class="wrap">
+  <div class="sec-head">
+    <div><div class="lbl lbl-sig">04</div><h2 data-k="nav_priv">Trasparenza</h2><p id="privLede"></p></div>
+  </div>
+  <div class="method" id="privGrid"></div>
+</section>
+
+<footer>
+  <div class="wrap cols">
+    <div>
+      <div class="mark" style="font-size:15px"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></div>
+      <div style="margin-top:8px;max-width:44ch" id="footTag"></div>
+      <!-- Un indirizzo raggiungibile: lo chiede AdSense, lo guardano i circuiti
+           di affiliazione quando esaminano il sito, e serve a chi arriva qui e
+           vuole sapere se dietro c'e' qualcuno. -->
+      <div style="margin-top:10px" class="mono"><a href="mailto:support@efficiency-life.com"
+        style="color:var(--signal)">support@efficiency-life.com</a></div>
+    </div>
+    <div style="max-width:46ch">
+      <div class="mono" id="footNote"></div>
+      <!--HUB-->
+      <button class="tiny" id="ccOpen" style="margin-top:12px" hidden></button>
+    </div>
+  </div>
+</footer>
+
+<div class="cc" id="cc" hidden>
+  <div class="wrap cc-in">
+    <p id="ccText"></p>
+    <div class="acts2">
+      <button class="btn" id="ccNo"></button>
+      <button class="btn pri" id="ccYes"></button>
+    </div>
+  </div>
+</div>
+
+<script id="catalog" type="application/json">__CATALOG__</script>
+<script id="dealdata" type="application/json">__DEALS__</script>
+<script id="worlddata" type="application/json">__WORLD__</script>
+<script>
+"use strict";
+__I18N__
+const PROSE = __PROSE__;
+
+const CAT   = JSON.parse(document.getElementById('catalog').textContent);
+const IDX   = JSON.parse(document.getElementById('dealdata').textContent);
+const WORLD = JSON.parse(document.getElementById('worlddata').textContent);
+const PL    = IDX.places;
+const AP    = Object.fromEntries(CAT.airports.map(a => [a.i, a]));
+const CTRY  = Object.fromEntries(CAT.countries.map(c => [c.k, c]));
+const NDEST = new Set(IDX.deals.map(d => d.d)).size;
+/* Storico dei prezzi: rotta -> [rilevazioni, decimo percentile, mediana] sugli
+   ultimi 90 giorni. Lo riempie build.py leggendo data/history/, che cresce di
+   una riga per rotta ogni notte. Finche' e' corto resta vuoto e il sito non
+   mostra niente: una statistica su tre osservazioni e' peggio del silenzio. */
+const HIST = __HIST__;
+const CURBY = Object.fromEntries(CUR.map(c => [c[0], c]));
+const TXT   = Object.fromEntries(KEYS.map((k,i) => [k, i]));
+
+/* ── stato ──────────────────────────────────────────────── */
+const WINDOWS = [30,60,90,120,150,180,999];
+let booting = true;
+const S = {
+  lang:'it', cur:'EUR', langSet:false, curSet:false,
+  geo:'from',
+  oCont:'', oCountries:new Set(), origins:new Set(), oFind:'',
+  dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
+  windows:new Set(WINDOWS), shapes:new Set(), minDist:0, maxDist:36000, maxBudget:2000, bagFee:0,
+  sort:'score', dir:-1, showAll:false,
+  live:false, liveRows:null, pin:'', results:[], auto:false
+};
+/* I pesi del punteggio. "deal" e' lo scarto dal prezzo atteso per quella
+   distanza: e' la voce che distingue un affare da un volo semplicemente lungo,
+   e vale quanto il chilometro per euro. */
+
+
+/* Forma del viaggio: giorno di partenza e giorno di rientro.
+   fri-mon 3 notti · fri-sun 2 · sat-sun 1. Il numero e' il giorno della
+   settimana in UTC, 0 = domenica. */
+/* Terzo numero: le notti. Senza quello "venerdi -> lunedi" accettava anche
+   un venerdi 17 ottobre con rientro lunedi 8 novembre — ventidue notti, che
+   un weekend lungo non e'. I giorni giusti nell'ordine giusto non bastano:
+   deve tornare la distanza fra le due date. */
+const SHAPES = { fsm:[5,1,3], fss:[5,0,2], ss:[6,0,1] };
+const dow = s => new Date(s + 'T00:00:00Z').getUTCDay();
+/* Una riga corrisponde a una forma se parte e rientra in quei giorni.
+   Si possono spuntare piu' forme insieme, come per le finestre: l'insieme
+   vuoto vuol dire "qualsiasi", ed e' lo stato di partenza. */
+const isShape = (r, k) => { const s = SHAPES[k];
+  return !!s && dow(r.dep) === s[0] && dow(r.ret) === s[1] && r.n === s[2]; };
+function shapeOk(r, set){
+  if(!set || !set.size) return true;
+  for(const k of set) if(isShape(r, k)) return true;
+  return false;
+}
+
+/* ── lingua, valuta, formati ────────────────────────────── */
+let RTL = false;
+const T = k => {
+  const row = LANGS[S.lang] || LANGS.en;
+  return row[TXT[k]] ?? LANGS.en[TXT[k]] ?? k;
+};
+const IT = () => S.lang === 'it';
+const P = () => PROSE.locales[S.lang] || PROSE.locales.en;
+let _dn = {}, _dnLang = '';
+function dispName(code, type){
+  if(_dnLang !== S.lang){ _dnLang = S.lang; _dn = {}; }
+  try{
+    _dn[type] ||= new Intl.DisplayNames([S.lang], {type});
+    return _dn[type].of(code) || code;
+  }catch(_){ return code; }
+}
+const cname = cc => cc === 'XK' ? 'Kosovo' : dispName(cc, 'region');
+
+/* continenti: codici UN M49, cosi' i nomi arrivano gia' tradotti dal browser */
+const REGIONS = [['150','r_eu'],['142','r_as'],['145','r_me'],['021','r_na'],
+                 ['419','r_la'],['002','r_af'],['009','r_oc']];
+const REG_OF = {'Europa':'150','Asia':'142','Medio Oriente':'145','Nord America':'021',
+                'America Latina & Caraibi':'419','Africa':'002','Oceania':'009'};
+const REG_KEY = Object.fromEntries(REGIONS);
+const regName = m49 => T(REG_KEY[m49] || 'f_all');
+
+const fx  = () => CURBY[S.cur] || CURBY.EUR;
+const sym = () => fx()[1];
+function money(eur, opt){
+  const f = fx(), v = eur * f[3];
+  const d = opt && opt.exact ? f[2] : (v >= 100 ? 0 : f[2]);
+  const n = v.toLocaleString(S.lang, {minimumFractionDigits:d, maximumFractionDigits:d});
+  return `${n} ${f[1]}`;
+}
+const toCur = eur => eur * fx()[3];
+const fmtN  = n => n.toLocaleString(S.lang);
+const fmtDate = s => new Date(s+'T00:00:00Z').toLocaleDateString(S.lang,{day:'2-digit',month:'short',timeZone:'UTC'});
+const dur = m => `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`;
+const ratio = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+/* Scarto dal prezzo atteso, in percento: -48% = costa quasi la meta' di
+   quanto costa di norma volare cosi' lontano. */
+const dealPct = r => r.exp ? Math.round((1 - r.price/r.exp) * 100) : 0;
+function dealCell(r){
+  const v = dealPct(r);
+  const txt = v > 0 ? '\u2212' + v + '%' : v < 0 ? '+' + (-v) + '%' : '—';
+  return `<div class="num c-deal${v >= 25 ? ' good' : v < 0 ? ' meh' : ''}">` +
+         `<b>${txt}</b><span>${esc(T('deal_u'))}</span></div>`;
+}
+
+/* bandiere: su alcuni sistemi (Windows) il font non ha le bandiere emoji.
+   Si verifica una volta sola disegnandone una e cercando il colore. */
+let FLAG_OK = false;
+(function testFlags(){
+  try{
+    const c = document.createElement('canvas'); c.width = c.height = 18;
+    const x = c.getContext('2d', {willReadFrequently:true});
+    x.font = '16px serif'; x.textBaseline = 'top'; x.fillText('🇨🇦', 0, 0);
+    const d = x.getImageData(0,0,18,18).data;
+    for(let i=0;i<d.length;i+=4) if(d[i] > 150 && d[i+1] < 90 && d[i+2] < 90){ FLAG_OK = true; break; }
+  }catch(_){}
+})();
+function flag(cc){
+  if(!cc || cc.length !== 2) return '';
+  if(!FLAG_OK) return `<span class="flag code">${cc}</span>`;
+  const e = String.fromCodePoint(...[...cc.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+  return `<span class="flag">${e}</span>`;
+}
+
+/* ── geodesia e motore ──────────────────────────────────── */
+const R = 6371, rad = d => d*Math.PI/180, deg = r => r*180/Math.PI;
+function haversine(a,b){
+  const dLa=rad(b.la-a.la), dLo=rad(b.lo-a.lo);
+  const h=Math.sin(dLa/2)**2+Math.cos(rad(a.la))*Math.cos(rad(b.la))*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+const TODAY = new Date(IDX.observed + 'T00:00:00Z');
+const daysOut = iso => Math.round((new Date(iso+'T00:00:00Z') - TODAY)/864e5);
+const windowOf = d => { const w = Math.ceil(Math.max(d,1)/30)*30; return w<=180 ? w : 999; };
+
+/* ── affiliazione ────────────────────────────────────────────────────
+   MARKER vuoto = il sito resta uno strumento di ricerca puro e i link
+   vanno diretti all'operatore, senza tracciamento. Con il marker
+   valorizzato ogni link di prenotazione passa dal redirect Travelpayouts
+   e la prenotazione viene attribuita al sito.
+   Un solo interruttore, in scripts/build.py.                          */
+const TP = { marker:'__TP_MARKER__', trs:'__TP_TRS__', campaign:'__TP_CAMPAIGN__',
+             tmpl:'__TP_LINK__', pFlight:'__TP_P_FLIGHT__', pHotel:'__TP_P_HOTEL__',
+             pAct:'__TP_P_ACT__', cAct:'__TP_C_ACT__' };
+const AFFIL = () => !!TP.marker && TP.marker !== '__TP_' + 'MARKER__';
+/* Il redirect si usa solo per i programmi di cui conosciamo il codice `p`.
+   Per gli altri il link resta diretto: il marker viaggia comunque come
+   parametro sulla pagina di destinazione, che e' il modo documentato. */
+function affil(url, prog, campaign){
+  if(!AFFIL() || !prog) return url;
+  return TP.tmpl.replace('{marker}',   encodeURIComponent(TP.marker))
+                .replace('{trs}',      encodeURIComponent(TP.trs))
+                .replace('{p}',        encodeURIComponent(prog))
+                .replace('{campaign}', encodeURIComponent(campaign || TP.campaign))
+                .replace('{url}',      encodeURIComponent(url));
+}
+/* Aviasales vuole le date come GGMM attaccate ai due codici */
+const ddmm = iso => iso.slice(8,10) + iso.slice(5,7);
+const aviasales = (o,d,dep,ret) =>
+  `https://www.aviasales.com/search/${o}${ddmm(dep)}${d}${ddmm(ret)}1?currency=${S.cur.toLowerCase()}&marker=${encodeURIComponent(TP.marker)}`;
+/* Alloggio. Hotellook — il motore alberghi del circuito Travelpayouts — ha
+   chiuso il 20 ottobre 2025: search.hotellook.com oggi rimbalza su Booking
+   con l'identificativo affiliato DI TRAVELPAYOUTS, non con il nostro. Un
+   pulsante che manda traffico e non incassa e' peggio di un pulsante assente,
+   quindi finche' TP_HOTEL_URL e' vuoto il pulsante non c'e'.
+   Quando ci sara' un programma alloggi a cui sei iscritto, qui va il suo
+   formato di ricerca: i segnaposto {city} {in} {out} {cur} {marker}
+   vengono riempiti dal sito. */
+/* Attivita' ed esperienze. La ricerca di Klook accetta il nome della citta'
+   in chiaro, quindi vale per tutte le destinazioni e non serve una tabella di
+   identificativi interni. */
+const ACT_TMPL = '__TP_ACT_URL__';
+const ACT_ON = () => !!ACT_TMPL && ACT_TMPL !== '__TP_' + 'ACT_URL__' && !!TP.pAct;
+const activities = (r) => ACT_TMPL.replace('{city}', encodeURIComponent(r.d.n));
+
+const HOTEL_TMPL = '__TP_HOTEL_URL__';
+const HOTELS_ON = () => !!HOTEL_TMPL && HOTEL_TMPL !== '__TP_' + 'HOTEL_URL__';
+const hotels = (r) => HOTEL_TMPL
+  .replace('{city}',   encodeURIComponent(r.d.n))
+  .replace('{in}',     r.dep)
+  .replace('{out}',    r.ret)
+  .replace('{cur}',    S.cur.toLowerCase())
+  .replace('{marker}', encodeURIComponent(TP.marker));
+
+function exploreUrl(iata){
+  const raw = "\x08\x1c\x10\x03\x1a\x0b\x28\x00\x6a\x07\x08\x01\x12\x03"+iata
+            + "\x1a\x0b\x28\x00\x72\x07\x08\x01\x12\x03"+iata
+            + "\x40\x01\x48\x01\x70\x02\x82\x01\x0b\x08"+"\xff".repeat(9)+"\x01\x98\x01\x01";
+  const b64 = btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return `https://www.google.com/travel/explore?tfs=${b64}&tfu=GgA&hl=${S.lang}&curr=${S.cur}`;
+}
+const gflight = (o,d,dep,ret) =>
+  `https://www.google.com/travel/flights?hl=${S.lang}&curr=${S.cur}&q=` +
+  encodeURIComponent(`Flights from ${o} to ${d} on ${dep} through ${ret} nonstop`);
+const yymmdd = s => s.slice(2,4)+s.slice(5,7)+s.slice(8,10);
+const sky = (o,d,dep,ret) =>
+  `https://www.skyscanner.net/transport/flights/${o.toLowerCase()}/${d.toLowerCase()}/${yymmdd(dep)}/${yymmdd(ret)}/?adultsv2=1&cabinclass=economy&preferdirects=true&rtn=1`;
+
+function enrich(raw){
+  const o = PL[raw.o], d = PL[raw.d];
+  if(!o || !d || d.k === o.k) return null;
+  if(!CTRY[d.k] || !CTRY[o.k]) return null;
+  const price = raw.p + S.bagFee;
+  const exp = raw.x || 0;
+  return { ...raw, o, d, oc:raw.o, dc:raw.d, price, base:raw.p, exp,
+    deal: exp ? exp/price : 1,
+    kmpe:(raw.km*2)/price, minpe:raw.dur/price,
+    win: windowOf(daysOut(raw.dep)), ck:d.k,
+    id: `${raw.o}-${raw.d}-${yymmdd(raw.dep)}` };
+}
+/* ══════════════════════════════════════════════════════════
+   IL PREZZO ATTESO — il motore che distingue un affare da un volo lungo
+   ══════════════════════════════════════════════════════════
+   Il chilometro per euro ha un difetto strutturale: premia sempre la
+   distanza. Un intercontinentale a 400 euro fa 45 km/EUR e sembra un affare;
+   un volo di 600 km a 19 euro ne fa 63 e passa inosservato, benche' costi
+   un terzo di quanto costa di norma quella tratta.
+
+   Qui si stima come il prezzo cresce con la distanza sull'intero indice —
+   circa cinquemila tariffe reali — con una retta nei logaritmi, cioe' una
+   legge di potenza p = a * km^b. Le tariffe anomale (errori di prezzo,
+   promozioni irripetibili) sposterebbero la retta, quindi si scartano in tre
+   passate quelle che distano piu' di 2,5 deviazioni robuste: mediana e MAD,
+   non media e sigma, perche' la media la sposta proprio il valore da
+   escludere.
+
+   Il risultato per ogni riga e' un numero solo: quanto quella tariffa sta
+   sotto il prezzo atteso per la sua distanza. Non e' copiabile in un
+   pomeriggio non perche' la formula sia segreta — e' scritta qui — ma perche'
+   senza un indice quotidiano di migliaia di tariffe la retta non si stima. */
+/* La curva prezzo-distanza non si stima piu' qui. Il prezzo atteso di ogni
+   riga arriva gia' calcolato dal job notturno (scripts/build.py) e dalla
+   funzione /api/prices per le tariffe in tempo reale: alla pagina servono
+   il numero, non il modo in cui e' nato. E' anche piu' veloce, perche' il
+   browser non stima piu' una regressione su cinquemila punti all'apertura. */
+
+/* Lo storico, quando c'e': dice se questo prezzo e' basso per questa rotta,
+   non solo per questa distanza. Due domande diverse, due risposte diverse. */
+function histTag(r){
+  const h = HIST[r.oc + '-' + r.dc];
+  if(!h || h[0] < 5) return '';
+  if(r.base <= h[1]) return `<span class="tagline hot-tag">${esc(T('hist_low'))} · ${h[0]}g</span>`;
+  if(r.base <  h[2]) return `<span class="tagline">${esc(T('hist_med'))} · ${h[0]}g</span>`;
+  return '';
+}
+
+/* Le tariffe raggruppate per scalo di partenza una volta sola, all'avvio.
+   Prima ogni chiamata rifaceva un filter sull'intero indice per ogni
+   aeroporto selezionato: con venti scali erano centomila confronti a ogni
+   ridisegno dei chip. */
+const IDX_BY_O = {};
+for(const r of IDX.deals) (IDX_BY_O[r.o] ||= []).push(r);
+
+function rawPool(){
+  const out = [];
+  const liveBy = {};
+  if(S.liveRows) for(const r of S.liveRows) (liveBy[r.o] ||= []).push(r);
+  for(const o of S.origins){
+    const rows = liveBy[o] || IDX_BY_O[o];
+    if(rows) out.push(...rows);
+  }
+  return out;
+}
+/* Il punteggio arriva con la riga, gia' fatto. Pesi, scale e componenti
+   stanno in scripts/build.py e nella funzione live: erano l'unica parte del
+   motore che si poteva leggere aprendo il sorgente della pagina, e non c'e'
+   ragione perche' un browser debba conoscerli per ordinare una colonna. */
+function score(list){
+  for(const r of list) r.score = r.sc || 0;
+  return list;
+}
+function runSearch(){
+  let l = rawPool().map(enrich).filter(Boolean);
+  if(S.dMode === 'pick' && S.dCountries.size) l = l.filter(r => S.dCountries.has(r.ck));
+  l = l.filter(r => S.windows.has(r.win) && shapeOk(r, S.shapes)
+                 && r.km*2 >= S.minDist && r.km*2 <= S.maxDist && r.price <= S.maxBudget);
+  const best = {};                                  // una riga per destinazione: la migliore
+  for(const r of l){ const k = r.dc; if(!best[k] || r.price < best[k].price) best[k] = r; }
+  S.results = score(Object.values(best));
+  S.showAll = false;
+  return S.results;
+}
+function sorted(){
+  const k = S.sort, d = S.dir;
+  const key = { score:r=>r.score, price:r=>-r.price, dist:r=>r.km, kmpe:r=>r.kmpe,
+                deal:r=>r.deal, stay:r=>r.n }[k] || (r=>r.score);
+  return [...S.results].sort((a,b) => (key(a)-key(b)) * (d<0 ? -1 : 1) || a.price-b.price);
+}
+
+/* ── helper DOM ─────────────────────────────────────────── */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const noAcc = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+
+/* ══════════════════════════════════════════════════════════
+   PANNELLO RICERCA
+   ══════════════════════════════════════════════════════════ */
+const dealsFrom = {};                       // iata -> quante rotte nell'indice
+for(const r of IDX.deals) dealsFrom[r.o] = (dealsFrom[r.o]||0)+1;
+const dealsTo   = {};                       // paese -> quante rotte in arrivo
+for(const r of IDX.deals){ const k = PL[r.d] && PL[r.d].k; if(k) dealsTo[k] = (dealsTo[k]||0)+1; }
+
+const countriesOf = m49 => CAT.countries.filter(c => !m49 || REG_OF[c.g] === m49);
+
+function segbar(host, items, active, act){
+  $(host).innerHTML = items.map(([v,label]) =>
+    `<button class="seg${String(v)===String(active)?' on':''}" data-act="${act}" data-v="${esc(String(v))}">${esc(label)}</button>`).join('');
+}
+
+/* La console geografica e' una sola: la scheda in cima dice se stai
+   componendo la partenza o la destinazione, e il mappamondo, la barra dei
+   continenti e l'elenco lavorano tutti su quella. Prima erano due pannelli
+   gemelli che facevano lo stesso mestiere. */
+const FROM = () => S.geo === 'from';
+const contOf  = () => FROM() ? S.oCont : S.dCont;
+const findOf  = () => FROM() ? S.oFind : S.dFind;
+const setOf   = () => FROM() ? S.oCountries : S.dCountries;
+
+function renderSegs(){
+  segbar('#contBar', [['', T('f_all')], ...REGIONS.map(([m])=>[m, regName(m)])], contOf(), 'cont');
+  segbar('#dMode', [['any', T('f_anywhere')], ['pick', T('f_country')]], S.dMode, 'dmode');
+  $('#dMode').hidden = FROM();
+  $('#apLbl').hidden = !FROM();
+  $('#apList').hidden = !FROM();
+  $('#find').placeholder = T('f_searchph');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === S.geo));
+  $('#find').value = findOf();
+  renderWindows();
+  renderShapes();
+}
+/* Ogni destinazione ha una sola data osservata: la piu' economica dell'anno.
+   Quindi una finestra non e' una ricerca, e' una fetta. Il numero sul pulsante
+   dice quante rotte cadono davvero li' dentro, cosi' non si cerca al buio. */
+let _stats = null, _statsKey = '';
+/* Finestre e forme del viaggio si contano insieme, in un giro solo, e il
+   risultato resta valido finche' non cambiano gli aeroporti o la sorgente. */
+function poolStats(){
+  const key = [...S.origins].join('.') + '|' + (S.liveRows ? 'live' : 'idx');
+  if(_statsKey === key && _stats) return _stats;
+  const w = {}, s = {any:0, fsm:0, fss:0, ss:0};
+  for(const r of rawPool()){
+    const k = windowOf(daysOut(r.dep)); w[k] = (w[k]||0)+1;
+    s.any++;
+    for(const t in SHAPES) if(isShape(r, t)) s[t]++;
+  }
+  _statsKey = key; _stats = {w, s};
+  return _stats;
+}
+function windowCounts(){ return poolStats().w; }
+/* Come per le finestre, il numero sul pulsante e' quante rotte hanno davvero
+   quella forma fra gli aeroporti scelti. La fonte da' una sola data per
+   destinazione: chiedere "solo venerdi-lunedi" e' una fetta stretta, e vederlo
+   prima di premere Cerca evita la classifica vuota. */
+function shapeCounts(){ return poolStats().s; }
+function renderShapes(){
+  const c = S.origins.size ? shapeCounts() : {};
+  const items = [['any','sh_any'],['fsm','sh_long'],['fss','sh_mid'],['ss','sh_short']];
+  $('#shapeChips').innerHTML = items.map(([v,k]) => {
+    const on = v === 'any' ? !S.shapes.size : S.shapes.has(v);
+    return `<button class="seg${on?' on':''}" data-act="shape" data-v="${v}">${esc(T(k))}${
+      S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`;
+  }).join('');
+}
+/* I riquadri non sono soglie ma intervalli: 30 significava "fra 1 e 30 giorni"
+   e nessuno poteva indovinarlo. Ora lo scrivono. Il conteggio delle rotte e'
+   sparito: qui il numero accanto a un intervallo veniva letto come "30 giorni,
+   12" invece che come quante tariffe cadono in quel periodo. */
+const winLabel = (w,i) => w === 999 ? '180+' : `${(WINDOWS[i-1]||0)+1}\u2013${w}`;
+function renderWindows(){
+  $('#winChips').innerHTML = WINDOWS.map((w,i) =>
+    `<button class="seg${S.windows.has(w)?' on':''}" data-act="win" data-v="${w}">${
+      winLabel(w,i)}</button>`).join('');
+}
+
+function renderList(){
+  const q = noAcc(findOf().trim()), sel = setOf(), from = FROM();
+  const tally = from
+    ? c => c.a.reduce((t,i)=>t+(dealsFrom[i]||0),0)
+    : c => dealsTo[c.k] || 0;
+  let list = countriesOf(contOf());
+  if(q) list = CAT.countries.filter(c =>
+    noAcc(cname(c.k)).includes(q) || c.k.toLowerCase() === q ||
+    (from && c.a.some(i => i.toLowerCase() === q || noAcc(AP[i].c).includes(q) || noAcc(AP[i].n).includes(q))));
+  list = list.map(c => ({c, n: tally(c)}))
+             .sort((a,b) => b.n - a.n || cname(a.c.k).localeCompare(cname(b.c.k), S.lang));
+  $('#ctryList').innerHTML = list.map(({c,n}) => `
+    <label class="pk${sel.has(c.k)?' sel':''}${n?' has':''}">
+      <input type="checkbox" data-act="ctry" data-v="${c.k}"${sel.has(c.k)?' checked':''}>
+      ${flag(c.k)}<span class="nm">${esc(cname(c.k))}</span>
+      <span class="qt">${n || (from ? c.a.length+'·' : '·')}</span></label>`).join('')
+    || `<div style="padding:14px;color:var(--ink-3);font-size:13px">—</div>`;
+  if(from) renderAirports();
+  renderTabs();
+}
+
+function renderAirports(){
+  /* con una ricerca scritta l'elenco mostra gli scali che corrispondono,
+     ovunque siano; senza ricerca, quelli dei paesi spuntati. In entrambi i
+     casi gli aeroporti gia' scelti restano visibili, per non farli sparire */
+  const q = noAcc(S.oFind.trim());
+  const by = (a,b) => (dealsFrom[b]||0)-(dealsFrom[a]||0) || a.localeCompare(b);
+  let hits;
+  if(q){
+    hits = CAT.airports.filter(a =>
+      a.i.toLowerCase() === q || noAcc(a.c).includes(q) ||
+      noAcc(a.n).includes(q) || noAcc(cname(a.k)).includes(q)).map(a => a.i);
+  }else{
+    hits = [];
+    for(const k of S.oCountries){ const c = CTRY[k]; if(c) hits.push(...c.a); }
+  }
+  hits.sort(by);
+  /* cio' che corrisponde alla ricerca viene prima; gli scali gia' scelti
+     restano in coda, per non farli sparire mentre cerchi altro */
+  const keep = [...S.origins].filter(i => !hits.includes(i)).sort(by);
+  const codes = [...hits, ...keep].slice(0, 150);
+  $('#apList').innerHTML = codes.length ? codes.map(i => {
+    const a = AP[i], n = dealsFrom[i]||0;
+    return `<label class="pk${S.origins.has(i)?' sel':''}${n?' has':''}">
+      <input type="checkbox" data-act="origin" data-v="${i}"${S.origins.has(i)?' checked':''}>
+      <span class="cc">${i}</span><span class="nm">${esc(a.c)}<span class="sub"> · ${esc(cname(a.k))} · ${esc(a.n)}</span></span>
+      <span class="qt">${n||'—'}</span></label>`;
+  }).join('') : `<div style="padding:14px;color:var(--ink-3);font-size:13px">${esc(T('f_searchph'))}</div>`;
+}
+
+/* le due schede in cima e la legenda sotto il globo dicono sempre a che
+   punto sei, senza dover scorrere */
+function renderTabs(){
+  const nAir = S.origins.size;
+  const dest = S.dMode === 'pick' && S.dCountries.size
+    ? `${S.dCountries.size} ${T('f_selected')}` : T('f_anywhere');
+  $('#oCount').textContent = nAir ? `${nAir} ${T('f_selected')}` : '—';
+  $('#dCount').textContent = dest;
+  $('#legFrom').textContent = nAir
+    ? [...S.origins].slice(0,4).join(' ') + (nAir>4 ? ` +${nAir-4}` : '') : '—';
+  $('#legTo').textContent = dest;
+  renderWindows();
+  updateReady();
+}
+
+/* Safari iOS: evita che badge IATA fuori viewport vengano compositati sotto la toolbar. */
+(function guardMobileAirportPaint(){
+  const list = $('#apList');
+  if(!list || !('IntersectionObserver' in window)) return;
+  list.classList.add('ap-offscreen');
+  const io = new IntersectionObserver(entries => {
+    for(const entry of entries)
+      list.classList.toggle('ap-offscreen', !entry.isIntersecting);
+  }, {root:null, rootMargin:'96px 0px 96px 0px', threshold:0});
+  io.observe(list);
+})();
+
+/* il pulsante Cerca resta spento finche' non c'e' almeno un aeroporto */
+function updateReady(){
+  const ok = S.origins.size > 0;
+  const btn = $('#btnSearch');
+  if(!btn) return;
+  btn.disabled = !ok;
+  if(!ok) $('#searchNote').textContent = T('f_need');
+  else if(dirty) $('#searchNote').textContent = T('f_dirty');
+  else $('#searchNote').textContent = '';
+}
+
+function renderLimits(){
+  $('#lblDist').textContent = `${T('th_dist')} (km)`;
+  $('#outDist').textContent = S.minDist
+    ? `${fmtN(S.minDist)} – ${fmtN(S.maxDist)}`
+    : `≤ ${fmtN(S.maxDist)} km`;
+  $('#outBudget').textContent = `≤ ${money(S.maxBudget)}`;
+  $('#outBag').textContent    = `+ ${money(S.bagFee)}`;
+  $('#rngDistMin').value = S.minDist; $('#rngDistMax').value = S.maxDist;
+  $('#rngBudget').value = S.maxBudget; $('#rngBag').value = S.bagFee;
+  const f = $('#distFill');
+  f.style.insetInlineStart = (S.minDist/36000*100) + '%';
+  f.style.width = ((S.maxDist-S.minDist)/36000*100) + '%';
+}
+function renderPanel(){ renderSegs(); renderList(); renderLimits(); }
+
+/* ══════════════════════════════════════════════════════════
+   MAPPAMONDO — proiezione ortografica, paesi cliccabili
+   ══════════════════════════════════════════════════════════ */
+const cv = $('#globe'), gx = cv.getContext('2d');
+let rot = 0, tilt = 0, spin = 0.0016, raf = null, dragging = false, vel = 0, hoverCC = '';
+let arcs = [], marks = [], centroid = {};
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* centroide di ogni paese: dai poligoni se ci sono, altrimenti dagli aeroporti */
+for(const [cc, rings] of Object.entries(WORLD)){
+  let sx=0, sy=0, n=0;
+  for(const r of rings) for(let i=0;i<r.length;i+=2){ sx+=r[i]; sy+=r[i+1]; n++; }
+  if(n) centroid[cc] = {lo:sx/n/10, la:sy/n/10};
+}
+for(const c of CAT.countries){
+  if(centroid[c.k]) continue;
+  const pts = c.a.map(i => AP[i]).filter(Boolean);
+  if(pts.length) centroid[c.k] = {lo: pts.reduce((s,a)=>s+a.lo,0)/pts.length,
+                                  la: pts.reduce((s,a)=>s+a.la,0)/pts.length};
+}
+const DOTS = CAT.countries.filter(c => !WORLD[c.k] && centroid[c.k]).map(c => c.k);
+
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function geom(){ const w=cv.clientWidth, h=cv.clientHeight; return {w,h,cx:w/2,cy:h/2,rr:Math.min(w,h)*0.47}; }
+function proj(la, lo, g){
+  const p = rad(la), l = rad(lo) + rot;
+  const X  = Math.cos(p)*Math.sin(l);
+  const y0 = Math.sin(p), z0 = Math.cos(p)*Math.cos(l);
+  const ct = Math.cos(tilt), st = Math.sin(tilt);
+  const Y = y0*ct - z0*st, Z = y0*st + z0*ct;
+  return [g.cx + X*g.rr, g.cy - Y*g.rr, Z];
+}
+function unproj(px, py, g){
+  const X = (px-g.cx)/g.rr, Y = (g.cy-py)/g.rr;
+  const s = X*X + Y*Y; if(s > 1) return null;
+  const Z = Math.sqrt(1-s), ct = Math.cos(tilt), st = Math.sin(tilt);
+  const y0 = Y*ct + Z*st, z0 = -Y*st + Z*ct;
+  let lo = deg(Math.atan2(X, z0) - rot);
+  lo = ((lo + 180) % 360 + 360) % 360 - 180;
+  return {la: deg(Math.asin(Math.max(-1,Math.min(1,y0)))), lo};
+}
+function inRing(la, lo, r){
+  let inside = false;
+  for(let i=0, j=r.length-2; i<r.length; j=i, i+=2){
+    const xi=r[i]/10, yi=r[i+1]/10, xj=r[j]/10, yj=r[j+1]/10;
+    if((yi>la) !== (yj>la) && lo < (xj-xi)*(la-yi)/((yj-yi)||1e-9) + xi) inside = !inside;
+  }
+  return inside;
+}
+function countryAt(la, lo){
+  for(const [cc, rings] of Object.entries(WORLD))
+    for(const r of rings) if(inRing(la, lo, r)) return cc;
+  let best = '', bd = 9e9;                       // isole senza poligono: il punto piu' vicino
+  for(const cc of DOTS){
+    const c = centroid[cc], d = (c.la-la)**2 + ((c.lo-lo)*Math.cos(rad(la)))**2;
+    if(d < bd){ bd = d; best = cc; }
+  }
+  return bd < 9 ? best : '';
+}
+function greatCircle(a, b, n=44){
+  const p1=rad(a.la), l1=rad(a.lo), p2=rad(b.la), l2=rad(b.lo);
+  const d = 2*Math.asin(Math.min(1,Math.sqrt(Math.sin((p2-p1)/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin((l2-l1)/2)**2)));
+  const out = [];
+  for(let i=0;i<=n;i++){
+    const f = i/n;
+    if(!d){ out.push([a.la,a.lo]); continue; }
+    const A=Math.sin((1-f)*d)/Math.sin(d), B=Math.sin(f*d)/Math.sin(d);
+    const x=A*Math.cos(p1)*Math.cos(l1)+B*Math.cos(p2)*Math.cos(l2);
+    const y=A*Math.cos(p1)*Math.sin(l1)+B*Math.cos(p2)*Math.sin(l2);
+    const z=A*Math.sin(p1)+B*Math.sin(p2);
+    out.push([deg(Math.atan2(z,Math.hypot(x,y))), deg(Math.atan2(y,x))]);
+  }
+  return out;
+}
+function frame(){
+  const g = geom(), dpr = Math.min(devicePixelRatio||1, 2);
+  if(cv.width !== Math.round(g.w*dpr)){ cv.width = Math.round(g.w*dpr); cv.height = Math.round(g.h*dpr); }
+  gx.setTransform(dpr,0,0,dpr,0,0);
+  gx.clearRect(0,0,g.w,g.h);
+  const sig = css('--signal'), sig2 = css('--signal-2'), alert = css('--alert');
+
+  /* atmosfera: un alone che sfuma fuori dal bordo, come la rifrazione
+     che si vede dall'orbita */
+  const halo = gx.createRadialGradient(g.cx,g.cy,g.rr*0.97, g.cx,g.cy,g.rr*1.16);
+  halo.addColorStop(0, css('--signal-soft'));
+  halo.addColorStop(1, 'transparent');
+  gx.fillStyle = halo;
+  gx.beginPath(); gx.arc(g.cx,g.cy,g.rr*1.16,0,7); gx.fill();
+
+  gx.save();
+  gx.beginPath(); gx.arc(g.cx,g.cy,g.rr,0,7); gx.clip();
+
+  /* l'oceano non e' piatto: si schiarisce verso la luce, in alto a sinistra */
+  const sea = gx.createRadialGradient(
+    g.cx - g.rr*0.34, g.cy - g.rr*0.40, g.rr*0.06, g.cx, g.cy, g.rr*1.05);
+  sea.addColorStop(0, css('--deck3'));
+  sea.addColorStop(0.62, css('--deck2'));
+  sea.addColorStop(1, css('--deck'));
+  gx.fillStyle = sea; gx.fill();
+
+  gx.strokeStyle = css('--rule'); gx.lineWidth = 1;              // reticolo
+  for(let la=-60; la<=60; la+=30){
+    gx.beginPath(); let st=false;
+    for(let lo=-180; lo<=180; lo+=5){ const [x,y,z]=proj(la,lo,g);
+      if(z>0){ st?gx.lineTo(x,y):(gx.moveTo(x,y),st=true); } else st=false; }
+    gx.stroke();
+  }
+  for(let lo=-180; lo<180; lo+=30){
+    gx.beginPath(); let st=false;
+    for(let la=-90; la<=90; la+=5){ const [x,y,z]=proj(la,lo,g);
+      if(z>0){ st?gx.lineTo(x,y):(gx.moveTo(x,y),st=true); } else st=false; }
+    gx.stroke();
+  }
+
+  const land = css('--land'), landHi = css('--land-hi');
+  for(const [cc, rings] of Object.entries(WORLD)){
+    const selD = S.dMode==='pick' && S.dCountries.has(cc);
+    const selO = S.oCountries.has(cc);
+    let vis = false;
+    gx.beginPath();
+    for(const r of rings){
+      for(let i=0;i<r.length;i+=2){
+        let [x,y,z] = proj(r[i+1]/10, r[i]/10, g);
+        if(z > 0) vis = true;
+        else { const dx=x-g.cx, dy=y-g.cy, m=Math.hypot(dx,dy)||1;   // punti dietro: sul bordo
+               x = g.cx + dx/m*g.rr; y = g.cy + dy/m*g.rr; }
+        i===0 ? gx.moveTo(x,y) : gx.lineTo(x,y);
+      }
+      gx.closePath();
+    }
+    if(!vis) continue;
+    const hot = selD || selO;
+    if(hot){                                   // i paesi scelti si accendono
+      gx.save();
+      gx.shadowColor = selD ? sig : alert;
+      gx.shadowBlur = 16;
+      gx.fillStyle = selD ? sig : alert;
+      gx.globalAlpha = .92; gx.fill();
+      gx.restore();
+    }else{
+      gx.fillStyle = cc===hoverCC ? landHi : land;
+      gx.fill();
+    }
+    gx.strokeStyle = hot ? (selD ? sig2 : alert)
+                         : (cc===hoverCC ? css('--rule-hi') : css('--rule'));
+    gx.lineWidth = hot ? 1 : .6;
+    gx.globalAlpha = hot ? .9 : 1;
+    gx.stroke();
+    gx.globalAlpha = 1;
+  }
+
+  for(const cc of DOTS){                                   // stati insulari: un punto
+    const c = centroid[cc], [x,y,z] = proj(c.la, c.lo, g);
+    if(z <= 0) continue;
+    const selD = S.dMode==='pick' && S.dCountries.has(cc), selO = S.oCountries.has(cc);
+    gx.fillStyle = selD ? sig : selO ? alert : css('--ink-3');
+    gx.beginPath(); gx.arc(x,y, selD||selO ? 3.4 : 1.9, 0, 7); gx.fill();
+  }
+
+  arcs.forEach((a,i) => {                                  // rotte trovate
+    gx.strokeStyle = i===0 ? alert : sig2;
+    gx.globalAlpha = i===0 ? .95 : .4;
+    gx.lineWidth   = i===0 ? 1.8 : 1;
+    gx.beginPath(); let st=false;
+    for(const [la,lo] of a.pts){ const [x,y,z]=proj(la,lo,g);
+      if(z>0){ st?gx.lineTo(x,y):(gx.moveTo(x,y),st=true); } else st=false; }
+    gx.stroke(); gx.globalAlpha = 1;
+    const [dx,dy,dz] = proj(a.d.la,a.d.lo,g);
+    if(dz>0){ gx.fillStyle = i===0 ? alert : sig2;
+      gx.beginPath(); gx.arc(dx,dy,i===0?3.6:2.4,0,7); gx.fill(); }
+  });
+  marks.forEach(m => {                                     // aeroporti di partenza
+    const [x,y,z] = proj(m.la, m.lo, g);
+    if(z<=0) return;
+    gx.save();
+    gx.shadowColor = alert; gx.shadowBlur = 10;
+    gx.fillStyle = css('--ink');
+    gx.beginPath(); gx.arc(x,y,3.2,0,7); gx.fill();
+    gx.restore();
+    gx.strokeStyle = alert; gx.lineWidth = 1; gx.globalAlpha = .55;
+    gx.beginPath(); gx.arc(x,y,6.5,0,7); gx.stroke(); gx.globalAlpha = 1;
+  });
+
+  /* ombra sul lembo: quel che da' la rotondita' */
+  const limb = gx.createRadialGradient(g.cx,g.cy,g.rr*0.66, g.cx,g.cy,g.rr);
+  limb.addColorStop(0, 'transparent');
+  limb.addColorStop(1, css('--limb'));
+  gx.fillStyle = limb;
+  gx.beginPath(); gx.arc(g.cx,g.cy,g.rr,0,7); gx.fill();
+  gx.restore();
+
+  /* filo di luce sul bordo illuminato */
+  gx.strokeStyle = css('--rule-hi'); gx.lineWidth = 1;
+  gx.beginPath(); gx.arc(g.cx,g.cy,g.rr,0,7); gx.stroke();
+  gx.strokeStyle = sig2; gx.globalAlpha = .5; gx.lineWidth = 1.4;
+  gx.beginPath(); gx.arc(g.cx,g.cy,g.rr-0.7, Math.PI*1.05, Math.PI*1.85); gx.stroke();
+  gx.globalAlpha = 1;
+}
+function loop(){
+  if(!dragging){
+    if(Math.abs(vel) > 1e-5){ rot += vel; vel *= 0.94; }
+    else if(!reduced) rot += spin;
+  }
+  frame();
+  raf = requestAnimationFrame(loop);
+}
+function focusGlobe(la, lo){ rot = -rad(lo); tilt = rad(la)*0.9; vel = 0; }
+
+let px0 = 0, py0 = 0, moved = 0;
+cv.addEventListener('pointerdown', e => {
+  dragging = true; moved = 0; px0 = e.clientX; py0 = e.clientY; vel = 0;
+  cv.classList.add('drag'); cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e => {
+  const b = cv.getBoundingClientRect();
+  if(dragging){
+    const dx = e.clientX - px0, dy = e.clientY - py0;
+    moved += Math.abs(dx) + Math.abs(dy);
+    rot  += dx * 0.006; vel = dx * 0.006;
+    tilt  = Math.max(-1.32, Math.min(1.32, tilt - dy * 0.006));
+    px0 = e.clientX; py0 = e.clientY;
+    return;
+  }
+  const p = unproj(e.clientX-b.left, e.clientY-b.top, geom());
+  const cc = p ? countryAt(p.la, p.lo) : '';
+  if(cc !== hoverCC){
+    hoverCC = cc;
+    tip.textContent = cc ? cname(cc) + (dealsTo[cc] ? ` · ${dealsTo[cc]}` : '') : '';
+    tip.classList.toggle('on', !!cc);
+  }
+  if(cc){ tip.style.left = (e.clientX-b.left)+'px'; tip.style.top = (e.clientY-b.top)+'px'; }
+});
+const endDrag = e => { if(!dragging) return; dragging = false; cv.classList.remove('drag');
+  if(moved < 6){ pickOnGlobe(e); } };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', () => { dragging = false; cv.classList.remove('drag'); });
+cv.addEventListener('pointerleave', () => { hoverCC=''; tip.classList.remove('on'); });
+function pickOnGlobe(e){
+  const b = cv.getBoundingClientRect();
+  const p = unproj(e.clientX-b.left, e.clientY-b.top, geom());
+  if(!p) return;
+  const cc = countryAt(p.la, p.lo);
+  if(!cc || !CTRY[cc]) return;
+  toggleCountry(cc);
+}
+/* Gli aeroporti che accende l'accensione di un paese: quelli con tariffe
+   nell'indice, o il primo se il paese non ne ha nessuna. La stessa regola
+   serve all'indirizzo condivisibile, che scrive "IT" invece di venti sigle. */
+function autoAirports(cc){
+  const c = CTRY[cc]; if(!c) return [];
+  const withData = c.a.filter(i => dealsFrom[i]);
+  return withData.length ? withData : c.a.slice(0,1);
+}
+/* un paese acceso o spento, sul globo o nell'elenco, e' la stessa cosa */
+function toggleCountry(cc){
+  const c = CTRY[cc]; if(!c) return;
+  if(!booting) S.auto = false;
+  if(FROM()){
+    if(S.oCountries.has(cc)){
+      S.oCountries.delete(cc); c.a.forEach(i => S.origins.delete(i));
+    }else{
+      S.oCountries.add(cc);
+      autoAirports(cc).forEach(i => S.origins.add(i));
+    }
+  }else{
+    if(S.dMode !== 'pick'){ S.dMode = 'pick'; renderSegs(); }
+    S.dCountries.has(cc) ? S.dCountries.delete(cc) : S.dCountries.add(cc);
+  }
+  renderList(); frame(); markDirty();
+}
+const tip = document.createElement('div');
+tip.className = 'globe-tip'; document.querySelector('.globe-wrap').appendChild(tip);
+
+/* ══════════════════════════════════════════════════════════
+   RISULTATI
+   ══════════════════════════════════════════════════════════ */
+const COLS = [
+  ['price','th_price','r c-price'],
+  ['dist','th_dist','r c-dist'],
+  ['kmpe','','r c-kmpe'],
+  ['deal','th_deal','r c-deal'],
+  ['stay','th_stay','r c-stay'],
+  ['score','th_score','c-score'],
+];
+function renderHead(){
+  $('#mhead').innerHTML = `<div class="lbl">#</div><div class="lbl">${esc(T('th_route'))}</div>`
+    + COLS.map(([k,tk,cls]) => {
+    const label = k==='kmpe' ? `Km/${sym()}` : T(tk);
+    const on = S.sort===k ? ' on' : '';
+    return `<div class="lbl ${cls}"><button class="sortbtn${on}" data-act="sort" data-v="${k}">${esc(label)}<span class="ar">${S.dir<0?'▼':'▲'}</span></button></div>`;
+  }).join('') + `<div class="lbl" data-k="th_check">${esc(T('th_check'))}</div>`;
+}
+/* Senza affiliazione i pulsanti restano quelli della ricerca: Google e
+   Skyscanner, due confronti indipendenti. Con l'affiliazione attiva la
+   riga diventa commerciale: prenotazione e alloggio davanti, e resta
+   Google come controprova, perche' un confronto va sempre lasciato. */
+function actions(r, wide){
+  const g = `<a class="btn" target="_blank" rel="noopener sponsored" href="${gflight(r.oc,r.dc,r.dep,r.ret)}">Google${wide?' Flights':''}</a>`;
+  if(!AFFIL()) return g.replace('class="btn"','class="btn pri"')
+    + `<a class="btn" target="_blank" rel="noopener" href="${sky(r.oc,r.dc,r.dep,r.ret)}">Skyscanner</a>`;
+  return `<a class="btn pri" target="_blank" rel="noopener sponsored" href="${esc(affil(aviasales(r.oc,r.dc,r.dep,r.ret), TP.pFlight))}">${esc(T('book'))}</a>`
+       + (HOTELS_ON()
+          ? `<a class="btn stay" target="_blank" rel="noopener sponsored" href="${esc(affil(hotels(r), TP.pHotel))}">${esc(T('stay'))}</a>`
+          : '')
+       + g;
+}
+
+function apexCard(r){
+  if(!r){ $('#apex').hidden = true; return; }
+  $('#apex').hidden = false;
+  $('#apexIn').innerHTML = `
+    <div>
+      <div class="lbl-rank"><b>01</b><span class="lbl">${esc(T('st_best'))}</span></div>
+      <h3>${flag(r.ck)}<span>${esc(r.d.n)}</span></h3>
+      <div class="meta">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}
+        · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · ${r.n} ${esc(T('nights'))}
+        · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${r.exp ? `<span class="tagline${dealPct(r) >= 25 ? ' hot-tag' : ''}">${
+          dealPct(r) > 0 ? '\u2212' + dealPct(r) + '%' : '+' + (-dealPct(r)) + '%'} ${esc(T('deal_u'))} · ${money(r.exp)}</span>` : ''}
+        ${histTag(r)}
+      </div>
+    </div>
+    <div class="apex-nums">
+      <div><b>${money(r.price)}</b><span class="lbl rt">${esc(T('rt'))}</span></div>
+      <div><b>${fmtN(r.km*2)}</b><span class="lbl">km</span></div>
+      <div><b>${ratio(r.km*2/toCur(r.price))}</b><span class="lbl">km/${esc(sym())}</span></div>
+      <div><b>${r.score}</b><span class="lbl">${esc(T('escore'))}<u> /100</u></span>
+        <div class="abar"><i style="width:${r.score}%"></i></div></div>
+    </div>
+    <div class="apex-acts">${actions(r, true)}
+      ${ACT_ON() ? `<a class="btn stay" target="_blank" rel="noopener sponsored"
+        href="${esc(affil(activities(r), TP.pAct, TP.cAct))}">${esc(T('act'))}</a>` : ''}
+      <button class="btn" data-act="copy" data-v="${r.id}">${esc(T('copylink'))}</button>
+    </div>`;
+}
+function renderBoard(){
+  const list = sorted();
+  $('#cntFound').textContent = fmtN(list.length);
+  const scope = S.dMode==='pick' && S.dCountries.size
+    ? [...S.dCountries].slice(0,3).map(cname).join(', ') + (S.dCountries.size>3 ? ` +${S.dCountries.size-3}` : '')
+    : T('f_anywhere');
+  $('#boardTitle').textContent =
+    [...S.origins].slice(0,3).join(' · ') + (S.origins.size>3 ? ` +${S.origins.size-3}` : '') + ' → ' + scope;
+  renderHead();
+  if(!S.origins.size){
+    $('#apex').hidden = true;
+    $('#manifest').innerHTML = `<div class="empty"><b>${esc(T('f_need'))}</b>
+      <div style="max-width:56ch;margin:0 auto 16px">${esc(T('f_globe'))}</div>
+      <button class="btn pri" style="display:inline-block;padding:9px 22px" data-act="goSearch">${esc(T('nav_search'))}</button></div>`;
+    $('#btnMore').style.display = 'none';
+    $('#boardTitle').textContent = T('everywhere').replace(/[:：]$/, '');
+    arcs = []; marks = []; frame();
+    return;
+  }
+  if(!list.length){
+    $('#apex').hidden = true;
+    $('#manifest').innerHTML = `<div class="empty"><b>${esc(T('empty_t'))}</b>
+      <div style="max-width:56ch;margin:0 auto 16px">${esc(T('empty_b'))}</div>
+      <a class="btn pri" style="display:inline-block;padding:9px 18px" target="_blank" rel="noopener"
+         href="${exploreUrl([...S.origins][0] || 'FCO')}">${esc(T('everywhere'))} ${[...S.origins][0]||''}</a></div>`;
+    $('#btnMore').style.display = 'none';
+    arcs = []; frame();
+    return;
+  }
+  const head = list[0];
+  apexCard(head);
+  const rest = S.showAll ? list.slice(1) : list.slice(1,10);
+  $('#manifest').innerHTML = rest.map((r,k) => {
+    const i = k+1;
+    return `<div class="mrow" id="row-${r.id}">
+      <div class="rk">${String(i+1).padStart(2,'0')}</div>
+      <div class="route">
+        <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
+        <div class="path">${r.oc} <i>→</i> ${r.dc}<span class="cty"> · ${esc(cname(r.ck))}</span> · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
+        <span class="tagline"><b class="dir">${esc(T('direct'))}</b> · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} <span class="src"> · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span></span>${histTag(r)}
+        <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
+          <div class="mbar"><i style="width:${r.score}%"></i></div></div>
+      </div>
+      <div class="num price c-price"><b>${money(r.price)}</b><span class="rt">${esc(T('rt'))}</span></div>
+      <div class="num c-dist"><b>${fmtN(r.km*2)}</b><span>km</span></div>
+      <div class="num c-kmpe"><b>${ratio(r.km*2/toCur(r.price))}</b><span>km/${esc(sym())}</span></div>
+      ${dealCell(r)}
+      <div class="num c-stay"><b>${r.n}</b><span>${esc(T('nights'))}</span></div>
+      <div class="meter c-score">
+        <div class="bar"><i style="width:${r.score}%"></i></div>
+        <div class="val"><span>${r.score}/100</span><span>${(r.dur/toCur(r.price)).toFixed(2)} min/${esc(sym())}</span></div>
+      </div>
+      <div class="acts">${actions(r, false)}
+        <button class="btn" data-act="copy" data-v="${r.id}">${esc(T('copylink'))}</button>
+      </div>
+    </div>` + ((ADS_ON() && (i===3 || i===8)) ? `<div class="bay" data-label="Sponsor" data-slot="${esc(ADS.slot)}"></div>` : '');
+  }).join('');
+  $('#btnMore').style.display = list.length > 10 ? '' : 'none';
+  $('#btnMore').textContent = S.showAll ? `${T('b_found')} · ${list.length}` : `${T('more')} (${list.length-10})`;
+
+  arcs = list.slice(0,10).map(r => ({pts: greatCircle(r.o, r.d), d:r.d}));
+  marks = [...S.origins].map(i => AP[i]).filter(Boolean);
+  const o = list[0].o; focusGlobe(o.la, o.lo);
+  frame();
+  if(S.pin){ const el = document.getElementById('row-'+S.pin);
+    if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('flash'); } S.pin=''; }
+}
+function renderTicker(){
+  const all = IDX.deals.map(r => ({...r, v: r.km*2/r.p})).sort((a,b)=>b.v-a.v).slice(0,44);
+  const one = all.map(r => `<span class="tick"><b>${r.o}<s>→</s>${r.d}</b> <s>${esc((PL[r.d]||{n:r.d}).n)}</s>
+      <i>${ratio(r.km*2/toCur(r.p))} km/${esc(sym())}</i> <s>${money(r.p)}</s></span>`).join('');
+  $('#tick').innerHTML = one + one;
+}
+
+function renderProse(){
+  const p = P();
+  const vars = {
+    fxDate:FX_DATE, observed:IDX.observed,
+    fareCount:fmtN(IDX.deals.length), originCount:fmtN(Object.keys(IDX.counts).length),
+    destCount:fmtN(NDEST), languageCount:fmtN(LANG_META.length), currencyCount:fmtN(CUR.length)
+  };
+  const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
+  $('#lede').textContent     = T('lede');
+  $('#boardNote').textContent= T('boardNote');
+  $('#methodLede').textContent = T('methodLede');
+  $('#privLede').textContent = T('privLede');
+  $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
+  $('#footTag').textContent  = T('plat_note');
+  const cell = ([h,b],i) => `<div class="mcell"><span class="lbl lbl-sig">${String(i+1).padStart(2,'0')}</span><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
+  $('#methodGrid').innerHTML = p.method.map(cell).join('');
+  $('#privGrid').innerHTML   = p.privacy.map(cell).join('');
+  $('#methodNote').innerHTML = fill(p.indexNote);
+  $('#footNote').textContent = `${T('obs')} ${IDX.observed} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
+  ccRender();
+}
+
+/* ── lingua applicata al DOM ────────────────────────────── */
+function applyLang(){
+  document.documentElement.lang = S.lang;
+  RTL = (LANG_META.find(l => l[0] === S.lang) || [])[2] === 1;
+  document.documentElement.dir = RTL ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-k]').forEach(el => { el.textContent = T(el.dataset.k); });
+  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  $('#globeCap').textContent = T('f_globe');
+  $('#heroEyebrow').textContent = `${T('obs')} ${IDX.observed} · ${T('direct')} · ${Object.keys(IDX.counts).length} ${T('st_air')}`;
+  $('#panelHint').textContent = T('f_globe');
+  $('#srcPill').title = S.live ? 'LIVE' : 'INDEX';
+  /* Gli indici aeroportuali esistono per italiano e inglese. In tutte le
+     altre lingue restano nel sorgente per i crawler, ma non ricadono a video
+     su una lingua diversa da quella selezionata. */
+  document.querySelectorAll('.hub').forEach(el => { el.hidden = el.lang !== S.lang; });
+  renderProse();
+}
+function fillSelectors(){
+  $('#selLang').innerHTML = LANG_META
+    .map(([c,n]) => ({c,n, s: dispName(c,'language')}))
+    .sort((a,b) => a.n.localeCompare(b.n))
+    .map(({c,n}) => `<option value="${c}"${c===S.lang?' selected':''}>${esc(n)}</option>`).join('');
+  $('#selCur').innerHTML = CUR.map(([c,s]) =>
+    `<option value="${c}"${c===S.cur?' selected':''}>${c} ${esc(s)}</option>`).join('');
+}
+
+/* ── URL condivisibile ──────────────────────────────────── */
+/* L'indirizzo porta solo cio' che si discosta dai valori predefiniti: se non
+   hai toccato nulla resta pulito, senza frammento. Lingua e valuta entrano
+   soltanto se le hai scelte tu (dal selettore o da un link ricevuto): chi apre
+   un link condiviso vede il sito nella propria lingua, non nella nostra.
+   Il collegamento da "Condividi" invece porta lo stato per intero, perche' li'
+   lo scopo e' far vedere all'altro esattamente la stessa schermata. */
+const CLEAN = () => location.origin + location.pathname + location.search;
+function urlParams(full){
+  const h = new URLSearchParams();
+  /* Un paese acceso vale una sigla sola. Accendere l'Italia significava
+     ventidue codici di aeroporto nell'indirizzo, che cresceva a ogni tocco:
+     qui torna a essere "n=IT", e restano scritti a parte solo gli aeroporti
+     scelti a mano fuori da quell'insieme. */
+  /* La partenza suggerita all'apertura non e' una scelta dell'utente e non
+     entra nell'indirizzo. Ma qui uscivo dalla funzione, e con lei se ne
+     andavano budget, distanza e forma del viaggio: chi copiava l'indirizzo
+     dalla barra perdeva la ricerca. Adesso salta solo la partenza. */
+  const suggerita = S.auto && !full;
+  const nats = [], soli = suggerita ? new Set() : new Set(S.origins);
+  if(!suggerita) for(const k of S.oCountries){
+    const a = autoAirports(k);
+    if(a.length && a.every(i => soli.has(i))){ nats.push(k); a.forEach(i => soli.delete(i)); }
+  }
+  if(nats.length)        h.set('n', nats.join('.'));
+  if(soli.size)          h.set('o', [...soli].join('.'));
+  if(S.dMode==='pick' && S.dCountries.size) h.set('c', [...S.dCountries].join('.'));
+  if(full || S.windows.size !== WINDOWS.length)
+                         h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
+  if(S.shapes.size)      h.set('k', [...S.shapes].join('.'));
+  if(S.minDist || S.maxDist!==36000) h.set('d', S.minDist + '.' + S.maxDist);
+  if(S.maxBudget!==2000) h.set('b', S.maxBudget);
+  if(S.bagFee)           h.set('g', S.bagFee);
+  if(S.sort!=='score')   h.set('s', S.sort + (S.dir>0?'+':''));
+  if(full || S.langSet)  h.set('l', S.lang);
+  if(full || S.curSet)   h.set('m', S.cur);
+  return h;
+}
+function writeURL(){
+  const q = urlParams(false).toString();
+  try{ history.replaceState(null,'', q ? '#'+q : CLEAN()); }catch(_){}
+  return location.href;
+}
+const shareURL = () => { const q = urlParams(true).toString(); return CLEAN() + (q?'#'+q:''); };
+function readURL(){
+  const h = new URLSearchParams(location.hash.slice(1));
+  const l = h.get('l'); if(l && LANG_META.some(x => x[0]===l)){ S.lang = l; S.langSet = true; }
+  const m = (h.get('m')||'').toUpperCase(); if(CURBY[m]){ S.cur = m; S.curSet = true; }
+  const n = (h.get('n')||'').toUpperCase().split('.').filter(x => CTRY[x]);
+  const o = (h.get('o')||'').toUpperCase().split('.').filter(x => AP[x]);
+  if(n.length || o.length){
+    S.origins = new Set(o); S.oCountries = new Set(o.map(i => AP[i].k));
+    for(const k of n){ S.oCountries.add(k); autoAirports(k).forEach(i => S.origins.add(i)); }
+    const primo = n[0] || AP[o[0]].k;
+    S.oCont = REG_OF[CTRY[primo].g] || '150';
+  }
+  const c = (h.get('c')||'').toUpperCase().split('.').filter(x => CTRY[x]);
+  if(c.length){ S.dCountries = new Set(c); S.dMode = 'pick'; }
+  const w = h.get('w');
+  if(w){ const set = new Set(w.split('.').map(Number).filter(n => WINDOWS.includes(n))); if(set.size) S.windows = set; }
+  const sh = (h.get('k')||'').split('.').filter(x => SHAPES[x]);
+  if(sh.length) S.shapes = new Set(sh);
+  const num = (k,lo,hi) => { const v = +h.get(k); return h.has(k) && Number.isFinite(v) && v>=lo && v<=hi ? v : null; };
+  const dr = (h.get('d')||'').split('.').map(Number);
+  if(dr.length===2 && dr.every(v => Number.isFinite(v) && v>=0 && v<=36000) && dr[0] < dr[1]){
+    S.minDist = dr[0]; S.maxDist = dr[1];
+  }
+  const b = num('b',20,2000);    if(b!==null) S.maxBudget = b;
+  const g = num('g',0,150);      if(g!==null) S.bagFee = g;
+  /* il "+" che segna l'ordine crescente viaggia codificato, ma un indirizzo
+     scritto a mano lo porta com'e' e URLSearchParams lo legge come spazio */
+  const s = h.get('s');
+  if(s){ const asc = /[+\s]$/.test(s), k = s.replace(/[+\s]+$/, '');
+         if(['score','price','dist','kmpe','deal','stay'].includes(k)){ S.sort = k; S.dir = asc ? 1 : -1; } }
+  S.pin = h.get('f') || '';
+}
+
+/* ── prezzi live ────────────────────────────────────────── */
+async function fetchLive(quiet){
+  const origins = [...S.origins].slice(0, 6);
+  if(!origins.length) return;
+  try{
+    const res = await Promise.all(origins.map(o =>
+      fetch(`/api/prices?origin=${o}&currency=${S.cur.toLowerCase()}`, {headers:{accept:'application/json'}})
+        .then(r => r.ok ? r.json() : null).catch(() => null)));
+    const rows = [];
+    res.forEach((j,i) => {
+      if(!j || !Array.isArray(j.deals)) return;
+      /* Il punteggio lo calcola la funzione, non la pagina. Una risposta
+         che non lo porta e' una risposta vecchia — la CDN tiene sei ore —
+         oppure una funzione che non ha il modello: in entrambi i casi
+         meglio l'indice notturno, che il voto ce l'ha, di righe a zero. */
+      for(const r of j.deals) if(PL[r.d] && PL[r.o] && r.sc != null) rows.push(r);
+    });
+    if(!rows.length) throw new Error('nessuna tariffa');
+    /* i prezzi live arrivano gia' nella valuta scelta: li riporto a euro,
+       perche' tutto il motore ragiona in euro e converte solo a schermo */
+    const k = 1 / fx()[3];
+    /* la data della rilevazione viaggia con la riga: una tariffa arrivata
+       adesso dall'API non porta la data dell'indice notturno */
+    const adesso = new Date().toISOString().slice(0,16).replace('T',' ');
+    S.liveRows = rows.map(r => ({...r, p: r.p * k, live:true, obs:adesso}));
+    S.live = true;
+    $('#srcTxt').textContent = 'LIVE';
+    $('#srcPill').querySelector('.dot').classList.remove('idle');
+  }catch(e){
+    S.liveRows = null; S.live = false;
+    $('#srcTxt').textContent = 'INDEX';
+    $('#srcPill').querySelector('.dot').classList.add('idle');
+  }
+  if(!quiet){ runSearch(); renderBoard(); }
+}
+
+/* ── consenso e pubblicita' ──────────────────────────────
+   Il circuito pubblicitario si attiva da scripts/build.py. Finche' non
+   c'e', nessuno script di terze parti entra nella pagina e il banner non
+   compare: non si chiede il permesso per qualcosa che non si fa.
+   Quando c'e', lo script viene caricato SOLO dopo un si' esplicito. */
+const ADS = { client: '__ADS_CLIENT__', slot: '__ADS_SLOT__' };
+const ADS_ON = () => !!ADS.client && ADS.client !== '__ADS_' + 'CLIENT__';
+
+/* Travelpayouts Drive: lo script con cui il circuito verifica il sito e
+   misura le uscite affiliate. E' codice di terze parti come la pubblicita',
+   quindi passa dalla stessa porta: caricato solo dopo un si' esplicito.
+   L'indirizzo resta scritto nel sorgente della pagina anche prima del
+   consenso, cosi' chi controlla il codice lo trova. */
+const DRIVE_URL = '__TP_DRIVE_URL__';
+const DRIVE_ON  = () => !!DRIVE_URL && DRIVE_URL !== '__TP_' + 'DRIVE_URL__';
+const TRACK_ON  = () => ADS_ON() || DRIVE_ON();
+function loadDrive(){
+  if(!DRIVE_ON() || document.getElementById('tpdrive')) return;
+  const sc = document.createElement('script');
+  sc.id = 'tpdrive'; sc.async = true; sc.src = DRIVE_URL;
+  document.head.appendChild(sc);
+}
+const CC_KEY = 'elf-consent';
+function ccGet(){ try{ return localStorage.getItem(CC_KEY); }catch(_){ return null; } }
+function ccSet(v){ try{ localStorage.setItem(CC_KEY, v); }catch(_){} }
+function loadAds(){
+  if(!ADS_ON() || document.getElementById('adsjs')) return;
+  const sc = document.createElement('script');
+  sc.id = 'adsjs'; sc.async = true; sc.crossOrigin = 'anonymous';
+  sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADS.client);
+  document.head.appendChild(sc);
+  document.querySelectorAll('.bay[data-slot]').forEach(bay => {
+    if(bay.dataset.filled) return;
+    bay.dataset.filled = '1';
+    bay.innerHTML = `<ins class="adsbygoogle" style="display:block;width:100%"
+      data-ad-client="${ADS.client}" data-ad-slot="${bay.dataset.slot}"
+      data-ad-format="auto" data-full-width-responsive="true"></ins>`;
+    try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); }catch(_){}
+  });
+}
+function ccRender(){
+  const c = P().consent;
+  $('#ccText').innerHTML = c.body;
+  $('#ccYes').textContent = c.accept;
+  $('#ccNo').textContent  = c.decline;
+  $('#ccOpen').textContent = c.preferences;
+  $('#ccOpen').hidden = !TRACK_ON();
+}
+function ccInit(){
+  if(!TRACK_ON()) return;
+  const v = ccGet();
+  if(v === 'yes'){ loadAds(); loadDrive(); }
+  else if(v !== 'no') $('#cc').hidden = false;
+}
+$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; loadAds(); loadDrive(); });
+$('#ccNo').addEventListener('click',  () => { ccSet('no');  $('#cc').hidden = true; });
+$('#ccOpen').addEventListener('click', () => { $('#cc').hidden = false; });
+
+/* ── eventi ─────────────────────────────────────────────── */
+let dirty = false;
+function markDirty(){ dirty = true; updateReady(); }
+function clearDirty(){ dirty = false; updateReady(); }
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const act = el.dataset.act, v = el.dataset.v;
+  if(act === 'mode'){ S.geo = v; renderSegs(); renderList(); frame(); }
+  else if(act === 'cont'){
+    if(FROM()){ S.oCont = v; S.oFind = ''; } else { S.dCont = v; S.dFind = ''; }
+    renderSegs(); renderList();
+  }
+  else if(act === 'dmode'){ S.dMode = v; renderSegs(); renderList(); frame(); markDirty(); }
+  else if(act === 'win'){
+    const w = +v;
+    S.windows.has(w) ? (S.windows.size>1 && S.windows.delete(w)) : S.windows.add(w);
+    renderSegs(); markDirty();
+  }
+  else if(act === 'shape'){
+    if(v === 'any') S.shapes.clear();
+    else S.shapes.has(v) ? S.shapes.delete(v) : S.shapes.add(v);
+    renderShapes(); markDirty();
+  }
+  else if(act === 'all'){
+    if(FROM()) for(const k of S.oCountries){ const c = CTRY[k]; if(c) c.a.forEach(i => S.origins.add(i)); }
+    else { S.dMode = 'pick'; countriesOf(S.dCont).forEach(c => S.dCountries.add(c.k)); renderSegs(); }
+    renderList(); frame(); markDirty();
+  }
+  else if(act === 'clear'){
+    if(FROM()){ S.origins.clear(); S.oCountries.clear(); }
+    else S.dCountries.clear();
+    renderList(); frame(); markDirty();
+  }
+  else if(act === 'goSearch'){ openPanel(); }
+  else if(act === 'sort'){
+    if(S.sort === v) S.dir = -S.dir; else { S.sort = v; S.dir = -1; }
+    renderBoard(); writeURL();
+  }
+  else if(act === 'copy'){
+    const h = urlParams(true); h.set('f', v);
+    const link = CLEAN() + '#' + h.toString();
+    try{ await navigator.clipboard.writeText(link); }
+    catch(_){ try{ prompt(T('copylink'), link); }catch(__){} }
+    const old = el.textContent; el.textContent = T('copied'); el.classList.add('done');
+    setTimeout(() => { el.textContent = old; el.classList.remove('done'); }, 1800);
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const act = el.dataset.act, v = el.dataset.v;
+  if(act === 'ctry'){ toggleCountry(v); }
+  else if(act === 'origin'){
+    S.auto = false;
+    el.checked ? S.origins.add(v) : S.origins.delete(v);
+    el.closest('.pk').classList.toggle('sel', el.checked);
+    renderTabs(); frame(); markDirty();
+  }
+});
+let ft;
+$('#find').addEventListener('input', e => { clearTimeout(ft);
+  ft = setTimeout(() => { FROM() ? (S.oFind = e.target.value) : (S.dFind = e.target.value); renderList(); }, 160); });
+$('#find').addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ e.target.value = ''; FROM() ? (S.oFind='') : (S.dFind=''); renderList(); } });
+$('#rngDistMin').addEventListener('input', e => {
+  S.minDist = Math.min(+e.target.value, S.maxDist - 500);
+  renderLimits(); markDirty();
+});
+$('#rngDistMax').addEventListener('input', e => {
+  S.maxDist = Math.max(+e.target.value, S.minDist + 500);
+  renderLimits(); markDirty();
+});
+$('#rngBudget').addEventListener('input', e => { S.maxBudget = +e.target.value; renderLimits(); markDirty(); });
+$('#rngBag').addEventListener('input', e => { S.bagFee = +e.target.value; renderLimits(); markDirty(); });
+
+$('#btnSearch').addEventListener('click', async () => {
+  if(!S.origins.size){ markDirty(); return; }
+  clearDirty();
+  $('#searchNote').textContent = '…';
+  if(location.protocol.startsWith('http')) await fetchLive(true);
+  runSearch(); renderBoard(); writeURL();
+  $('#searchNote').textContent = '';
+  $('#apex').scrollIntoView({behavior:'smooth', block:'start'});
+});
+$('#btnMore').addEventListener('click', () => { S.showAll = !S.showAll; renderBoard(); });
+function openPanel(){
+  $('#search').removeAttribute('data-closed'); $('#panelToggle').textContent = '—';
+  $('#search').scrollIntoView({behavior:'smooth', block:'start'});
+  setTimeout(frame, 350);
+}
+$('#navSearch').addEventListener('click', openPanel);
+$('#panelToggle').addEventListener('click', () => {
+  const p = $('#search'), closed = p.hasAttribute('data-closed');
+  closed ? p.removeAttribute('data-closed') : p.setAttribute('data-closed','');
+  $('#panelToggle').textContent = closed ? '—' : '+';
+  if(closed) setTimeout(frame, 60);
+});
+$('#selLang').addEventListener('change', e => {
+  S.lang = e.target.value; S.langSet = true;
+  try{ localStorage.setItem('elf-lang', S.lang); }catch(_){}
+  applyLang(); fillSelectors(); renderPanel(); renderTicker(); renderBoard(); writeURL();
+});
+$('#selCur').addEventListener('change', e => {
+  S.cur = e.target.value; S.curSet = true;
+  try{ localStorage.setItem('elf-cur', S.cur); }catch(_){}
+  renderLimits(); renderTicker(); renderBoard(); writeURL();
+  if(S.live) fetchLive(true).then(() => { runSearch(); renderBoard(); });
+});
+$('#shareBtn').addEventListener('click', async () => {
+  writeURL();
+  const url = shareURL(), btn = $('#shareBtn'), old = btn.textContent;
+  try{
+    if(navigator.share && matchMedia('(pointer:coarse)').matches){
+      await navigator.share({title:'Efficiency Life Flight', url}); return;
+    }
+    await navigator.clipboard.writeText(url);
+    btn.textContent = T('copied');
+  }catch(_){ btn.textContent = T('copied'); }
+  setTimeout(() => { btn.textContent = old; }, 1900);
+});
+$('#dayBtn').addEventListener('click', () => {
+  document.documentElement.toggleAttribute('data-day');
+  try{ localStorage.setItem('elf-day', document.documentElement.hasAttribute('data-day')?'1':'0'); }catch(_){}
+  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  frame();
+});
+addEventListener('resize', () => frame());
+
+/* ── avvio ──────────────────────────────────────────────── */
+const LANG_ALIAS = Object.freeze({fil:'tl',nb:'no',nn:'no',iw:'he',in:'id'});
+function languageFromTag(tag){
+  const normal = String(tag || '').trim().toLowerCase().replaceAll('_','-');
+  if(!normal) return '';
+  const primary = normal.split('-')[0];
+  const code = LANG_ALIAS[primary] || primary;
+  return LANG_META.some(x => x[0] === code) ? code : '';
+}
+function browserLanguage(){
+  const tags = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages : [navigator.language || 'en'];
+  return tags.map(languageFromTag).find(Boolean) || 'en';
+}
+function browserRegion(){
+  const tags = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages : [navigator.language || ''];
+  for(const tag of tags){
+    try{
+      const region = new Intl.Locale(tag).region;
+      if(region) return region.toUpperCase();
+    }catch(_){
+      const hit = String(tag).match(/[-_]([A-Za-z]{2}|\d{3})(?:[-_]|$)/);
+      if(hit) return hit[1].toUpperCase();
+    }
+  }
+  return '';
+}
+(function boot(){
+  S.lang = browserLanguage();
+  try{
+    const l = localStorage.getItem('elf-lang'); if(l && LANG_META.some(x=>x[0]===l)) S.lang = l;
+    const c = localStorage.getItem('elf-cur');  if(c && CURBY[c]) S.cur = c;
+    if(localStorage.getItem('elf-day')==='1') document.documentElement.setAttribute('data-day','');
+  }catch(_){}
+  readURL();
+
+  fillSelectors(); applyLang(); renderPanel(); renderTicker();
+  $('#stAir').textContent  = fmtN(Object.keys(IDX.counts).length);
+  $('#stDest').textContent = fmtN(NDEST);
+  $('#stFare').textContent = fmtN(IDX.deals.length);
+  const bb = IDX.deals.reduce((m,r) => Math.max(m, r.km*2/r.p), 0);
+  $('#stBest').textContent = ratio(bb) + ' km/€';
+
+  /* Il cuore del sito sono i risultati, non il modulo: aprire su "rotte
+     trovate 0" e' chiedere lavoro prima di dare qualcosa. Se non arrivi da un
+     link, la partenza la sceglie il sito — il tuo paese se l'indice lo copre,
+     altrimenti lo scalo con piu' rotte — e la classifica c'e' gia'. Sono
+     tariffe vere, non una vetrina finta: appena cerchi, vengono sostituite. */
+  if(!S.origins.size){
+    const reg = browserRegion();
+    const cand = reg && CTRY[reg.toUpperCase()] ? reg.toUpperCase() : '';
+    const top  = Object.keys(IDX.counts).sort((a,b) => IDX.counts[b]-IDX.counts[a])[0];
+    const casa = cand && autoAirports(cand).some(i => dealsFrom[i]) ? cand
+               : (AP[top] ? AP[top].k : '');
+    if(casa){ S.auto = true; toggleCountry(casa); }
+  }
+  const o = AP[[...S.origins][0]];
+  if(o) focusGlobe(o.la, o.lo); else { rot = -rad(12); tilt = rad(22); }
+  runSearch(); renderBoard(); writeURL();
+  booting = false;
+  ccInit();
+  loop();
+  if(location.protocol.startsWith('http')) fetchLive(true).then(() => { runSearch(); renderBoard(); });
+})();
+</script>
