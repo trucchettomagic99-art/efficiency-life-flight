@@ -501,13 +501,25 @@ footer a{color:var(--ink-2)}
 @media(max-width:420px){
   .seg{padding:5px 8px;font-size:10px;letter-spacing:.06em}
   .pk{font-size:12.5px;padding:7px 8px}
-  .route b{font-size:15px}
 }
 @media(max-width:860px){
   .hero-in{grid-template-columns:1fr;align-items:start}
   .rail nav{display:none}
   .rail-in{height:auto;padding:9px 0;flex-wrap:wrap;gap:9px}
-  .mrow,.mhead{grid-template-columns:32px minmax(0,1.6fr) minmax(64px,.8fr) minmax(60px,.7fr) 100px}
+  /* Prezzo e km/valuta erano due colonne affiancate, strette, con la
+     seconda che rubava spazio alla rotta. Qui diventano una colonna sola
+     addossata ai pulsanti, uno sopra l'altro e allineati a destra: la
+     rotta si riprende la larghezza e i numeri leggono in verticale. */
+  .mrow,.mhead{grid-template-columns:40px minmax(0,1fr) 100px 96px;
+    grid-template-rows:auto 1fr}
+  .mrow .rk,   .mhead > :first-child   {grid-column:1;grid-row:1 / 3;align-self:center;justify-self:center}
+  .mrow .route,.mhead > :nth-child(2)  {grid-column:2;grid-row:1 / 3}
+  /* i due numeri sono una coppia, uno sotto l'altro e stretti: separati
+     dal mezzo della riga sembravano due informazioni diverse */
+  .c-price {grid-column:3;grid-row:1;align-self:start;padding-bottom:0}
+  .c-kmpe  {grid-column:3;grid-row:2;align-self:start;padding-top:9px}
+  .mrow .acts, .mhead > :last-child    {grid-column:4;grid-row:1 / 3}
+  .mhead .c-price,.mhead .c-kmpe{align-self:end}
   .c-dist{display:none}
   .mrow > *{padding:11px 7px}
   .acts .btn{padding:5px 4px;font-size:9px;letter-spacing:.06em}
@@ -515,7 +527,14 @@ footer a{color:var(--ink-2)}
      altre colonne, centrate, finivano a quote diverse riga per riga. Da
      qui in giu' tutte le colonne partono dalla stessa riga d'appoggio. */
   .mrow{align-items:start}
-  .mrow .rk{padding-top:13px}
+  /* Il numero galleggiava in alto, disallineato da tutto. Adesso e' un
+     quadrato pieno al centro della sua colonna: si legge come un rango,
+     non come un avanzo di testo. Testo sul fondo della pagina invece che
+     bianco, perche' su ambra il bianco non si legge. */
+  .mrow .rk{padding:0;width:28px;height:28px;border-radius:5px;
+    display:grid;place-items:center;background:var(--warn);color:var(--void);
+    font-size:12.5px;font-weight:700;letter-spacing:0;line-height:1}
+  .mrow.hot .rk{background:var(--alert);color:#fff}
   .num b{line-height:1.15}
   /* un nome di paese lungo mandava a capo la riga delle date e faceva una
      riga piu' alta delle altre: qui si tronca invece di spezzarsi */
@@ -531,26 +550,27 @@ footer a{color:var(--ink-2)}
    spaziature — e quella riga va a capo dentro la sua cella invece di
    scavalcarla. */
 @media(max-width:560px){
-  .mrow,.mhead{grid-template-columns:26px minmax(0,1.9fr) minmax(56px,.72fr) minmax(52px,.62fr) 84px}
+  .mrow,.mhead{grid-template-columns:34px minmax(0,1fr) 84px 92px}
+  /* l'itinerario deve starci per intero: senza la data di rientro la riga
+     non dice niente, e i puntini di troncamento se la mangiavano */
+  .route .path{font-size:10px;letter-spacing:.01em}
   .mrow > *{padding:10px 5px}
   /* la targhetta e' un inline-flex: i suoi figli diventano blocchi e il
      testo non va a capo come testo. Qui torna flusso normale e si spezza
      dove serve, dentro la sua cella. */
   .route .tagline{display:inline;width:auto;white-space:normal;line-height:1.7;max-width:100%}
-  .route .path{white-space:normal}
   .route b{font-size:14px}
   .acts .btn{padding:5px 3px;font-size:8.5px;letter-spacing:.04em}
   .num b{font-size:14px}
   .num span{font-size:9px;letter-spacing:.06em}
   /* "andata e ritorno" si spezzava in tre righe sotto il prezzo */
-  .num.price span.rt{letter-spacing:0;font-size:8.5px;line-height:1.35}
+  .num.price span.rt{letter-spacing:0;font-size:8px;line-height:1.3;white-space:nowrap}
   /* Le celle erano centrate verticalmente: con una cella rotta alta, il
      numero d'ordine e il prezzo galleggiavano a quote diverse in ogni riga
      e il numero finiva addosso alla data andata a capo. Adesso tutte le
      colonne partono dalla stessa riga d'appoggio, e la classifica ha una
      rigatura sola dall'alto in basso. */
   .mrow > *{padding-top:13px;padding-bottom:13px}
-  .mrow .rk{padding-top:15px;font-size:13px}
   .route b{margin-top:-1px}
   /* il paese sta gia' nella bandiera: senza, le date stanno su una riga */
   .route .path .cty{display:none}
@@ -560,6 +580,14 @@ footer a{color:var(--ink-2)}
   /* la fonte e la data sono gia' scritte in grande sopra la classifica:
      su un telefono quello spazio serve alla rotta */
   .tagline .src{display:none}
+}
+@media(max-width:400px){
+  /* telefoni stretti: le colonne dei numeri e dei pulsanti cedono qualche
+     pixel perche' l'itinerario resti leggibile per intero */
+  .mrow,.mhead{grid-template-columns:28px minmax(0,1fr) 72px 80px}
+  .route .path{font-size:9px;letter-spacing:0}
+  .mrow .rk{width:26px;height:26px;font-size:11.5px}
+  .acts .btn{font-size:8px}
 }
 /* sotto i 380 px la parola non ci sta: restano il numero e la barra */
 @media(max-width:380px){
