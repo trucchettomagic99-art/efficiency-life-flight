@@ -300,6 +300,13 @@ section{scroll-margin-top:64px}
 .num.good b{color:var(--ok)}
 .num.meh b{color:var(--ink-3)}
 .tagline.hot-tag{border-color:var(--ok);color:var(--ok)}
+/* "Diretto" e "andata e ritorno" non sono dettagli: sono le due condizioni
+   che rendono confrontabili i prezzi di questa classifica. In ambra si
+   leggono prima del resto della riga, senza rubare il posto al prezzo. */
+/* .route b e' il nome della destinazione: Archivo 16.5px, ed e' un flex.
+   Qui serve una parola in linea dentro la targhetta, non un titolo. */
+.tagline .dir{display:inline;font:inherit;font-weight:700;color:var(--warn);letter-spacing:.12em}
+.num.price span.rt,.apex-nums .lbl.rt{color:var(--warn)}
 .meter{display:flex;flex-direction:column;gap:6px}
 .meter .bar{height:4px;background:var(--deck3);position:relative;overflow:hidden}
 .meter .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--signal-deep),var(--signal-2));display:block}
@@ -341,7 +348,7 @@ section{scroll-margin-top:64px}
 .mhead .r .sortbtn{justify-content:flex-end;width:100%}
 .tagline{display:inline-flex;gap:5px;align-items:center;font-family:"JetBrains Mono",monospace;font-size:9.5px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--rule);
-  padding:1px 5px;border-radius:2px;margin-top:2px;width:max-content}
+  padding:1px 5px;border-radius:2px;margin-top:2px;width:max-content;max-width:100%}
 .flag{font-size:17px;line-height:1;flex:none}
 .flag.code{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.05em;
   background:var(--signal-soft);border:1px solid var(--rule-hi);color:var(--signal);padding:2px 4px;border-radius:2px}
@@ -496,6 +503,29 @@ footer a{color:var(--ink-2)}
   .mini-score{flex-direction:column;align-items:stretch;gap:3px;max-width:none;margin-top:6px}
   .mini-score s{font-size:9.5px;letter-spacing:.06em}
   .mini-score .mbar{width:100%}
+}
+/* Sotto i 560 px la colonna della rotta scendeva a settanta pixel e la
+   riga "Diretto · 2h33 · Aviasales" usciva dalla cella passando sopra il
+   prezzo. Qui le colonne si stringono dove si puo' — numero, pulsanti,
+   spaziature — e quella riga va a capo dentro la sua cella invece di
+   scavalcarla. */
+@media(max-width:560px){
+  .mrow,.mhead{grid-template-columns:26px minmax(0,1.9fr) minmax(56px,.72fr) minmax(52px,.62fr) 84px}
+  .mrow > *{padding:10px 5px}
+  /* la targhetta e' un inline-flex: i suoi figli diventano blocchi e il
+     testo non va a capo come testo. Qui torna flusso normale e si spezza
+     dove serve, dentro la sua cella. */
+  .route .tagline{display:inline;width:auto;white-space:normal;line-height:1.7;max-width:100%}
+  .route .path{white-space:normal}
+  .route b{font-size:14px}
+  .acts .btn{padding:5px 3px;font-size:8.5px;letter-spacing:.04em}
+  .num b{font-size:14px}
+  .num span{font-size:9px;letter-spacing:.06em}
+  /* "andata e ritorno" si spezzava in tre righe sotto il prezzo */
+  .num.price span.rt{letter-spacing:0;font-size:8.5px;line-height:1.35}
+  /* la fonte e la data sono gia' scritte in grande sopra la classifica:
+     su un telefono quello spazio serve alla rotta */
+  .tagline .src{display:none}
 }
 /* sotto i 380 px la parola non ci sta: restano il numero e la barra */
 @media(max-width:380px){
@@ -1505,7 +1535,7 @@ function apexCard(r){
       </div>
     </div>
     <div class="apex-nums">
-      <div><b>${money(r.price)}</b><span class="lbl">${esc(T('rt'))}</span></div>
+      <div><b>${money(r.price)}</b><span class="lbl rt">${esc(T('rt'))}</span></div>
       <div><b>${fmtN(r.km*2)}</b><span class="lbl">km</span></div>
       <div><b>${ratio(r.km*2/toCur(r.price))}</b><span class="lbl">km/${esc(sym())}</span></div>
       <div><b>${r.score}</b><span class="lbl">${esc(T('escore'))}<u> /100</u></span>
@@ -1556,11 +1586,11 @@ function renderBoard(){
       <div class="route">
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
-        <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span>${histTag(r)}
+        <span class="tagline"><b class="dir">${esc(T('direct'))}</b> · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} <span class="src"> · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span></span>${histTag(r)}
         <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
           <div class="mbar"><i style="width:${r.score}%"></i></div></div>
       </div>
-      <div class="num price c-price"><b>${money(r.price)}</b><span>${esc(T('rt'))}</span></div>
+      <div class="num price c-price"><b>${money(r.price)}</b><span class="rt">${esc(T('rt'))}</span></div>
       <div class="num c-dist"><b>${fmtN(r.km*2)}</b><span>km</span></div>
       <div class="num c-kmpe"><b>${ratio(r.km*2/toCur(r.price))}</b><span>km/${esc(sym())}</span></div>
       ${dealCell(r)}
