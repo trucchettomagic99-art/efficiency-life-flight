@@ -607,8 +607,8 @@ footer a{color:var(--ink-2)}
             <div class="rangeRow">
               <div class="dual" id="dualDist">
                 <div class="track"><i id="distFill"></i></div>
-                <input type="range" id="rngDistMin" min="0" max="18000" step="250" value="0" aria-label="min">
-                <input type="range" id="rngDistMax" min="0" max="18000" step="250" value="18000" aria-label="max">
+                <input type="range" id="rngDistMin" min="0" max="36000" step="500" value="0" aria-label="min">
+                <input type="range" id="rngDistMax" min="0" max="36000" step="500" value="36000" aria-label="max">
               </div>
               <output id="outDist"></output></div></div>
           <div><span class="lbl" data-k="f_budget">Budget massimo</span>
@@ -731,7 +731,7 @@ const S = {
   geo:'from',
   oCont:'', oCountries:new Set(), origins:new Set(), oFind:'',
   dMode:'any', dCont:'', dCountries:new Set(), dFind:'',
-  windows:new Set(WINDOWS), shapes:new Set(), minDist:0, maxDist:18000, maxBudget:2000, bagFee:0,
+  windows:new Set(WINDOWS), shapes:new Set(), minDist:0, maxDist:36000, maxBudget:2000, bagFee:0,
   sort:'score', dir:-1, showAll:false,
   live:false, liveRows:null, pin:'', results:[], auto:false
 };
@@ -907,6 +907,7 @@ const sky = (o,d,dep,ret) =>
 function enrich(raw){
   const o = PL[raw.o], d = PL[raw.d];
   if(!o || !d || d.k === o.k) return null;
+  if(!CTRY[d.k] || !CTRY[o.k]) return null;
   const price = raw.p + S.bagFee;
   const [s1,s2] = stayFor(raw.km);
   const exp = expectedPrice(raw.km);
@@ -1045,7 +1046,7 @@ function runSearch(){
   let l = rawPool().map(enrich).filter(Boolean);
   if(S.dMode === 'pick' && S.dCountries.size) l = l.filter(r => S.dCountries.has(r.ck));
   l = l.filter(r => S.windows.has(r.win) && shapeOk(r, S.shapes)
-                 && r.km >= S.minDist && r.km <= S.maxDist && r.price <= S.maxBudget);
+                 && r.km*2 >= S.minDist && r.km*2 <= S.maxDist && r.price <= S.maxBudget);
   const best = {};                                  // una riga per destinazione: la migliore
   for(const r of l){ const k = r.dc; if(!best[k] || r.price < best[k].price) best[k] = r; }
   S.results = score(Object.values(best));
@@ -1242,8 +1243,8 @@ function renderLimits(){
   $('#rngDistMin').value = S.minDist; $('#rngDistMax').value = S.maxDist;
   $('#rngBudget').value = S.maxBudget; $('#rngBag').value = S.bagFee;
   const f = $('#distFill');
-  f.style.insetInlineStart = (S.minDist/18000*100) + '%';
-  f.style.width = ((S.maxDist-S.minDist)/18000*100) + '%';
+  f.style.insetInlineStart = (S.minDist/36000*100) + '%';
+  f.style.width = ((S.maxDist-S.minDist)/36000*100) + '%';
 }
 function renderPanel(){ renderSegs(); renderList(); renderLimits(); }
 
@@ -1562,7 +1563,8 @@ function apexCard(r){
       <div class="lbl-rank"><b>01</b><span class="lbl">${esc(T('st_best'))}</span></div>
       <h3>${flag(r.ck)}<span>${esc(r.d.n)}</span></h3>
       <div class="meta">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}
-        · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · ${r.n} ${esc(T('nights'))}</div>
+        · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · ${r.n} ${esc(T('nights'))}
+        · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         ${r.exp ? `<span class="tagline${dealPct(r) >= 25 ? ' hot-tag' : ''}">${
           dealPct(r) > 0 ? '\u2212' + dealPct(r) + '%' : '+' + (-dealPct(r)) + '%'} ${esc(T('deal_u'))} · ${money(r.exp)}</span>` : ''}
@@ -1621,7 +1623,7 @@ function renderBoard(){
       <div class="route">
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
-        <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · Aviasales ${esc(IDX.observed)}</span>${histTag(r)}
+        <span class="tagline">${esc(T('direct'))} · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span>${histTag(r)}
         <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
           <div class="mbar"><i style="width:${r.score}%"></i></div></div>
       </div>
@@ -1718,11 +1720,13 @@ function urlParams(full){
      ventidue codici di aeroporto nell'indirizzo, che cresceva a ogni tocco:
      qui torna a essere "n=IT", e restano scritti a parte solo gli aeroporti
      scelti a mano fuori da quell'insieme. */
-  /* la partenza suggerita all'apertura non e' una scelta dell'utente e non
-     entra nell'indirizzo: appena tocca qualcosa, l'indirizzo la registra */
-  if(S.auto && !full) return h;
-  const nats = [], soli = new Set(S.origins);
-  for(const k of S.oCountries){
+  /* La partenza suggerita all'apertura non e' una scelta dell'utente e non
+     entra nell'indirizzo. Ma qui uscivo dalla funzione, e con lei se ne
+     andavano budget, distanza e forma del viaggio: chi copiava l'indirizzo
+     dalla barra perdeva la ricerca. Adesso salta solo la partenza. */
+  const suggerita = S.auto && !full;
+  const nats = [], soli = suggerita ? new Set() : new Set(S.origins);
+  if(!suggerita) for(const k of S.oCountries){
     const a = autoAirports(k);
     if(a.length && a.every(i => soli.has(i))){ nats.push(k); a.forEach(i => soli.delete(i)); }
   }
@@ -1732,7 +1736,7 @@ function urlParams(full){
   if(full || S.windows.size !== WINDOWS.length)
                          h.set('w', [...S.windows].sort((a,b)=>a-b).join('.'));
   if(S.shapes.size)      h.set('k', [...S.shapes].join('.'));
-  if(S.minDist || S.maxDist!==18000) h.set('d', S.minDist + '.' + S.maxDist);
+  if(S.minDist || S.maxDist!==36000) h.set('d', S.minDist + '.' + S.maxDist);
   if(S.maxBudget!==2000) h.set('b', S.maxBudget);
   if(S.bagFee)           h.set('g', S.bagFee);
   if(S.sort!=='score')   h.set('s', S.sort + (S.dir>0?'+':''));
@@ -1766,7 +1770,7 @@ function readURL(){
   if(sh.length) S.shapes = new Set(sh);
   const num = (k,lo,hi) => { const v = +h.get(k); return h.has(k) && Number.isFinite(v) && v>=lo && v<=hi ? v : null; };
   const dr = (h.get('d')||'').split('.').map(Number);
-  if(dr.length===2 && dr.every(v => Number.isFinite(v) && v>=0 && v<=18000) && dr[0] < dr[1]){
+  if(dr.length===2 && dr.every(v => Number.isFinite(v) && v>=0 && v<=36000) && dr[0] < dr[1]){
     S.minDist = dr[0]; S.maxDist = dr[1];
   }
   const b = num('b',20,2000);    if(b!==null) S.maxBudget = b;
@@ -1796,7 +1800,10 @@ async function fetchLive(quiet){
     /* i prezzi live arrivano gia' nella valuta scelta: li riporto a euro,
        perche' tutto il motore ragiona in euro e converte solo a schermo */
     const k = 1 / fx()[3];
-    S.liveRows = rows.map(r => ({...r, p: r.p * k}));
+    /* la data della rilevazione viaggia con la riga: una tariffa arrivata
+       adesso dall'API non porta la data dell'indice notturno */
+    const adesso = new Date().toISOString().slice(0,16).replace('T',' ');
+    S.liveRows = rows.map(r => ({...r, p: r.p * k, live:true, obs:adesso}));
     S.live = true;
     $('#srcTxt').textContent = 'LIVE';
     $('#srcPill').querySelector('.dot').classList.remove('idle');
@@ -1931,11 +1938,11 @@ $('#find').addEventListener('input', e => { clearTimeout(ft);
 $('#find').addEventListener('keydown', e => {
   if(e.key === 'Escape'){ e.target.value = ''; FROM() ? (S.oFind='') : (S.dFind=''); renderList(); } });
 $('#rngDistMin').addEventListener('input', e => {
-  S.minDist = Math.min(+e.target.value, S.maxDist - 250);
+  S.minDist = Math.min(+e.target.value, S.maxDist - 500);
   renderLimits(); markDirty();
 });
 $('#rngDistMax').addEventListener('input', e => {
-  S.maxDist = Math.max(+e.target.value, S.minDist + 250);
+  S.maxDist = Math.max(+e.target.value, S.minDist + 500);
   renderLimits(); markDirty();
 });
 $('#rngBudget').addEventListener('input', e => { S.maxBudget = +e.target.value; renderLimits(); markDirty(); });
