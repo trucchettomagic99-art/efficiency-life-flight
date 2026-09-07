@@ -1,0 +1,3 @@
+# www porta al dominio senza prefisso: un solo indirizzo canonico,
+# una sola pagina da indicizzare.
+https://www.efficiency-life.com/*  https://efficiency-life.com/:splat  301
