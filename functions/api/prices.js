@@ -17,6 +17,38 @@
  * visitatore sarebbe una chiamata all'API. Sei ore, come su Netlify.
  */
 
+/* === MODELLO GENERATO DA build.py — non modificare a mano === */
+const MODELLO = {"a":1.0380148350977674,"b":0.5176725524746038,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[3.251184834123223,78.17777777777778],"minpe":[0.5376344086021505,8.083333333333334],"price":[31,617],"deal":[0.22267375436170114,3.25075277939808]}};
+/* === fine modello generato === */
+
+/* Le tariffe in tempo reale non passano dal job notturno: arrivano qui e da
+   qui vanno al browser. Se il punteggio lo calcolasse la pagina, la formula
+   dovrebbe stare nella pagina — e allora tanto varrebbe non nasconderla.
+   Percio' si valuta qui, sul server, con le stesse costanti che build.py
+   scrive nel blocco qui sopra a ogni ricompilazione. */
+const STAY = [[800,3,4],[2000,5,7],[4000,8,10],[7000,12,14],[1e9,15,21]];
+function valuta(rows){
+  const M = MODELLO;
+  if(!M) return rows;
+  const { a, b, curva, pesi, scale } = M;
+  const tot = Object.values(pesi).reduce((x,y) => x+y, 0);
+  const nz = (v,[lo,hi]) => hi === lo ? 1 : Math.max(0, Math.min(1, (v-lo)/(hi-lo)));
+  for(const r of rows){
+    const p = r.p;
+    const atteso = curva && p > 0 && r.km > 0 ? Math.exp(a + b*Math.log(r.km)) : 0;
+    r.x = atteso ? Math.round(atteso) : 0;
+    if(!(p > 0)){ r.sc = 0; continue; }
+    let s1 = 15, s2 = 21;
+    for(const [lim,x,y] of STAY) if(r.km <= lim){ s1 = x; s2 = y; break; }
+    const fuori = r.n < s1 ? s1 - r.n : r.n > s2 ? r.n - s2 : 0;
+    const parti = { kmpe:nz(r.km*2/p, scale.kmpe), minpe:nz(r.dur/p, scale.minpe),
+                    price:1 - nz(p, scale.price), deal:nz(atteso ? atteso/p : 1, scale.deal),
+                    itin:Math.max(0, 1 - fuori/7), rel:.8 };
+    r.sc = Math.round(100 * Object.entries(pesi).reduce((s,[k,w]) => s + w*parti[k], 0) / tot);
+  }
+  return rows;
+}
+
 const API = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices';
 const MIN_NIGHTS = 2, MAX_NIGHTS = 30, MIN_PRICE = 10, MAX_ROWS = 60;
 const CACHE_SECONDS = 6 * 60 * 60;
@@ -106,9 +138,9 @@ export async function onRequest(context) {
     }
   }
 
-  const deals = [...best.values()]
+  const deals = valuta([...best.values()]
     .sort((a, b) => (b.km * 2) / b.p - (a.km * 2) / a.p)
-    .slice(0, MAX_ROWS);
+    .slice(0, MAX_ROWS));
 
   const out = json(
     { ok: true, origin, currency: cur.toUpperCase(),
