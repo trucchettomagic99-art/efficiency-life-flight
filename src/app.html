@@ -738,7 +738,7 @@ const S = {
 /* I pesi del punteggio. "deal" e' lo scarto dal prezzo atteso per quella
    distanza: e' la voce che distingue un affare da un volo semplicemente lungo,
    e vale quanto il chilometro per euro. */
-const WEIGHTS = { kmpe:32, deal:30, price:15, minpe:13, itin:5, rel:5 };
+
 
 /* Forma del viaggio: giorno di partenza e giorno di rientro.
    fri-mon 3 notti · fri-sun 2 · sat-sun 1. Il numero e' il giorno della
@@ -835,8 +835,6 @@ function haversine(a,b){
   const h=Math.sin(dLa/2)**2+Math.cos(rad(a.la))*Math.cos(rad(b.la))*Math.sin(dLo/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
 }
-const STAY = [[800,3,4],[2000,5,7],[4000,8,10],[7000,12,14],[Infinity,15,21]];
-const stayFor = km => { for(const [l,a,b] of STAY) if(km<=l) return [a,b]; };
 const TODAY = new Date(IDX.observed + 'T00:00:00Z');
 const daysOut = iso => Math.round((new Date(iso+'T00:00:00Z') - TODAY)/864e5);
 const windowOf = d => { const w = Math.ceil(Math.max(d,1)/30)*30; return w<=180 ? w : 999; };
@@ -909,12 +907,11 @@ function enrich(raw){
   if(!o || !d || d.k === o.k) return null;
   if(!CTRY[d.k] || !CTRY[o.k]) return null;
   const price = raw.p + S.bagFee;
-  const [s1,s2] = stayFor(raw.km);
-  const exp = expectedPrice(raw.km);
+  const exp = raw.x || 0;
   return { ...raw, o, d, oc:raw.o, dc:raw.d, price, base:raw.p, exp,
     deal: exp ? exp/price : 1,
     kmpe:(raw.km*2)/price, minpe:raw.dur/price,
-    win: windowOf(daysOut(raw.dep)), stay:[s1,s2], ck:d.k,
+    win: windowOf(daysOut(raw.dep)), ck:d.k,
     id: `${raw.o}-${raw.d}-${yymmdd(raw.dep)}` };
 }
 /* ══════════════════════════════════════════════════════════
@@ -937,43 +934,11 @@ function enrich(raw){
    sotto il prezzo atteso per la sua distanza. Non e' copiabile in un
    pomeriggio non perche' la formula sia segreta — e' scritta qui — ma perche'
    senza un indice quotidiano di migliaia di tariffe la retta non si stima. */
-let CURVE = null;
-function fitCurve(rows, gk, gp){
-  const pts = [];
-  for(const r of rows){
-    const km = gk(r), p = gp(r);
-    if(km > 80 && p > 0) pts.push([Math.log(km), Math.log(p)]);
-  }
-  if(pts.length < 200) return null;
-  const med = v => { const s = [...v].sort((x,y)=>x-y), n = s.length;
-                     return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; };
-  let use = pts, a = 0, b = 0;
-  for(let pass = 0; pass < 3; pass++){
-    const n = use.length;
-    let sx = 0, sy = 0;
-    for(const [x,y] of use){ sx += x; sy += y; }
-    const mx = sx/n, my = sy/n;
-    let sxy = 0, sxx = 0;
-    for(const [x,y] of use){ sxy += (x-mx)*(y-my); sxx += (x-mx)*(x-mx); }
-    if(!sxx) return null;
-    b = sxy/sxx; a = my - b*mx;
-    const res = pts.map(([x,y]) => y - (a + b*x));
-    const m = med(res), mad = med(res.map(r => Math.abs(r-m))) || 1e-9;
-    const cut = 2.5 * 1.4826 * mad;
-    const nxt = pts.filter((_,i) => Math.abs(res[i]-m) <= cut);
-    if(nxt.length < 200) break;
-    use = nxt;
-  }
-  return {a, b};
-}
-function marketCurve(){
-  if(!CURVE) CURVE = fitCurve(IDX.deals, r => r.km, r => r.p);
-  return CURVE;
-}
-const expectedPrice = km => {
-  const c = marketCurve();
-  return c && km > 0 ? Math.exp(c.a + c.b*Math.log(km)) : 0;
-};
+/* La curva prezzo-distanza non si stima piu' qui. Il prezzo atteso di ogni
+   riga arriva gia' calcolato dal job notturno (scripts/build.py) e dalla
+   funzione /api/prices per le tariffe in tempo reale: alla pagina servono
+   il numero, non il modo in cui e' nato. E' anche piu' veloce, perche' il
+   browser non stima piu' una regressione su cinquemila punti all'apertura. */
 
 /* Lo storico, quando c'e': dice se questo prezzo e' basso per questa rotta,
    non solo per questa distanza. Due domande diverse, due risposte diverse. */
@@ -1002,44 +967,12 @@ function rawPool(){
   }
   return out;
 }
-/* Le scale del punteggio sono assolute e si calcolano una volta sola
-   sull'intero indice, non sul risultato della ricerca. Prima "88/100"
-   voleva dire "il migliore dei tre che hai davanti": bastava stringere un
-   filtro perche' la stessa rotta cambiasse voto, e un punteggio condiviso
-   non significava niente. Ora vuol dire sempre la stessa cosa.
-   Secondo e novantottesimo percentile invece del minimo e del massimo: un
-   solo errore di prezzo nell'indice schiacciava tutta la scala. */
-const SCALE = (() => {
-  const q = (v, k) => { v.sort((a,b) => a-b);
-    return v[Math.min(v.length-1, Math.max(0, Math.round(k*(v.length-1))))]; };
-  const kmpe = [], minpe = [], price = [], deal = [];
-  for(const raw of IDX.deals){
-    if(!(raw.p > 0)) continue;
-    const exp = expectedPrice(raw.km);
-    kmpe.push(raw.km*2/raw.p); minpe.push(raw.dur/raw.p);
-    price.push(raw.p); deal.push(exp ? exp/raw.p : 1);
-  }
-  const band = v => v.length ? [q(v,.02), q(v,.98)] : [0,1];
-  return { kmpe:band(kmpe), minpe:band(minpe), price:band(price), deal:band(deal) };
-})();
+/* Il punteggio arriva con la riga, gia' fatto. Pesi, scale e componenti
+   stanno in scripts/build.py e nella funzione live: erano l'unica parte del
+   motore che si poteva leggere aprendo il sorgente della pagina, e non c'e'
+   ragione perche' un browser debba conoscerli per ordinare una colonna. */
 function score(list){
-  const nz = (v,[lo,hi]) => hi===lo ? 1 : Math.max(0, Math.min(1, (v-lo)/(hi-lo)));
-  const tot = Object.values(WEIGHTS).reduce((a,b)=>a+b,0);
-  const pFix = [SCALE.price[0] + S.bagFee, SCALE.price[1] + S.bagFee];
-  for(const r of list){
-    /* itin e rel erano due costanti: dieci punti su cento che ogni riga
-       prendeva comunque, e che quindi non distinguevano niente. Adesso
-       itin premia il soggiorno proporzionato alla distanza e rel dice se
-       di quella rotta abbiamo uno storico o solo la rilevazione di oggi. */
-    const [s1,s2] = r.stay || [0,99];
-    const fuori = r.n < s1 ? s1 - r.n : r.n > s2 ? r.n - s2 : 0;
-    const h = HIST[r.oc + '-' + r.dc];
-    const p = { kmpe:nz(r.kmpe,SCALE.kmpe), minpe:nz(r.minpe,SCALE.minpe),
-                price:1 - nz(r.price,pFix), deal:nz(r.deal,SCALE.deal),
-                itin: Math.max(0, 1 - fuori/7),
-                rel: h && h[0] >= 5 ? 1 : .8 };
-    r.score = Math.round(100 * Object.entries(WEIGHTS).reduce((s,[k,w])=>s+w*p[k],0)/tot);
-  }
+  for(const r of list) r.score = r.sc || 0;
   return list;
 }
 function runSearch(){
