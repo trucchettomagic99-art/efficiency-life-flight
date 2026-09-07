@@ -1727,7 +1727,11 @@ async function fetchLive(quiet){
     const rows = [];
     res.forEach((j,i) => {
       if(!j || !Array.isArray(j.deals)) return;
-      for(const r of j.deals) if(PL[r.d] && PL[r.o]) rows.push(r);
+      /* Il punteggio lo calcola la funzione, non la pagina. Una risposta
+         che non lo porta e' una risposta vecchia — la CDN tiene sei ore —
+         oppure una funzione che non ha il modello: in entrambi i casi
+         meglio l'indice notturno, che il voto ce l'ha, di righe a zero. */
+      for(const r of j.deals) if(PL[r.d] && PL[r.o] && r.sc != null) rows.push(r);
     });
     if(!rows.length) throw new Error('nessuna tariffa');
     /* i prezzi live arrivano gia' nella valuta scelta: li riporto a euro,
