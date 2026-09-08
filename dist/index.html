@@ -451,9 +451,12 @@ section{scroll-margin-top:64px}
 .sortbtn{background:transparent;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;
   display:inline-flex;align-items:center;gap:5px;letter-spacing:inherit;text-transform:inherit}
 .sortbtn:hover{color:var(--ink)}
-.sortbtn .ar{opacity:0;font-size:9px}
+/* Era invisibile ma occupava la sua larghezza: il titolo della colonna
+   finiva quindici pixel piu' a sinistra dei numeri sotto. Ora sparisce
+   davvero, e compare solo sulla colonna che sta ordinando. */
+.sortbtn .ar{display:none;font-size:9px}
 .sortbtn.on{color:var(--signal)}
-.sortbtn.on .ar{opacity:1}
+.sortbtn.on .ar{display:inline;opacity:1}
 .mhead .r{justify-content:flex-end;text-align:end}
 .mhead .r .sortbtn{justify-content:flex-end;width:100%}
 .tagline{display:inline-flex;gap:5px;align-items:center;font-family:"JetBrains Mono",monospace;font-size:9.5px;
@@ -1911,6 +1914,16 @@ function renderTicker(){
   const one = all.map(r => `<span class="tick"><b>${r.o}<s>→</s>${r.d}</b> <s>${esc((PL[r.d]||{n:r.d}).n)}</s>
       <i>${ratio(r.km*2/toCur(r.p))} km/${esc(sym())}</i> <s>${money(r.p)}</s></span>`).join('');
   $('#tick').innerHTML = one + one;
+  /* La durata era fissa a novanta secondi per l'intero nastro: con
+     quarantaquattro offerte fanno oltre cento pixel al secondo, e non si
+     legge niente. Qui si calcola dalla larghezza vera, perche' un nastro in
+     tedesco e' piu' lungo di uno in cinese e deve scorrere alla stessa
+     velocita' — cinquanta pixel al secondo, che e' un passo da lettura. */
+  const tr = $('#tick');
+  requestAnimationFrame(() => {
+    const passo = tr.scrollWidth / 2;                 // una sola copia
+    if(passo > 0) tr.style.animationDuration = Math.round(passo / 48) + 's';
+  });
 }
 
 function renderProse(){
