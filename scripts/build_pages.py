@@ -310,6 +310,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <link rel="alternate" hreflang="{lang}" href="{url}">
 <link rel="alternate" hreflang="{other}" href="{alt}">
 <link rel="alternate" hreflang="x-default" href="{SITE}/{L['en']['dir']}/{iata.lower()}/">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="dark light">
 <meta property="og:type" content="article">
@@ -434,6 +437,9 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="{url}">
 {alternate_links()}
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="dark light">
 <meta property="og:type" content="website">

@@ -79,6 +79,12 @@ ADS_SLOT   = ''
 DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
+# L'eta in linea resta per i browser moderni, ma NON basta: Google mostra
+# l'icona accanto al risultato solo se Googlebot-Image riesce a SCARICARE un
+# file, e un data: URI non e' un file da scaricare. In piu' l'SVG non e' fra i
+# formati che accetta (BMP, GIF, ICO, PNG, JPEG, PPM, TIFF). Da qui i file
+# veri in public/: favicon.ico, icon-192.png, apple-touch-icon.png. Senza,
+# nei risultati compare il mappamondo grigio.
 FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2303070E'/><path d='M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z' fill='%232E8DFF'/><path d='M3.5 23.9h25' stroke='%235FE3FF' stroke-width='2.2' stroke-linecap='round'/></svg>"
 
 
@@ -363,8 +369,10 @@ def main() -> int:
 <meta name="color-scheme" content="dark light">
 <link rel="canonical" href="{SITE}/">
 {alternates}
-<link rel="icon" href="{FAVICON}">
-<link rel="apple-touch-icon" href="{FAVICON}">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="{FAVICON}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Efficiency Life">
 <meta property="og:title" content="Efficiency Life Flight">
