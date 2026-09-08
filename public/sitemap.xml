@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Segnaposto. La sitemap vera la scrive scripts/build_pages.py alla fine
+     della compilazione, con la home piu' tutte le pagine per aeroporto e le
+     landing di lingua. Questo file esiste solo perche' dist/ non resti mai
+     senza sitemap se quella fase non gira: prima puntava al vecchio
+     indirizzo Netlify, che e' esattamente cio' che teneva in vita il sito
+     dismesso nei risultati di Google. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://efficiencylife-flight.netlify.app/</loc>
-    <lastmod>2026-09-02</lastmod>
+    <loc>https://efficiency-life.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
