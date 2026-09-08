@@ -505,7 +505,12 @@ footer a{color:var(--ink-2)}
 @media(max-width:860px){
   .hero-in{grid-template-columns:1fr;align-items:start}
   .rail nav{display:none}
-  .rail-in{height:auto;padding:9px 0;flex-wrap:wrap;gap:9px}
+  /* "Giorno" finiva su una seconda riga da solo. Meglio una barra che
+     scorre in orizzontale che una che si spezza. */
+  .rail-in{height:auto;padding:9px 0;flex-wrap:nowrap;gap:9px;
+    overflow-x:auto;scrollbar-width:none}
+  .rail-in::-webkit-scrollbar{display:none}
+  .rail-in > *{flex:none}
   /* Prezzo e km/valuta erano due colonne affiancate, strette, con la
      seconda che rubava spazio alla rotta. Qui diventano una colonna sola
      addossata ai pulsanti, uno sopra l'altro e allineati a destra: la
@@ -525,12 +530,16 @@ footer a{color:var(--ink-2)}
      linea di base. Km/valuta sparisce, perche' quel numero sta sotto il
      prezzo e un titolo sopra la colonna del prezzo basta per entrambi. */
   .mhead{grid-template-rows:auto;align-items:end}
-  .mhead > *{grid-row:1;align-self:end}
-  .mhead > :first-child{grid-column:1;justify-self:center}
+  .mhead > *{grid-row:1;align-self:end;padding:11px 7px}
+  .mhead > :first-child{grid-column:1;justify-self:center;padding-inline:0}
   .mhead > :nth-child(2){grid-column:2}
   .mhead .c-price{grid-column:3;padding-inline-end:16px}
   .mhead .c-kmpe{display:none}
-  .mhead > :last-child{grid-column:4}
+  .mhead > :last-child{grid-column:4;text-align:start}
+  /* i due numeri sono il motivo per cui si guarda questa classifica:
+     su un telefono meritano piu' corpo delle etichette che li spiegano */
+  .mrow .c-price b{font-size:19px}
+  .mrow .c-kmpe b{font-size:17px}
   .c-dist{display:none}
   .mrow > *{padding:11px 7px}
   .acts .btn{padding:5px 4px;font-size:9px;letter-spacing:.06em}
@@ -612,7 +621,7 @@ footer a{color:var(--ink-2)}
   <div class="wrap mod-in">
     <span class="lbl" data-k="platform">Piattaforma</span>
     <nav class="mods" aria-label="Moduli">
-      <span class="mod on"><s>▲</s> Flight</span>
+      <span class="mod on">Flight</span>
       <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
       <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
     </nav>
@@ -656,7 +665,6 @@ footer a{color:var(--ink-2)}
 <section class="panel" id="search">
   <div class="wrap">
     <div class="panel-head">
-      <span class="lbl lbl-sig">01</span>
       <h2 data-k="nav_search">Ricerca</h2>
       <span class="lbl" id="panelHint"></span>
       <button class="tiny" id="panelToggle" style="margin-inline-start:auto">—</button>
@@ -738,7 +746,6 @@ footer a{color:var(--ink-2)}
   <section id="board">
     <div class="sec-head">
       <div>
-        <div class="lbl lbl-sig">02</div>
         <h2 id="boardTitle"></h2>
         <p id="boardNote"></p>
         <p class="trust" id="trustNote"></p>
@@ -758,7 +765,6 @@ footer a{color:var(--ink-2)}
   <section id="method">
     <div class="sec-head">
       <div>
-        <div class="lbl lbl-sig">03</div>
         <h2 data-k="nav_method">Metodo</h2>
         <p id="methodLede"></p>
       </div>
@@ -770,7 +776,7 @@ footer a{color:var(--ink-2)}
 
 <section id="privacy" class="wrap">
   <div class="sec-head">
-    <div><div class="lbl lbl-sig">04</div><h2 data-k="nav_priv">Trasparenza</h2><p id="privLede"></p></div>
+    <div><h2 data-k="nav_priv">Trasparenza</h2><p id="privLede"></p></div>
   </div>
   <div class="method" id="privGrid"></div>
 </section>
@@ -999,9 +1005,13 @@ function exploreUrl(iata){
   const b64 = btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return `https://www.google.com/travel/explore?tfs=${b64}&tfu=GgA&hl=${S.lang}&curr=${S.cur}`;
 }
+/* Google Flights capisce una frase, non dei parametri. La formula che
+   documentano e' "Flights to X from Y on DATA through DATA": l'ordine
+   inverso e la parola "nonstop" in coda facevano cadere l'analisi su
+   telefono, e si finiva sulla pagina generica invece che sulla ricerca. */
 const gflight = (o,d,dep,ret) =>
   `https://www.google.com/travel/flights?hl=${S.lang}&curr=${S.cur}&q=` +
-  encodeURIComponent(`Flights from ${o} to ${d} on ${dep} through ${ret} nonstop`);
+  encodeURIComponent(`Flights to ${d} from ${o} on ${dep} through ${ret}`);
 const yymmdd = s => s.slice(2,4)+s.slice(5,7)+s.slice(8,10);
 const sky = (o,d,dep,ret) =>
   `https://www.skyscanner.net/transport/flights/${o.toLowerCase()}/${d.toLowerCase()}/${yymmdd(dep)}/${yymmdd(ret)}/?adultsv2=1&cabinclass=economy&preferdirects=true&rtn=1`;
@@ -1570,7 +1580,7 @@ const COLS = [
   ['score','th_score','c-score'],
 ];
 function renderHead(){
-  $('#mhead').innerHTML = `<div class="lbl">#</div><div class="lbl">${esc(T('th_route'))}</div>`
+  $('#mhead').innerHTML = `<div class="lbl rkh">${esc(T('th_rank'))}</div><div class="lbl">${esc(T('th_route'))}</div>`
     + COLS.map(([k,tk,cls]) => {
     const label = k==='kmpe' ? `Km/${sym()}` : T(tk);
     const on = S.sort===k ? ' on' : '';
@@ -1709,7 +1719,7 @@ function renderProse(){
   $('#privLede').textContent = T('privLede');
   $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
   $('#footTag').textContent  = T('plat_note');
-  const cell = ([h,b],i) => `<div class="mcell"><span class="lbl lbl-sig">${String(i+1).padStart(2,'0')}</span><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
+  const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
   $('#methodGrid').innerHTML = p.method.map(cell).join('');
   $('#privGrid').innerHTML   = p.privacy.map(cell).join('');
   $('#methodNote').innerHTML = fill(p.indexNote);
