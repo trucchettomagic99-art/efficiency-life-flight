@@ -1711,11 +1711,15 @@ function renderTicker(){
      legge niente. Qui si calcola dalla larghezza vera, perche' un nastro in
      tedesco e' piu' lungo di uno in cinese e deve scorrere alla stessa
      velocita' — cinquanta pixel al secondo, che e' un passo da lettura. */
+  /* Niente requestAnimationFrame: nelle schede in secondo piano non
+     scatta, e la pagina caricata mentre guardi altrove restava alla
+     velocita' vecchia. La lettura di scrollWidth forza il calcolo del
+     layout qui e ora, che e' esattamente quello che serve. */
   const tr = $('#tick');
-  requestAnimationFrame(() => {
-    const passo = tr.scrollWidth / 2;                 // una sola copia
-    if(passo > 0) tr.style.animationDuration = Math.round(passo / 48) + 's';
-  });
+  const passo = () => { const w = tr.scrollWidth / 2;   // una sola copia
+    if(w > 0) tr.style.animationDuration = Math.round(w / 48) + 's'; };
+  passo();
+  if(!tr.style.animationDuration) setTimeout(passo, 500);
 }
 
 function renderProse(){
