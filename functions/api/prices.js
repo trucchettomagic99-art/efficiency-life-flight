@@ -18,7 +18,7 @@
  */
 
 /* === MODELLO GENERATO DA build.py — non modificare a mano === */
-const MODELLO = {"a":1.0314092803028658,"b":0.5186581873743658,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[3.2448979591836733,78.17777777777778],"minpe":[0.5376344086021505,8.055555555555555],"price":[31,614],"deal":[0.22248031758213235,3.220224736652041]}};
+const MODELLO = {"a":1.0324006445203278,"b":0.5184225635114061,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[3.2254335260115607,78.17647058823529],"minpe":[0.5360721442885772,8.048780487804878],"price":[31,620],"deal":[0.22116912238192588,3.2181007534007873]}};
 /* === fine modello generato === */
 
 /* Le tariffe in tempo reale non passano dal job notturno: arrivano qui e da
