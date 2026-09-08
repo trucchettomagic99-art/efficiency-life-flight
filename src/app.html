@@ -234,7 +234,6 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
   background:linear-gradient(90deg,var(--deck),transparent 6%,transparent 94%,var(--deck))}
 .tick-track{display:flex;gap:0;white-space:nowrap;width:max-content;animation:tick 370s linear infinite}
 .ticker:hover .tick-track,.ticker:focus-within .tick-track{animation-play-state:paused}
-@media (prefers-reduced-motion:reduce){.tick-track{animation:none}}
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .tick{display:inline-flex;align-items:center;gap:9px;padding:9px 20px;border-inline-end:1px solid var(--rule);
   font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
@@ -618,7 +617,13 @@ footer a{color:var(--ink-2)}
 @media(max-width:380px){
   .mini-score s u{display:none}
 }
-@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* Chi ha spento le animazioni nel sistema operativo non deve subire
+   dissolvenze e scorrimenti. Il nastro delle offerte pero' resta fuori:
+   con la regola generica la sua animazione durava un centesimo di
+   millisecondo e la striscia appariva CONGELATA sulla prima offerta, non
+   ferma per scelta ma rotta. Meglio farla scorrere piano — c'e' la pausa
+   al passaggio del mouse — che mostrare un elemento morto. */
+@media(prefers-reduced-motion:reduce){*:not(.tick-track){animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 
 <div class="modules">
