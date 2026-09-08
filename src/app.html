@@ -252,6 +252,9 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
   letter-spacing:-.035em;line-height:.95;text-transform:uppercase;margin:10px 0 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .apex .meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-2);letter-spacing:.04em}
 .apex .meta i{font-style:normal;color:var(--signal)}
+/* Ogni voce sta su una riga sola: la riga va a capo fra un dato e l'altro,
+   mai dentro "2h45 a tratta" o dentro una data. */
+.apex .meta span{white-space:nowrap}
 .apex-nums{display:grid;grid-template-columns:repeat(4,1fr);border-inline-start:1px solid var(--rule)}
 .apex-nums div{border-inline-end:1px solid var(--rule);padding:2px 12px;min-width:0}
 .apex-nums b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(17px,2.05vw,26px);
@@ -355,9 +358,18 @@ section{scroll-margin-top:64px}
 .sortbtn.on .ar{display:inline;opacity:1}
 .mhead .r{justify-content:flex-end;text-align:end}
 .mhead .r .sortbtn{justify-content:flex-end;width:100%}
-.tagline{display:inline-flex;gap:5px;align-items:center;font-family:"JetBrains Mono",monospace;font-size:9.5px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--rule);
+/* Era un inline-flex: "diretto", la durata e la fonte diventavano tre
+   caselle affiancate, e quando la colonna si stringeva ognuna andava a capo
+   per conto suo — "2H00 A" sopra e "TRATTA" sotto, "AVIASALES 2026-09-08
+   12:17" sopra e "LIVE" sotto, incolonnate a quote diverse perche' erano
+   centrate fra loro. Qui e' testo normale: va a capo fra un pezzo e
+   l'altro, mai dentro un pezzo (ci pensa il nowrap qui sotto), e le righe
+   appoggiano tutte sulla stessa linea di base. */
+.tagline{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:9.5px;
+  letter-spacing:.1em;line-height:1.7;text-transform:uppercase;color:var(--ink-3);
+  border:1px solid var(--rule);vertical-align:top;
   padding:1px 5px;border-radius:2px;margin-top:2px;width:max-content;max-width:100%}
+.tagline > b,.tagline > span{white-space:nowrap}
 .flag{font-size:17px;line-height:1;flex:none}
 .flag.code{font-family:"JetBrains Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.05em;
   background:var(--signal-soft);border:1px solid var(--rule-hi);color:var(--signal);padding:2px 4px;border-radius:2px}
@@ -418,6 +430,10 @@ footer a{color:var(--ink-2)}
 
 /* stringendo cadono prima le colonne accessorie: km/EUR resta fino in fondo,
    perche' e' il numero per cui esiste questo sito */
+/* Sotto i 1360 la colonna della rotta non regge "AVIASALES · LIVE 12:17"
+   su una riga sola. L'ora e' il pezzo piu' sacrificabile: che il prezzo sia
+   di adesso lo dice gia' LIVE, e l'ora esatta resta nel suggerimento. */
+@media(max-width:1360px){.tagline .src .ora{display:none}}
 @media(max-width:1240px){
   .mrow,.mhead{grid-template-columns:44px minmax(0,2fr) minmax(74px,.78fr) minmax(68px,.66fr) minmax(66px,.62fr) minmax(70px,.62fr) minmax(104px,.86fr) 116px}
   .c-stay{display:none}
@@ -578,10 +594,14 @@ footer a{color:var(--ink-2)}
      non dice niente, e i puntini di troncamento se la mangiavano */
   .route .path{font-size:10px;letter-spacing:.01em}
   .mrow > *{padding:10px 5px}
-  /* la targhetta e' un inline-flex: i suoi figli diventano blocchi e il
-     testo non va a capo come testo. Qui torna flusso normale e si spezza
-     dove serve, dentro la sua cella. */
-  .route .tagline{display:inline;width:auto;white-space:normal;line-height:1.7;max-width:100%}
+  /* La targhetta si stringe sul proprio testo invece di allargarsi a tutta
+     la colonna, e la spaziatura fra le lettere scende da .1em a .04em:
+     bastano quei pochi pixel perche' "DIRETTO · 2H45 A TRATTA" stia su una
+     riga sola in una colonna da centocinquanta pixel. Prima si spezzava a
+     meta' della parola. */
+  .route .tagline{align-self:flex-start;width:max-content;max-width:100%;
+    white-space:normal;letter-spacing:.04em}
+  .route .tagline .dir{letter-spacing:.06em}
   .route b{font-size:14px}
   .acts .btn{padding:5px 3px;font-size:8.5px;letter-spacing:.04em}
   .num b{font-size:14px}
@@ -921,6 +941,18 @@ const ratio = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(
 /* Scarto dal prezzo atteso, in percento: -48% = costa quasi la meta' di
    quanto costa di norma volare cosi' lontano. */
 const dealPct = r => r.exp ? Math.round((1 - r.price/r.exp) * 100) : 0;
+/* La provenienza di ogni tariffa, in forma corta. Per esteso era
+   "AVIASALES 2026-09-08 12:17 LIVE": trentatre caratteri che non stavano
+   nella colonna della rotta e mandavano la targhetta a due righe. La data
+   per esteso serve a poco su ogni riga — sta gia' in grande sopra la
+   classifica — mentre l'ora dice se il prezzo e' di adesso. Quella intera
+   resta nel suggerimento del mouse. */
+function fonte(r){
+  const s = String(r.obs || IDX.observed);
+  const ora = (s.split(' ')[1] || '').slice(0,5);
+  const breve = r.live ? `LIVE<span class="ora"> ${esc(ora)}</span>` : esc(fmtDate(s.slice(0,10)));
+  return `<span class="src" title="Aviasales · ${esc(s)}">· Aviasales · ${breve}</span>`;
+}
 function dealCell(r){
   const v = dealPct(r);
   const txt = v > 0 ? '\u2212' + v + '%' : v < 0 ? '+' + (-v) + '%' : '—';
@@ -1618,9 +1650,10 @@ function apexCard(r){
     <div>
       <div class="lbl-rank"><b>01</b><span class="lbl">${esc(T('st_best'))}</span></div>
       <h3>${flag(r.ck)}<span>${esc(r.d.n)}</span></h3>
-      <div class="meta">${r.oc} <i>→</i> ${r.dc} · ${esc(cname(r.ck))} · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}
-        · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} · ${r.n} ${esc(T('nights'))}
-        · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</div>
+      <div class="meta"><span>${r.oc} <i>→</i> ${r.dc}</span> · <span>${esc(cname(r.ck))}</span>
+        · <span>${fmtDate(r.dep)} – ${fmtDate(r.ret)}</span>
+        · <span>${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span> · <span>${r.n} ${esc(T('nights'))}</span>
+        · <span>Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         ${r.exp ? `<span class="tagline${dealPct(r) >= 25 ? ' hot-tag' : ''}">${
           dealPct(r) > 0 ? '\u2212' + dealPct(r) + '%' : '+' + (-dealPct(r)) + '%'} ${esc(T('deal_u'))} · ${money(r.exp)}</span>` : ''}
@@ -1679,7 +1712,7 @@ function renderBoard(){
       <div class="route">
         <b>${flag(r.ck)}<span class="nm">${esc(r.d.n)}</span></b>
         <div class="path">${r.oc} <i>→</i> ${r.dc}<span class="cty"> · ${esc(cname(r.ck))}</span> · ${fmtDate(r.dep)} – ${fmtDate(r.ret)}</div>
-        <span class="tagline"><b class="dir">${esc(T('direct'))}</b> · ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))} <span class="src"> · Aviasales ${esc(r.obs || IDX.observed)}${r.live ? ' LIVE' : ''}</span></span>${histTag(r)}
+        <span class="tagline"><b class="dir">${esc(T('direct'))}</b> <span class="leg">· ${dur(Math.round(r.dur/2))} ${esc(T('eachway'))}</span> ${fonte(r)}</span>${histTag(r)}
         <div class="mini-score"><s><u>${esc(T('escore'))}</u> <b>${r.score}</b>/100</s>
           <div class="mbar"><i style="width:${r.score}%"></i></div></div>
       </div>
