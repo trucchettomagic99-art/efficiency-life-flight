@@ -232,7 +232,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .ticker{border-bottom:1px solid var(--rule);background:var(--deck);overflow:hidden;position:relative}
 .ticker::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(90deg,var(--deck),transparent 6%,transparent 94%,var(--deck))}
-.tick-track{display:flex;gap:0;white-space:nowrap;width:max-content;animation:tick 620s linear infinite}
+.tick-track{display:flex;gap:0;white-space:nowrap;width:max-content;animation:tick 370s linear infinite}
 .ticker:hover .tick-track,.ticker:focus-within .tick-track{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.tick-track{animation:none}}
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -1709,18 +1709,21 @@ function renderTicker(){
   $('#tick').innerHTML = one + one;
   /* La durata si calcola dalla larghezza vera, perche' un nastro in tedesco
      e' piu' lungo di uno in cinese e deve scorrere allo stesso passo.
-     VELOCITA: diciotto pixel al secondo. Una scheda e' larga circa
-     duecentocinquanta pixel: mentre la leggi si sposta di una cinquantina,
-     un quinto della sua larghezza, e l'occhio non deve inseguirla. A
-     quarantotto si leggeva, ma con fatica: si finiva la riga e la scheda
-     era gia' a meta' strada. Meglio lento e leggibile che vivace. */
+     VELOCITA: trenta pixel al secondo, dopo due tentativi sbagliati in
+     direzioni opposte. A quarantotto si leggeva con fatica: finita la riga,
+     la scheda era gia' a meta' strada. A diciotto il nastro sembrava fermo
+     — in un'occhiata di un secondo si spostava di diciotto pixel su
+     millecinquecento di schermo, e l'occhio non registra un movimento cosi'
+     piccolo. A trenta una scheda da duecentocinquanta pixel impiega otto
+     secondi ad attraversare il proprio spazio: mentre ne leggi una si
+     sposta di un quarto, si vede che scorre e si legge senza inseguirla. */
   /* Niente requestAnimationFrame: nelle schede in secondo piano non
      scatta, e la pagina caricata mentre guardi altrove restava alla
      velocita' vecchia. La lettura di scrollWidth forza il calcolo del
      layout qui e ora, che e' esattamente quello che serve. */
   const tr = $('#tick');
   const passo = () => { const w = tr.scrollWidth / 2;   // una sola copia
-    if(w > 0) tr.style.animationDuration = Math.round(w / 18) + 's'; };
+    if(w > 0) tr.style.animationDuration = Math.round(w / 30) + 's'; };
   passo();
   if(!tr.style.animationDuration) setTimeout(passo, 500);
 }
