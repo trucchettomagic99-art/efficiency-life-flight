@@ -152,7 +152,8 @@ def validate(row, places, today):
     if not 0 < r['km'] <= 20100 or not 0 <= r['dur'] <= 5760:
         raise ValueError('invalid_distance_duration')
     r.update(dep=dep.isoformat(), ret=ret.isoformat(), obs=obs.isoformat(), n=(ret-dep).days)
-    # Low prices are possible. Keep them, marked, rather than silently dropping them.
+    # Low prices are possible, but are too error-prone to influence a public ranking.
+    # Preserve them for later re-validation while keeping them quarantined.
     if r['p'] < 10:
         r['quality'] = 'low_price_review'
     r.pop('sc', None); r.pop('x', None)
@@ -213,17 +214,22 @@ def clean_rows(rows, places, today, observed=None):
             issues[str(e) if isinstance(e, ValueError) else 'malformed_row'] += 1
     return sorted(best.values(), key=key), issues
 
+def publishable(rows):
+    """Rows safe to influence the public model, history and search results."""
+    return [r for r in rows if r.get('quality') != 'low_price_review']
+
 def representatives(rows):
     best = {}
-    for r in rows:
+    for r in publishable(rows):
         k = r['o'], r['d']
         if k not in best or r['p'] < best[k]['p']:
             best[k] = r
     return sorted(best.values(), key=key)
 
 def public_rows(rows):
-    # Keep every distinct valid date pair: file per origin avoids a global payload.
-    return [{k: r[k] for k in ('o','d','p','dep','ret','dur','km','n','obs','s','x','sc') if k in r} for r in rows]
+    # Keep every distinct valid date pair, except quarantined observations.
+    return [{k: r[k] for k in ('o','d','p','dep','ret','dur','km','n','obs','s','x','sc') if k in r}
+            for r in publishable(rows)]
 
 def migrate(data, today):
     old = read(data / 'index.json')
@@ -231,7 +237,8 @@ def migrate(data, today):
     places = places_from(catalog, old['places'])
     rows, rejected = clean_rows(old['deals'], places, today, old['observed'])
     issues.update(rejected)
-    index = dict(old, places=places, deals=representatives(rows), counts=dict(Counter(r['o'] for r in representatives(rows))))
+    reps = representatives(rows)
+    index = dict(old, places=places, deals=reps, counts=dict(Counter(r['o'] for r in reps)))
     # Cleaning never pretends that old prices have just been observed.
     dump(data / 'catalog.json', catalog)
     dump(data / 'origins.json', list(dict.fromkeys([*read(data/'origins.json', []), *[a['i'] for a in catalog['airports']]])))
