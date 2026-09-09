@@ -1,0 +1,336 @@
+<title>Efficiency Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Il foglio di stile e' quello del motore, iniettato qui da build.py: una
+   sola sorgente per due pagine. Se si duplicasse, fra un mese le due pagine
+   avrebbero due grigi diversi e nessuno saprebbe quale e' quello giusto. */
+__STYLE__
+
+/* ── quel poco che vive solo qui ───────────────────────────── */
+/* La home non ha classifica: il richiamo al motore deve essere la cosa piu'
+   grossa dopo il titolo, altrimenti si e' spostato il prodotto dietro una
+   porta e non si e' messo un cartello. */
+.cta-home{display:inline-flex;align-items:center;gap:12px;margin-top:26px;
+  background:var(--signal);color:var(--void);border:0;border-radius:3px;
+  padding:15px 26px;font-family:Archivo,sans-serif;font-weight:800;font-size:16px;
+  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.cta-home:hover{background:var(--signal-2)}
+.cta-home:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+:root[data-day] .cta-home{color:#fff}
+.cta-home s{text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:13px;opacity:.7}
+a.mod{text-decoration:none;cursor:pointer}
+a.mod:hover{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft)}
+a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+/* Niente padding in piu' qui: .hero-in ne ha gia' il suo, e sommarli
+   lasciava trecento pixel di vuoto sopra il titolo. */
+.home-hero .h1{max-width:16ch}
+@media(max-width:860px){ .cta-home{padding:13px 20px;font-size:14px} }
+</style>
+
+<span id="top"></span>
+
+<div class="modules">
+  <div class="wrap mod-in">
+    <span class="lbl" data-k="platform">Piattaforma</span>
+    <nav class="mods" aria-label="Moduli">
+      <a class="mod" href="/flight/">Flight</a>
+      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
+      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
+    </nav>
+  </div>
+</div>
+
+<div class="rail">
+  <div class="wrap rail-in">
+    <a class="mark" href="/" id="brand">
+      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></a>
+    <button class="pill" id="navBtn" aria-label="Menu" aria-expanded="false" aria-controls="mainnav">&#9776;</button>
+    <nav id="mainnav" aria-label="Efficiency Life">
+      <a href="/" class="on" data-k="nav_home">Home</a>
+      <a href="/flight/">Flight</a>
+      <span class="drop" id="drop">
+        <button class="navbtn" id="expBtn" aria-expanded="false" aria-haspopup="true" aria-controls="expMenu"><span data-k="nav_explore">Esplora</span><i aria-hidden="true">&#9662;</i></button>
+        <span class="navlbl" data-k="nav_explore" aria-hidden="true">Esplora</span>
+        <span class="dropmenu" id="expMenu" role="menu" hidden>
+          <a class="dropitem" href="/flight/" role="menuitem">Flight<em class="ok" data-k="avail">Disponibile</em></a>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Stay<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Rail<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Drive<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Energy<em data-k="soon">In arrivo</em></span>
+        </span>
+      </span>
+    </nav>
+    <div class="rail-right">
+      <select class="pill" id="selLang" aria-label="Language"></select>
+      <button class="pill" id="dayBtn" data-k="day">Giorno</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero home-hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="lbl lbl-sig" id="heroEyebrow"></div>
+      <h1 class="h1"><span data-k="h1a">Non scegliere dove.</span><span data-k="h1b">Scegli quanto lontano.</span></h1>
+      <p class="lede" id="lede"></p>
+      <a class="cta-home" href="/flight/">Flight<s>&#9654;</s></a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><b>__ST_AIR__</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
+      <div class="hstat"><b>__ST_DEST__</b><span class="lbl" data-k="st_dest">Destinazioni</span></div>
+      <div class="hstat"><b>__ST_FARE__</b><span class="lbl" data-k="st_fare">Tariffe osservate</span></div>
+      <div class="hstat"><b>__ST_BEST__</b><span class="lbl" data-k="st_best">Miglior rapporto</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="about">
+    <div class="sec-head">
+      <div>
+        <h2 data-k="about_t">Cos'è Efficiency Life</h2>
+        <p id="aboutLede"></p>
+        <p id="aboutPlat" style="color:var(--ink-3)"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="sec-head">
+      <div>
+        <h2 data-k="svc_t">I nostri servizi</h2>
+        <p id="svcLede"></p>
+      </div>
+    </div>
+    <div class="svc" id="svcGrid"></div>
+  </section>
+
+  <section id="method">
+    <div class="sec-head">
+      <div>
+        <h2 data-k="nav_method">Come funziona</h2>
+        <p id="methodLede"></p>
+      </div>
+    </div>
+    <div class="method" id="methodGrid"></div>
+    <div class="note" id="methodNote"></div>
+  </section>
+</main>
+
+<section id="privacy" class="wrap">
+  <div class="sec-head">
+    <div><h2 data-k="nav_priv">Trasparenza</h2><p id="privLede"></p></div>
+  </div>
+  <div class="method" id="privGrid"></div>
+</section>
+
+<footer>
+  <div class="wrap cols">
+    <div>
+      <div class="mark" style="font-size:15px"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></div>
+      <div style="margin-top:8px;max-width:44ch" id="footTag"></div>
+      <div style="margin-top:10px" class="mono"><a href="mailto:support@efficiency-life.com"
+        style="color:var(--signal)">support@efficiency-life.com</a></div>
+    </div>
+    <div style="max-width:46ch">
+      <div class="mono" id="footNote"></div>
+      <!-- I collegamenti ai 190 aeroporti, che build_pages.py scrive qui.
+           Stavano nel piede del motore finche' il motore era la radice: e'
+           l'intervento che ha sbloccato la scansione delle pagine per
+           aeroporto, e deve restare sulla pagina piu' forte del sito. -->
+      <!--HUB-->
+      <button class="tiny" id="ccOpen" style="margin-top:12px" hidden></button>
+    </div>
+  </div>
+</footer>
+
+<div class="cc" id="cc" hidden>
+  <div class="wrap cc-in">
+    <p id="ccText"></p>
+    <div class="acts2">
+      <button class="btn" id="ccNo"></button>
+      <button class="btn pri" id="ccYes"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+__I18N__
+const PROSE = __PROSE__;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const OBSERVED = '__OBSERVED__';
+const S = { lang:'en' };
+const TXT = Object.fromEntries(KEYS.map((k,i) => [k,i]));
+const T = k => { const row = LANGS[S.lang] || LANGS.en; return row[TXT[k]] ?? LANGS.en[TXT[k]] ?? k; };
+const P = () => PROSE.locales[S.lang] || PROSE.locales.en;
+
+/* ── i link di ricerca gia' condivisi ─────────────────────────
+   Fino a oggi il motore stava qui, e chi ha salvato o mandato a qualcuno
+   "efficiency-life.com/#n=IT&w=30" si aspetta i suoi filtri, non una pagina
+   di presentazione. Il frammento lo riconosciamo dalle chiavi del motore e
+   lo passiamo intero a /flight/. "#about" o "#privacy", che sono ancore di
+   questa pagina, non contengono un "=" e restano dove sono. */
+(function portaAlMotore(){
+  const h = location.hash.slice(1);
+  if(!h || h.indexOf('=') < 0) return;
+  const chiavi = ['n','o','c','w','k','d','b','g','s','l','m','f'];
+  const p = new URLSearchParams(h);
+  if(![...p.keys()].some(k => chiavi.includes(k))) return;
+  location.replace('/flight/#' + h);
+})();
+
+/* ── lingua ───────────────────────────────────────────────── */
+let RTL = false;
+/* fil-PH e' filippino, non finlandese: prendere le prime due lettere del tag
+   del browser apriva il sito in finlandese a chi scrive in tagalog. */
+const LANG_ALIAS = Object.freeze({fil:'tl',nb:'no',nn:'no',iw:'he',in:'id'});
+function languageFromTag(tag){
+  const normal = String(tag || '').trim().toLowerCase().replaceAll('_','-');
+  if(!normal) return '';
+  const primary = normal.split('-')[0];
+  const code = LANG_ALIAS[primary] || primary;
+  return LANG_META.some(x => x[0] === code) ? code : '';
+}
+function browserLanguage(){
+  const tags = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages : [navigator.language || 'en'];
+  return tags.map(languageFromTag).find(Boolean) || 'en';
+}
+const MODULI = [['Flight',1],['Stay',0],['Rail',0],['Drive',0],['Energy',0]];
+function renderServices(){
+  $('#svcGrid').innerHTML = MODULI.map(([n,attivo]) => attivo
+    ? `<a class="svc-on" href="/flight/"><b>${n}</b>
+         <span class="tagline">${esc(T('avail'))}</span></a>`
+    : `<span class="svc-off" aria-disabled="true"><b>${n}</b>
+         <span class="tagline">${esc(T('soon'))}</span></span>`).join('');
+}
+
+function applyLang(){
+  document.documentElement.lang = S.lang;
+  RTL = (LANG_META.find(l => l[0] === S.lang) || [])[2] === 1;
+  document.documentElement.dir = RTL ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-k]').forEach(el => { el.textContent = T(el.dataset.k); });
+  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  $('#heroEyebrow').textContent = `${T('obs')} ${OBSERVED} · ${T('direct')} · __ST_AIR__ ${T('st_air')}`;
+
+  const p = P();
+  const vars = { observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
+                 destCount:'__ST_DEST__', languageCount:String(LANG_META.length) };
+  const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
+  const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
+  $('#lede').textContent       = T('lede');
+  $('#aboutLede').textContent  = T('about_b');
+  $('#aboutPlat').textContent  = T('plat_note');
+  $('#svcLede').textContent    = T('svc_b');
+  $('#methodLede').textContent = T('methodLede');
+  $('#privLede').textContent   = T('privLede');
+  $('#footTag').textContent    = T('plat_note');
+  $('#methodGrid').innerHTML   = p.method.map(cell).join('');
+  $('#privGrid').innerHTML     = p.privacy.map(cell).join('');
+  $('#methodNote').innerHTML   = fill(p.indexNote);
+  $('#footNote').textContent   = `${T('obs')} ${OBSERVED} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
+  /* Gli indici aeroportuali esistono per italiano e inglese. In tutte le
+     altre lingue restano nel sorgente per i crawler, ma non ricadono a video
+     su una lingua diversa da quella selezionata. */
+  document.querySelectorAll('.hub').forEach(el => { el.hidden = el.lang !== S.lang; });
+  renderServices();
+  ccRender();
+}
+
+$('#selLang').innerHTML = LANG_META
+  .map(([c,n]) => ({c,n}))
+  .sort((a,b) => a.n.localeCompare(b.n))
+  .map(({c,n}) => `<option value="${c}">${esc(n)}</option>`).join('');
+$('#selLang').addEventListener('change', e => {
+  S.lang = e.target.value;
+  try{ localStorage.setItem('elf-lang', S.lang); }catch(_){}
+  applyLang();
+});
+$('#dayBtn').addEventListener('click', () => {
+  document.documentElement.toggleAttribute('data-day');
+  try{ localStorage.setItem('elf-day', document.documentElement.hasAttribute('data-day')?'1':'0'); }catch(_){}
+  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+});
+
+/* ── consenso ─────────────────────────────────────────────
+   La scelta e' la stessa del motore: stesso dominio, stessa chiave. Chi ha
+   gia' risposto di la' non se lo vede richiedere di qua. */
+const CC_KEY = 'elf-consent';
+/* Stessa regola del motore: finche' non c'e' un circuito configurato non
+   entra nessuno script di terze parti e il banner non compare — non si
+   chiede il permesso per qualcosa che non si fa. Qui non ci sono spazi
+   pubblicitari da riempire: la home raccoglie solo la risposta, che vale
+   anche di la' perche' il dominio e la chiave sono gli stessi. */
+const ADS_CLIENT = '__ADS_CLIENT__';
+const DRIVE_URL  = '__TP_DRIVE_URL__';
+const TRACK_ON = () => (!!ADS_CLIENT && ADS_CLIENT !== '__ADS_' + 'CLIENT__')
+                    || (!!DRIVE_URL  && DRIVE_URL  !== '__TP_' + 'DRIVE_URL__');
+function ccGet(){ try{ return localStorage.getItem(CC_KEY); }catch(_){ return null; } }
+function ccSet(v){ try{ localStorage.setItem(CC_KEY, v); }catch(_){} }
+function ccRender(){
+  const c = P().consent;
+  $('#ccText').innerHTML   = c.body;
+  $('#ccYes').textContent  = c.accept;
+  $('#ccNo').textContent   = c.decline;
+  $('#ccOpen').textContent = c.preferences;
+  $('#ccOpen').hidden = !TRACK_ON();
+}
+$('#ccYes').addEventListener('click', () => { ccSet('yes'); $('#cc').hidden = true; });
+$('#ccNo').addEventListener('click',  () => { ccSet('no');  $('#cc').hidden = true; });
+$('#ccOpen').addEventListener('click', () => { $('#cc').hidden = false; });
+
+/* ── menu ─────────────────────────────────────────────────
+   Identici a quelli del motore, perche' la barra e' la stessa barra. */
+const menu = $('#expMenu'), expBtn = $('#expBtn'),
+      navEl = $('#mainnav'), navBtn = $('#navBtn'),
+      stretto = matchMedia('(max-width:860px)');
+function adattaLarghezza(){
+  if(stretto.matches){ menu.hidden = false; expBtn.setAttribute('aria-expanded','true'); }
+  else { menu.hidden = true; expBtn.setAttribute('aria-expanded','false');
+         navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); }
+}
+stretto.addEventListener('change', adattaLarghezza);
+adattaLarghezza();
+function chiudiMenu(){
+  if(stretto.matches){ navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); return; }
+  menu.hidden = true; expBtn.setAttribute('aria-expanded','false');
+}
+expBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if(menu.hidden){ menu.hidden = false; expBtn.setAttribute('aria-expanded','true'); }
+  else chiudiMenu();
+});
+navBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const aperto = navEl.classList.toggle('open');
+  navBtn.setAttribute('aria-expanded', aperto ? 'true' : 'false');
+});
+document.addEventListener('click', e => {
+  if(!$('#drop').contains(e.target)) chiudiMenu();
+  if(!navEl.contains(e.target) && e.target !== navBtn){
+    navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false');
+  }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(navEl.classList.contains('open')){
+    navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); navBtn.focus();
+  } else if(!menu.hidden && !stretto.matches){ chiudiMenu(); expBtn.focus(); }
+});
+
+(function boot(){
+  S.lang = browserLanguage();
+  try{
+    const l = localStorage.getItem('elf-lang'); if(l && LANG_META.some(x=>x[0]===l)) S.lang = l;
+    if(localStorage.getItem('elf-day')==='1') document.documentElement.setAttribute('data-day','');
+  }catch(_){}
+  $('#selLang').value = S.lang;
+  applyLang();
+  if(TRACK_ON() && !ccGet()) $('#cc').hidden = false;
+})();
+</script>

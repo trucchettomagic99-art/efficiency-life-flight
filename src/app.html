@@ -52,11 +52,23 @@ button,select,input{font:inherit;color:inherit}
   letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
 .lbl-sig{color:var(--signal)}
 
-/* La barra "Piattaforma · Flight · Stay in arrivo · ..." che stava qui sopra
-   e' stata tolta il 9 settembre: diceva le stesse cose che ora dicono il menu
-   Esplora e la sezione "I nostri servizi", e le diceva in un nastro che su
-   telefono usciva dallo schermo. Il contenuto non e' andato perso, e'
-   cambiato posto. */
+/* ── barra moduli ─────────────────────────────────────────── */
+/* Dice in quale dei cinque moduli ti trovi. Sul motore "Flight" e' acceso;
+   sulla home nessuno lo e', perche' la home non e' un modulo ma la porta. */
+.modules{border-bottom:1px solid var(--rule);background:var(--deck)}
+.mod-in{display:flex;align-items:center;gap:18px;height:34px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.mod-in::-webkit-scrollbar{display:none}
+.mod-in > .lbl{flex:none;letter-spacing:.26em}
+.mods{display:flex;gap:2px;flex:1;min-width:0}
+.mod{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);padding:4px 11px;border:1px solid transparent;white-space:nowrap;border-radius:2px}
+.mod.on{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft);box-shadow:inset 0 -2px 0 var(--signal)}
+.mod.on s{text-decoration:none;color:var(--signal)}
+.mod-note{margin-left:auto;flex:none;color:var(--ink-3)}
+.mod i{font-style:normal;display:inline-block;margin-inline-start:6px;font-size:7.5px;letter-spacing:.14em;
+  color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;vertical-align:1px;
+  white-space:nowrap}
+.mod.on i{display:none}
 
 /* ── barra strumenti ──────────────────────────────────────── */
 .rail{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 90%,transparent);
@@ -149,6 +161,11 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .h1{font-size:clamp(30px,4.5vw,58px);line-height:.95;letter-spacing:-.035em;font-weight:800;
   text-transform:uppercase;margin:14px 0 0}
 .h1 span{display:block}
+/* Il titolo del modulo e' una frase intera, non due righe brevi: piu'
+   piccolo, e non tutto maiuscolo perche' cinquanta caratteri in maiuscolo
+   spaziato diventano un muro. */
+.h1-mod{font-size:clamp(25px,3.1vw,42px);line-height:1.04;letter-spacing:-.025em;
+  text-transform:none;max-width:19ch}
 .h1 span:last-child{color:var(--signal)}
 .lede{max-width:54ch;color:var(--ink-2);font-size:clamp(14.5px,1.1vw,16.5px);margin:16px 0 0}
 .hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--rule)}
@@ -714,12 +731,23 @@ footer a{color:var(--ink-2)}
 
 <span id="top"></span>
 
+<div class="modules">
+  <div class="wrap mod-in">
+    <span class="lbl" data-k="platform">Piattaforma</span>
+    <nav class="mods" aria-label="Moduli">
+      <span class="mod on">Flight</span>
+      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
+      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
+    </nav>
+  </div>
+</div>
+
 <div class="rail">
   <div class="wrap rail-in">
-    <a class="mark" href="#top" data-goto="top" id="brand">
-      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></a>
+    <a class="mark" href="/" id="brand">
+      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></a>
     <nav id="mainnav" aria-label="Efficiency Life">
-      <a href="#top" data-goto="top" data-k="nav_home">Home</a>
+      <a href="/" data-k="nav_home">Home</a>
       <a href="#search" data-goto="search" class="on">Flight</a>
       <span class="drop" id="drop">
         <button class="navbtn" id="expBtn" aria-expanded="false" aria-haspopup="true" aria-controls="expMenu"><span data-k="nav_explore">Esplora</span><i aria-hidden="true">&#9662;</i></button>
@@ -732,8 +760,6 @@ footer a{color:var(--ink-2)}
           <span class="dropitem off" role="menuitem" aria-disabled="true">Energy<em data-k="soon">In arrivo</em></span>
         </span>
       </span>
-      <a href="#method" data-goto="method" data-k="nav_method">Come funziona</a>
-      <a href="#privacy" data-goto="privacy" data-k="nav_priv">Trasparenza</a>
     </nav>
     <button class="pill" id="navBtn" aria-label="Menu" aria-expanded="false" aria-controls="mainnav">&#9776;</button>
     <div class="rail-right">
@@ -750,7 +776,13 @@ footer a{color:var(--ink-2)}
   <div class="wrap hero-in">
     <div>
       <div class="lbl lbl-sig" id="heroEyebrow"></div>
-      <h1 class="h1"><span data-k="h1a">Non scegliere dove.</span><span data-k="h1b">Scegli quanto lontano.</span></h1>
+      <!-- "Scegli l'opzione migliore per te" e' il titolo della piattaforma e
+           adesso vive sulla home. Qui serve il titolo di QUESTA pagina: due
+           pagine con lo stesso titolone si leggono come la stessa pagina, e
+           chi clicca "Flight" crede di non essere andato da nessuna parte.
+           Il testo e' quello che il sito usa gia' come titolo di ricerca,
+           quindi e' scritto per bene in tutte e trentasei le lingue. -->
+      <h1 class="h1 h1-mod" id="heroH1"></h1>
       <p class="lede" id="lede"></p>
     </div>
     <div class="hero-stats">
@@ -862,44 +894,11 @@ footer a{color:var(--ink-2)}
     </div>
   </section>
 
-  <section id="about">
-    <div class="sec-head">
-      <div>
-        <h2 data-k="about_t">Cos'è Efficiency Life</h2>
-        <p id="aboutLede"></p>
-        <p id="aboutPlat" style="color:var(--ink-3)"></p>
-      </div>
-    </div>
-  </section>
-
-  <section id="services">
-    <div class="sec-head">
-      <div>
-        <h2 data-k="svc_t">I nostri servizi</h2>
-        <p id="svcLede"></p>
-      </div>
-    </div>
-    <div class="svc" id="svcGrid"></div>
-  </section>
-
-  <section id="method">
-    <div class="sec-head">
-      <div>
-        <h2 data-k="nav_method">Come funziona</h2>
-        <p id="methodLede"></p>
-      </div>
-    </div>
-    <div class="method" id="methodGrid"></div>
-    <div class="note" id="methodNote"></div>
-  </section>
+  <!-- Cos'e' Efficiency Life, i servizi, Come funziona e Trasparenza sono
+       passati sulla home il 9 settembre: qui restano il motore e i suoi
+       risultati. Il contenuto non e' stato toccato, e' cambiata pagina. -->
 </main>
 
-<section id="privacy" class="wrap">
-  <div class="sec-head">
-    <div><h2 data-k="nav_priv">Trasparenza</h2><p id="privLede"></p></div>
-  </div>
-  <div class="method" id="privGrid"></div>
-</section>
 
 <footer>
   <div class="wrap cols">
@@ -909,12 +908,12 @@ footer a{color:var(--ink-2)}
       <!-- Un indirizzo raggiungibile: lo chiede AdSense, lo guardano i circuiti
            di affiliazione quando esaminano il sito, e serve a chi arriva qui e
            vuole sapere se dietro c'e' qualcuno. -->
-      <div style="margin-top:10px" class="mono"><a href="mailto:support@efficiency-life.com"
+      <div style="margin-top:10px" class="mono"><a href="/#method" style="color:var(--signal)" data-k="nav_method">Come funziona</a> &middot; <a href="/#privacy" style="color:var(--signal)" data-k="nav_priv">Trasparenza</a></div>
+      <div style="margin-top:6px" class="mono"><a href="mailto:support@efficiency-life.com"
         style="color:var(--signal)">support@efficiency-life.com</a></div>
     </div>
     <div style="max-width:46ch">
       <div class="mono" id="footNote"></div>
-      <!--HUB-->
       <button class="tiny" id="ccOpen" style="margin-top:12px" hidden></button>
     </div>
   </div>
@@ -1873,45 +1872,17 @@ function renderTicker(){
   if(!tr.style.animationDuration) setTimeout(passo, 500);
 }
 
+/* Le dieci schede del Metodo, le quattro di Trasparenza e l'indice degli
+   aeroporti sono passati sulla home: qui restano le righe che accompagnano
+   la classifica. */
 function renderProse(){
-  const p = P();
-  const vars = {
-    fxDate:FX_DATE, observed:IDX.observed,
-    fareCount:fmtN(IDX.deals.length), originCount:fmtN(Object.keys(IDX.counts).length),
-    destCount:fmtN(NDEST), languageCount:fmtN(LANG_META.length), currencyCount:fmtN(CUR.length)
-  };
-  const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
+  $('#heroH1').textContent   = String(P().seo.title).split('|')[0].trim();
   $('#lede').textContent     = T('lede');
   $('#boardNote').textContent= T('boardNote');
-  $('#methodLede').textContent = T('methodLede');
-  $('#privLede').textContent = T('privLede');
   $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
   $('#footTag').textContent  = T('plat_note');
-  $('#aboutLede').textContent = T('about_b');
-  $('#aboutPlat').textContent = T('plat_note');
-  $('#svcLede').textContent   = T('svc_b');
-  renderServices();
-  const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
-  $('#methodGrid').innerHTML = p.method.map(cell).join('');
-  $('#privGrid').innerHTML   = p.privacy.map(cell).join('');
-  $('#methodNote').innerHTML = fill(p.indexNote);
   $('#footNote').textContent = `${T('obs')} ${IDX.observed} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
   ccRender();
-}
-
-/* I cinque moduli. Solo il nome e lo stato: una riga di descrizione per
-   ciascuno vorrebbe dire cinque frasi per trentasei lingue, e quattro di
-   quelle frasi descriverebbero cose che non esistono ancora. Flight e' un
-   collegamento vero al motore; gli altri non sono collegamenti affatto —
-   non hanno href, non reagiscono al clic e lo dicono anche a un lettore di
-   schermo. */
-const MODULI = [['Flight',1],['Stay',0],['Rail',0],['Drive',0],['Energy',0]];
-function renderServices(){
-  $('#svcGrid').innerHTML = MODULI.map(([n,attivo]) => attivo
-    ? `<a class="svc-on" href="#search" data-goto="search"><b>${n}</b>
-         <span class="tagline">${esc(T('avail'))}</span></a>`
-    : `<span class="svc-off" aria-disabled="true"><b>${n}</b>
-         <span class="tagline">${esc(T('soon'))}</span></span>`).join('');
 }
 
 /* ── lingua applicata al DOM ────────────────────────────── */
@@ -1925,10 +1896,6 @@ function applyLang(){
   $('#heroEyebrow').textContent = `${T('obs')} ${IDX.observed} · ${T('direct')} · ${Object.keys(IDX.counts).length} ${T('st_air')}`;
   $('#panelHint').textContent = T('f_globe');
   $('#srcPill').title = S.live ? 'LIVE' : 'INDEX';
-  /* Gli indici aeroportuali esistono per italiano e inglese. In tutte le
-     altre lingue restano nel sorgente per i crawler, ma non ricadono a video
-     su una lingua diversa da quella selezionata. */
-  document.querySelectorAll('.hub').forEach(el => { el.hidden = el.lang !== S.lang; });
   renderProse();
 }
 function fillSelectors(){
