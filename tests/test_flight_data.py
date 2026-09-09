@@ -8,7 +8,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-from flight_data import clean_catalog, clean_rows, normalize, validate, representatives, migrate
+from flight_data import (clean_catalog, clean_rows, normalize, public_rows,
+                         validate, representatives, migrate)
 from fetch_prices import collect, RateLimiter, make_snapshot, append_history, Client
 
 TODAY = dt.date(2026,9,9)
@@ -24,6 +25,12 @@ def raw(**kw):
                  'price':40,'departure_at':'2026-10-02T16:00:00+02:00',
                  'return_at':'2026-10-05T20:00:00+01:00','duration':320,
                  'transfers':0,'return_transfers':0}, **kw)
+
+def latest_raw(**kw):
+    return dict({'origin':'FCO','destination':'MAN','value':40,
+                 'depart_date':'2026-10-02','return_date':'2026-10-05',
+                 'duration':320,'distance':1700,'number_of_changes':0,
+                 'actual':True,'found_at':'2026-09-09T08:00:00Z'}, **kw)
 
 class FakeClient:
     def __init__(self,pages): self.pages=iter(pages); self.calls=[]
@@ -65,6 +72,14 @@ class FlightDataTests(unittest.TestCase):
         self.assertEqual(r['p'],8.99)
         self.assertEqual(r['quality'],'low_price_review')
 
+    def test_low_price_is_quarantined_from_public_outputs(self):
+        low=validate(fare(p=9),PLACES,TODAY)
+        normal=validate(fare(p=40,ret='2026-10-06'),PLACES,TODAY)
+        self.assertEqual(len(clean_rows([low,normal],PLACES,TODAY)[0]),2)
+        self.assertEqual(representatives([low]),[])
+        self.assertEqual(public_rows([low]),[])
+        self.assertEqual(public_rows([low,normal])[0]['p'],40)
+
     def test_invalid_rows_are_rejected(self):
         for overrides in ({'p':float('nan')},{'p':float('inf')},{'p':True},{'p':0},
                           {'dep':'2026-09-01'},{'ret':'2026-10-01'},
@@ -104,6 +119,14 @@ class FlightDataTests(unittest.TestCase):
             self.assertEqual(len(clean_rows(second['rows'],PLACES,TODAY)[0]),2)
             cached=collect(FakeClient([]),'FCO','dates',PLACES,TODAY,path,3)
             self.assertTrue(cached['resumed'])
+
+    def test_short_latest_page_is_terminal(self):
+        with tempfile.TemporaryDirectory() as d:
+            client=FakeClient([[latest_raw()]])
+            result=collect(client,'FCO','latest',PLACES,TODAY,Path(d),2)
+            self.assertEqual(result['status'],'ok')
+            self.assertEqual(len(client.calls),1)
+            self.assertEqual(client.calls[0]['page'],1)
 
     def test_repeated_page_does_not_loop(self):
         with tempfile.TemporaryDirectory() as d:
