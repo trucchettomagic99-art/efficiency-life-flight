@@ -16,6 +16,7 @@ on:
       - 'scripts/**'
       - 'src/**'
       - 'public/**'
+      - 'functions/**'
       - 'data/origins.json'
       - 'data/catalog.json'
       - 'tests/**'
@@ -26,9 +27,12 @@ on:
 permissions:
   contents: write           # serve per ricommittare i dati aggiornati
 
+# Una nuova modifica sullo stesso ramo rende obsoleto il job precedente.
+# Rami diversi non si bloccano tra loro: il collaudo della PR non deve ritardare
+# l'aggiornamento notturno di main e viceversa.
 concurrency:
-  group: indice
-  cancel-in-progress: false
+  group: indice-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   aggiorna:
