@@ -67,6 +67,15 @@ class FlightDataTests(unittest.TestCase):
     def test_reject_airport_alias_substitution(self):
         with self.assertRaises(ValueError): normalize(raw(origin_airport='CIA'),'FCO','dates',PLACES,TODAY)
 
+    def test_city_aggregates_are_rejected_everywhere(self):
+        places=dict(PLACES)
+        places['LON']={'n':'London','k':'GB','la':51.5,'lo':-0.1,'t':'city'}
+        with self.assertRaisesRegex(ValueError,'city_aggregate'):
+            normalize(latest_raw(destination='LON'),'FCO','latest',places,TODAY)
+        rows,issues=clean_rows([fare(d='LON')],places,TODAY)
+        self.assertEqual(rows,[])
+        self.assertEqual(issues['city_aggregate'],1)
+
     def test_low_price_kept_flagged(self):
         r=normalize(raw(price=8.99),'FCO','dates',PLACES,TODAY)
         self.assertEqual(r['p'],8.99)
