@@ -78,7 +78,34 @@ def main() -> int:
     language_pages = list((DIST / 'lang').glob('*/index.html'))
     require(len(language_pages) == len(locales),
             f'landing lingua inattese: {len(language_pages)}')
-    print(f'OK · home e JavaScript validi · {len(locales)} lingue · '
+
+    # ── il motore, che dal 9 settembre vive su /flight/ ────────────────
+    # Prima era la radice ed era coperto dai controlli qui sopra. Senza
+    # queste righe una pagina su due uscirebbe senza nessuno che la guarda.
+    flight_path = DIST / 'flight' / 'index.html'
+    require(flight_path.is_file(), 'dist/flight/index.html non esiste')
+    flight = flight_path.read_text()
+    flight_head = flight.split('</head>', 1)[0]
+    require(not re.search(r'__[A-Z][A-Z0-9_]*__', flight), 'segnaposto non sostituito nel motore')
+    require(f'<link rel="canonical" href="{B.SITE}/flight/">' in flight_head,
+            'canonical del motore non punta a /flight/')
+    require(f'<link rel="canonical" href="{B.SITE}/">' in root.split('</head>', 1)[0],
+            'canonical della home non punta alla radice')
+    require(f'{B.SITE}/flight/' in urls, '/flight/ assente dalla sitemap')
+    require('id="btnSearch"' in flight and 'id="mhead"' in flight,
+            'il motore ha perso il modulo di ricerca o la classifica')
+    require('id="methodGrid"' in root and 'id="privGrid"' in root,
+            'la home ha perso Come funziona o Trasparenza')
+    require('class="hub"' in root or '<!--HUB-->' in root,
+            'indice degli aeroporti assente dalla home')
+    flight_scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', flight, flags=re.S | re.I)
+    flight_app = next((s for s in flight_scripts if '"use strict";' in s), '')
+    require(bool(flight_app), 'script principale non trovato nel motore')
+    check_f = subprocess.run(['node', '--check'], input=flight_app, text=True,
+                             capture_output=True, check=False)
+    require(check_f.returncode == 0, f'JavaScript del motore non valido:\n{check_f.stderr}')
+
+    print(f'OK · home e motore validi · {len(locales)} lingue · '
           f'{len(urls)} URL in sitemap · RTL e fil-PH verificati')
     return 0
 

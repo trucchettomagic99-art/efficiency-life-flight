@@ -76,6 +76,12 @@ ADS_CLIENT = ''
 ADS_SLOT   = ''
 
 
+# La radice non descrive piu' il motore ma la piattaforma: se le due pagine
+# avessero la stessa descrizione Google ne sceglierebbe una e scarterebbe
+# l'altra come doppione.
+DESC_HOME = ("Efficiency Life misura quanto ottieni per quanto spendi. Flight, il primo "
+             "modulo, ordina migliaia di tariffe aeree reali per chilometri per euro: "
+             "tu fissi il budget, il motore trova fin dove puo' portarti.")
 DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
@@ -357,57 +363,101 @@ def main() -> int:
         f'<meta property="og:locale:alternate" content="{row["locale"]}">'
         for code, row in prose_obj['locales'].items() if code != 'it')
 
-    head = f"""<!doctype html>
+    def testa(titolo: str, descr: str, percorso: str, alt: str, ld: str) -> str:
+        """La testa HTML, uguale per le due pagine tranne dove deve differire.
+
+        Canonical e og:url puntano ciascuno alla propria pagina: sono le due
+        righe che dicono a Google che / e /flight/ sono due cose diverse e non
+        una copia dell'altra. Sbagliarle qui significa vederne sparire una."""
+        return f"""<!doctype html>
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Efficiency Life Flight</title>
-<meta name="description" content="{DESC}">
+<title>{titolo}</title>
+<meta name="description" content="{descr}">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#EDF2F8" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
-<link rel="canonical" href="{SITE}/">
-{alternates}
+<link rel="canonical" href="{SITE}{percorso}">
+{alt}
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
 <link rel="icon" href="{FAVICON}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Efficiency Life">
-<meta property="og:title" content="Efficiency Life Flight">
-<meta property="og:description" content="{DESC}">
-<meta property="og:url" content="{SITE}/">
+<meta property="og:title" content="{titolo}">
+<meta property="og:description" content="{descr}">
+<meta property="og:url" content="{SITE}{percorso}">
 <meta property="og:image" content="{SITE}/og.png">
 <meta property="og:locale" content="it_IT">
 {og_alternates}
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Efficiency Life Flight">
-<meta name="twitter:description" content="{DESC}">
+<meta name="twitter:title" content="{titolo}">
+<meta name="twitter:description" content="{descr}">
 <meta name="twitter:image" content="{SITE}/og.png">
 <script type="application/ld+json">
-{{"@context":"https://schema.org","@type":"WebApplication","name":"Efficiency Life Flight",
-"applicationCategory":"TravelApplication","operatingSystem":"Any","url":"{SITE}/",
-"description":"{DESC}","offers":{{"@type":"Offer","price":"0","priceCurrency":"EUR"}},
-"isPartOf":{{"@type":"WebSite","name":"Efficiency Life","url":"{SITE}/"}}}}
+{ld}
 </script>
 <style>html{{color-scheme:dark}}body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
 """
 
-    full = head + body.split('\n', 1)[1] + '\n</body>\n</html>\n'
-    full = full.replace('<link rel="preconnect"', '</head>\n<body>\n<link rel="preconnect"', 1)
+    def pagina(testa_html: str, corpo: str) -> str:
+        out = testa_html + corpo.split('\n', 1)[1] + '\n</body>\n</html>\n'
+        return out.replace('<link rel="preconnect"', '</head>\n<body>\n<link rel="preconnect"', 1)
 
     DIST.mkdir(exist_ok=True)
-    (DIST / 'index.html').write_text(full)
+
+    # ── il motore, su /flight/ ─────────────────────────────────────────
+    # Fino al 9 settembre stava sulla radice. Le hreflang restano puntate
+    # alle landing di lingua, che sono la porta d'ingresso del sito.
+    ld_flight = (f'{{"@context":"https://schema.org","@type":"WebApplication",'
+                 f'"name":"Efficiency Life Flight","applicationCategory":"TravelApplication",'
+                 f'"operatingSystem":"Any","url":"{SITE}/flight/","description":"{DESC}",'
+                 f'"offers":{{"@type":"Offer","price":"0","priceCurrency":"EUR"}},'
+                 f'"isPartOf":{{"@type":"WebSite","name":"Efficiency Life","url":"{SITE}/"}}}}')
+    motore = pagina(testa('Efficiency Life Flight', DESC, '/flight/', alternates, ld_flight), body)
+    (DIST / 'flight').mkdir(exist_ok=True)
+    (DIST / 'flight' / 'index.html').write_text(motore)
+
+    # ── la home di marca, sulla radice ────────────────────────────────
+    # Riceve il foglio di stile del motore invece di averne uno suo: una
+    # sola sorgente, nessuna deriva fra le due pagine.
+    stile = re.search(r'<style>\n(.*?)\n</style>', tpl, re.S)
+    if not stile:
+        sys.exit('non trovo il blocco <style> in app.html')
+    d = json.loads(idx)
+    nd = len({r['d'] for r in d['deals']})
+    best = max((r['km'] * 2 / r['p'] for r in d['deals'] if r.get('p')), default=0)
+    hm = (ROOT / 'src' / 'home.html').read_text()
+    hm = (hm.replace('__STYLE__', stile.group(1))
+            .replace('__I18N__', i18).replace('__PROSE__', prose)
+            .replace('__ST_AIR__', f"{len(d['counts']):,}".replace(',', '.'))
+            .replace('__ST_DEST__', f"{nd:,}".replace(',', '.'))
+            .replace('__ST_FARE__', f"{len(d['deals']):,}".replace(',', '.'))
+            .replace('__ST_BEST__', f"{best:.0f} km/€")
+            .replace('__OBSERVED__', d['observed'])
+            .replace('__ADS_CLIENT__', ADS_CLIENT)
+            .replace('__TP_DRIVE_URL__', TP_DRIVE_URL))
+    for ph in ('__STYLE__', '__I18N__', '__PROSE__', '__ST_AIR__', '__ST_DEST__',
+               '__ST_FARE__', '__ST_BEST__', '__OBSERVED__'):
+        if ph in hm:
+            sys.exit(f'segnaposto {ph} non sostituito in home.html.')
+    ld_home = (f'{{"@context":"https://schema.org","@type":"WebSite",'
+               f'"name":"Efficiency Life","url":"{SITE}/","description":"{DESC_HOME}"}}')
+    home = pagina(testa('Efficiency Life', DESC_HOME, '/', alternates, ld_home), hm)
+    (DIST / 'index.html').write_text(home)
+
     for f in PUBLIC.iterdir():
         if f.is_file():
             shutil.copy2(f, DIST / f.name)
 
-    d = json.loads(idx)
     nh = len(json.loads(hist))
     print(f"storico: {nh} rotte con almeno 5 rilevazioni negli ultimi 90 giorni")
-    print(f"dist/index.html · {len(full):,} byte · {len(d['deals']):,} tariffe "
+    print(f"dist/flight/index.html · {len(motore):,} byte · {len(d['deals']):,} tariffe "
           f"· {len(d['counts'])} origini · rilevate il {d['observed']}")
+    print(f"dist/index.html (home) · {len(home):,} byte")
     return 0
 
 

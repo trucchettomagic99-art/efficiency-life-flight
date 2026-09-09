@@ -351,7 +351,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
     <tbody>{''.join(body)}</tbody>
   </table></div>
 
-  <a class="go" href="{SITE}/#o={iata}&l={lang}">
+  <a class="go" href="{SITE}/flight/#o={iata}&l={lang}">
     <b>{esc(t['cta'].format(**fmt))}</b><span>{esc(t['ctaSub'])}</span></a>
 
   <h2>{esc(t['near'])}</h2>
@@ -361,7 +361,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 </main>
 
 <footer><div class="wrap">
-  <a href="{SITE}/">{esc(t['back'])}</a> · Travelpayouts / Aviasales · OurAirports
+  <a href="{SITE}/flight/">{esc(t['back'])}</a> · Travelpayouts / Aviasales · OurAirports
   · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
 </div></footer>
 </body>
@@ -474,7 +474,7 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
     <thead><tr><th>#</th><th>IATA</th><th class="n">€</th><th class="n">KM ↔</th><th class="n">KM/€</th></tr></thead>
     <tbody>{''.join(body)}</tbody>
   </table></div>
-  <a class="go" href="{SITE}/#l={code}"><b>Efficiency Life Flight →</b></a>
+  <a class="go" href="{SITE}/flight/#l={code}"><b>Efficiency Life Flight →</b></a>
   {cards}
   <p class="note">{warning}</p>
   <nav class="near" aria-label="Language">{language_nav}</nav>
@@ -606,7 +606,12 @@ def main() -> int:
 
     # sitemap: la radice piu' tutte le pagine appena scritte
     today = datetime.date.today().isoformat()
-    urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>']
+    # Dal 9 settembre sono due pagine distinte: la radice presenta la
+    # piattaforma, /flight/ e' il motore. Vanno dichiarate entrambe, o Google
+    # scopre la seconda solo seguendo i collegamenti, con settimane di ritardo.
+    urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>',
+            f'  <url><loc>{SITE}/flight/</loc><lastmod>{today}</lastmod>'
+            f'<changefreq>daily</changefreq><priority>0.9</priority></url>']
     urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.7</priority></url>'
              for u in made]
     urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.8</priority></url>'
