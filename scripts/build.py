@@ -315,6 +315,15 @@ def main() -> int:
     i18 = (ROOT / 'src' / 'i18n.js').read_text()
     prose_obj = prose_data()
     prose = json.dumps(prose_obj, ensure_ascii=False, separators=(',', ':'))
+    # Il motore non ha piu' le schede di Metodo e Trasparenza: da quando sono
+    # passate sulla home, di questi testi gli servono solo il banner del
+    # consenso e il titolo. Le duemila parole per trentasei lingue le portava
+    # in giro per niente — cinquanta kilobyte compressi su ogni apertura.
+    prose_motore = json.dumps(
+        {**prose_obj,
+         'locales': {c: {'consent': r['consent'], 'seo': {'title': r['seo']['title']}}
+                     for c, r in prose_obj['locales'].items()}},
+        ensure_ascii=False, separators=(',', ':'))
     storico = history_stats()
     hist = json.dumps(storico, separators=(',', ':'))
 
@@ -351,7 +360,40 @@ def main() -> int:
     if shards:
         dati['shards'] = shards
     dati['deals'] = public_rows(dati['deals'])
+
+    # ── quanto indice entra DENTRO la pagina ──────────────────────────
+    # Con 1.328 origini l'indice completo pesava 3,1 MB e la pagina apriva in
+    # ventitre secondi su un telefono di fascia media: misurato, non temuto.
+    # Ma nessuno ha bisogno delle duecento rotte da Novosibirsk mentre parte
+    # da Roma. Dentro la pagina restano le origini piu' servite, poche righe
+    # ciascuna: bastano alla classifica d'apertura, al nastro e a coprire il
+    # caso in cui la rete non risponda. Tutto il resto arriva dallo scomparto
+    # dell'aeroporto scelto, che il browser scarica appena cerchi — ed e' il
+    # dato completo, con tutte le date.
+    INLINE_ORIGINI, INLINE_PER_ORIGINE = 400, 20
+    per_origine = {}
+    for r in dati['deals']:
+        per_origine.setdefault(r['o'], []).append(r)
+    # I conteggi mostrati nell'elenco dei paesi devono restare quelli VERI,
+    # non quelli delle righe incorporate: si prendono qui, prima di tagliare.
+    dati['ndest'] = len({r['d'] for r in dati['deals']})
+    luoghi = dati.get('places') or {}
+    dcounts = {}
+    for r in dati['deals']:
+        k = (luoghi.get(r['d']) or {}).get('k')
+        if k:
+            dcounts[k] = dcounts.get(k, 0) + 1
+    dati['dcounts'] = dcounts
+    grandi = sorted(per_origine, key=lambda o: -len(per_origine[o]))[:INLINE_ORIGINI]
+    dentro = []
+    for o in grandi:
+        righe = sorted(per_origine[o], key=lambda r: -(r.get('sc') or 0))
+        dentro += righe[:INLINE_PER_ORIGINE]
+    intere = len(dati['deals'])
+    dati['deals'] = dentro
     idx = json.dumps(dati, separators=(',', ':'))
+    print(f"indice nella pagina: {len(dentro):,} righe di {intere:,} "
+          f"({len(grandi)} origini x {INLINE_PER_ORIGINE}); il resto negli scomparti")
     if M['curva']:
         print(f"curva prezzo-distanza: p ~ {math.exp(M['a']):.2f} * km^{M['b']:.3f}")
     else:
@@ -365,7 +407,7 @@ def main() -> int:
             sys.exit(f'{name} contiene un tag di chiusura script: mi fermo.')
 
     body = (tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
-               .replace('__WORLD__', wld).replace('__I18N__', i18).replace('__PROSE__', prose)
+               .replace('__WORLD__', wld).replace('__I18N__', i18).replace('__PROSE__', prose_motore)
                .replace('__HIST__', hist)
                .replace('__TP_MARKER__', TP_MARKER).replace('__TP_LINK__', TP_LINK)
                .replace('__TP_TRS__', TP_TRS).replace('__TP_CAMPAIGN__', TP_CAMPAIGN)
@@ -456,14 +498,17 @@ def main() -> int:
     if not stile:
         sys.exit('non trovo il blocco <style> in app.html')
     d = json.loads(idx)
-    nd = len({r['d'] for r in d['deals']})
+    # I numeri della home sono quelli VERI dell'archivio, non quelli delle
+    # righe rimaste dentro la pagina del motore dopo il taglio.
+    nd = d.get('ndest') or len({r['d'] for r in d['deals']})
+    n_tariffe = d.get('offer_count') or len(d['deals'])
     best = max((r['km'] * 2 / r['p'] for r in d['deals'] if r.get('p')), default=0)
     hm = (ROOT / 'src' / 'home.html').read_text()
     hm = (hm.replace('__STYLE__', stile.group(1))
             .replace('__I18N__', i18).replace('__PROSE__', prose)
             .replace('__ST_AIR__', f"{len(d['counts']):,}".replace(',', '.'))
             .replace('__ST_DEST__', f"{nd:,}".replace(',', '.'))
-            .replace('__ST_FARE__', f"{len(d['deals']):,}".replace(',', '.'))
+            .replace('__ST_FARE__', f"{n_tariffe:,}".replace(',', '.'))
             .replace('__ST_BEST__', f"{best:.0f} km/€")
             .replace('__OBSERVED__', d['observed'])
             .replace('__ADS_CLIENT__', ADS_CLIENT)
