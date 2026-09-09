@@ -52,28 +52,27 @@ button,select,input{font:inherit;color:inherit}
   letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
 .lbl-sig{color:var(--signal)}
 
-/* ── barra moduli ─────────────────────────────────────────── */
-.modules{border-bottom:1px solid var(--rule);background:var(--deck)}
-.mod-in{display:flex;align-items:center;gap:18px;height:34px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-.mod-in::-webkit-scrollbar{display:none}
-.mod-in > .lbl{flex:none;letter-spacing:.26em}
-.mods{display:flex;gap:2px;flex:1;min-width:0}
-.mod{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink-3);padding:4px 11px;border:1px solid transparent;white-space:nowrap;border-radius:2px}
-.mod.on{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft);box-shadow:inset 0 -2px 0 var(--signal)}
-.mod.on s{text-decoration:none;color:var(--signal)}
-.mod-note{margin-left:auto;flex:none;color:var(--ink-3)}
-.mod i{font-style:normal;display:inline-block;margin-inline-start:6px;font-size:7.5px;letter-spacing:.14em;
-  color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;vertical-align:1px;
-  white-space:nowrap}
-.mod.on i{display:none}
+/* La barra "Piattaforma · Flight · Stay in arrivo · ..." che stava qui sopra
+   e' stata tolta il 9 settembre: diceva le stesse cose che ora dicono il menu
+   Esplora e la sezione "I nostri servizi", e le diceva in un nastro che su
+   telefono usciva dallo schermo. Il contenuto non e' andato perso, e'
+   cambiato posto. */
 
 /* ── barra strumenti ──────────────────────────────────────── */
 .rail{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 90%,transparent);
   backdrop-filter:blur(14px);border-bottom:1px solid var(--rule)}
-.rail-in{display:flex;align-items:center;gap:16px;height:60px}
-.mark{display:flex;align-items:center;gap:9px;font-family:Archivo,sans-serif;font-weight:800;
-  font-size:16px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.rail-in{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:10px;font-family:Archivo,sans-serif;font-weight:800;
+  font-size:19px;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap}
+/* Il marchio e' il collegamento alla cima della pagina: lo dice il cambio di
+   fondo al passaggio del mouse, non un sottolineato, perche' un sottolineato
+   su un logo in maiuscolo spaziato si legge come un errore. */
+a.mark{text-decoration:none;color:inherit;padding:4px 7px;margin-inline-start:-7px;border-radius:3px;
+  transition:background-color .13s,color .13s}
+a.mark:hover{background:var(--signal-soft)}
+a.mark:hover .glyph{color:var(--signal-2)}
+a.mark:hover u{color:var(--ink-2)}
+a.mark:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .mark s{text-decoration:none;color:var(--signal);font-size:14px}
 /* Il marchio e' la lettera eta: in fisica e' il simbolo del rendimento, quanto
    ottieni diviso quanto spendi — che e' esattamente cio' che ordina questo
@@ -84,10 +83,51 @@ button,select,input{font:inherit;color:inherit}
 .mark em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;
   color:var(--signal-2);font-weight:700;border:1px solid var(--rule-hi);padding:2px 7px;border-radius:2px;
   background:var(--signal-soft)}
-.rail nav{display:flex;gap:18px;margin-left:10px}
-.rail nav a{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;cursor:pointer}
-.rail nav a:hover,.rail nav a.on{color:var(--ink);border-bottom-color:var(--signal)}
+.rail nav{display:flex;gap:18px;margin-left:10px;align-items:center;flex-wrap:wrap}
+.rail nav a,.navbtn{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:4px 0;border:0;
+  border-bottom:1px solid transparent;cursor:pointer;background:transparent}
+.rail nav a:hover,.rail nav a.on,.navbtn:hover{color:var(--ink);border-bottom-color:var(--signal)}
+.rail nav a:focus-visible,.navbtn:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:2px}
+
+/* ── menu Esplora ─────────────────────────────────────────── */
+#navBtn{display:none}
+.navlbl{display:none}
+.drop{position:relative;display:inline-flex}
+.navbtn{display:inline-flex;align-items:center;gap:7px}
+.navbtn i{font-style:normal;font-size:9px;transition:transform .15s}
+.navbtn[aria-expanded=true]{color:var(--ink);border-bottom-color:var(--signal)}
+.navbtn[aria-expanded=true] i{transform:rotate(180deg)}
+.dropmenu{position:absolute;top:calc(100% + 11px);inset-inline-start:-14px;z-index:80;
+  display:flex;flex-direction:column;min-width:216px;background:var(--deck);
+  border:1px solid var(--rule-hi);border-radius:3px;padding:5px;box-shadow:0 16px 38px rgba(0,0,0,.45)}
+.dropitem{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;padding:9px 10px;border-radius:2px}
+a.dropitem:hover,a.dropitem:focus-visible{background:var(--signal-soft);color:var(--signal-2);outline:none}
+a.dropitem:focus-visible{box-shadow:inset 0 0 0 1px var(--signal)}
+.dropitem em{font-style:normal;font-size:8px;letter-spacing:.12em;white-space:nowrap;
+  border:1px solid var(--rule-hi);border-radius:2px;padding:2px 5px;color:var(--ink-3)}
+.dropitem em.ok{color:var(--ok);border-color:var(--ok)}
+/* I moduli non ancora pronti non fingono di essere collegamenti: niente
+   href, niente puntatore a mano, colore spento e stato dichiarato ad alta
+   voce con aria-disabled per chi usa un lettore di schermo. */
+.dropitem.off{color:var(--ink-3);opacity:.6;cursor:not-allowed}
+
+/* ── i cinque moduli, in chiaro ───────────────────────────── */
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule)}
+.svc > *{background:var(--deck);padding:18px 17px 15px;display:flex;flex-direction:column;
+  gap:14px;text-decoration:none;color:inherit;min-height:104px}
+#about #aboutPlat{margin-top:9px}
+.svc b{font-family:Archivo,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.svc p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-3)}
+.svc .tagline{margin-top:auto;align-self:flex-start}
+a.svc-on:hover,a.svc-on:focus-visible{background:var(--signal-soft);outline:none}
+a.svc-on:focus-visible{box-shadow:inset 0 0 0 1px var(--signal)}
+a.svc-on .tagline{color:var(--ok);border-color:var(--ok)}
+.svc-off{opacity:.62;cursor:not-allowed}
+.svc-off b{color:var(--ink-2)}
 .rail-right{margin-inline-start:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule-hi);
   padding:5px 10px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;
@@ -485,7 +525,7 @@ footer a{color:var(--ink-2)}
   .legend{gap:12px}
   .rail{position:static;backdrop-filter:none}
   .rail-in{gap:7px;padding:8px 0}
-  .mark{font-size:14px;gap:7px;letter-spacing:.1em}
+  .mark{font-size:16px;gap:8px;letter-spacing:.1em}
   .mark em{font-size:9px;padding:1px 5px}
   .pill{padding:5px 8px;font-size:9.5px;letter-spacing:.1em}
   select.pill{max-width:112px}
@@ -523,7 +563,33 @@ footer a{color:var(--ink-2)}
 }
 @media(max-width:860px){
   .hero-in{grid-template-columns:1fr;align-items:start}
-  .rail nav{display:none}
+  /* Fino al 9 settembre qui c'era "display:none" e basta: su telefono il
+     sito non aveva navigazione. Adesso le stesse voci diventano un pannello
+     che si apre dal pulsante a tre righe, e "Esplora" non e' piu' una
+     tendina dentro una tendina — i cinque moduli stanno gia' aperti
+     dentro. Nessun disegno nuovo: sono gli stessi elementi, impilati. */
+  #navBtn{display:inline-flex;font-size:14px;padding:4px 9px;line-height:1}
+  /* Il pannello si ancora alla barra, non alla riga interna: quella scorre
+     in orizzontale con overflow, e un elemento assoluto agganciato li'
+     dentro verrebbe tagliato al primo pixel fuori. */
+  .rail{position:relative}
+  .rail nav{display:none;position:absolute;top:100%;inset-inline:0;z-index:90;
+    flex-direction:column;align-items:stretch;gap:0;margin:0;padding:6px;
+    background:var(--deck);border:1px solid var(--rule-hi);border-radius:3px;
+    box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .rail nav.open{display:flex}
+  .rail nav > a{padding:12px 11px;border-bottom:0;font-size:11.5px;border-radius:2px}
+  .rail nav > a:hover{background:var(--signal-soft);color:var(--ink)}
+  .drop{flex-direction:column}
+  .navbtn{display:none}
+  /* "Flight" compare due volte nel pannello: una come scorciatoia in cima,
+     una dentro l'elenco dei moduli. Senza un titolo sopra il gruppo sembra
+     una svista invece che un indice dei servizi. */
+  .navlbl{display:block;font-family:"JetBrains Mono",monospace;font-size:9px;
+    letter-spacing:.26em;text-transform:uppercase;color:var(--ink-3);padding:11px 11px 3px}
+  .dropmenu{position:static;min-width:0;border:0;border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);border-radius:0;background:transparent;
+    box-shadow:none;padding:5px 0;margin:4px 0}
   /* "Giorno" finiva su una seconda riga da solo. Meglio una barra che
      scorre in orizzontale che una che si spezza. */
   .rail-in{height:auto;padding:9px 0;flex-wrap:nowrap;gap:9px;
@@ -646,25 +712,30 @@ footer a{color:var(--ink-2)}
 @media(prefers-reduced-motion:reduce){*:not(.tick-track){animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 
-<div class="modules">
-  <div class="wrap mod-in">
-    <span class="lbl" data-k="platform">Piattaforma</span>
-    <nav class="mods" aria-label="Moduli">
-      <span class="mod on">Flight</span>
-      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
-      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
-    </nav>
-  </div>
-</div>
+<span id="top"></span>
 
 <div class="rail">
   <div class="wrap rail-in">
-    <div class="mark"><svg class="glyph" width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></div>
-    <nav>
-      <a id="navSearch" data-k="nav_search">Ricerca</a>
-      <a href="#method" data-k="nav_method">Metodo</a>
-      <a href="#privacy" data-k="nav_priv">Trasparenza</a>
+    <a class="mark" href="#top" data-goto="top" id="brand">
+      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></a>
+    <nav id="mainnav" aria-label="Efficiency Life">
+      <a href="#top" data-goto="top" data-k="nav_home">Home</a>
+      <a href="#search" data-goto="search" class="on">Flight</a>
+      <span class="drop" id="drop">
+        <button class="navbtn" id="expBtn" aria-expanded="false" aria-haspopup="true" aria-controls="expMenu"><span data-k="nav_explore">Esplora</span><i aria-hidden="true">&#9662;</i></button>
+        <span class="navlbl" data-k="nav_explore" aria-hidden="true">Esplora</span>
+        <span class="dropmenu" id="expMenu" role="menu" hidden>
+          <a class="dropitem" href="#search" data-goto="search" role="menuitem">Flight<em class="ok" data-k="avail">Disponibile</em></a>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Stay<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Rail<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Drive<em data-k="soon">In arrivo</em></span>
+          <span class="dropitem off" role="menuitem" aria-disabled="true">Energy<em data-k="soon">In arrivo</em></span>
+        </span>
+      </span>
+      <a href="#method" data-goto="method" data-k="nav_method">Come funziona</a>
+      <a href="#privacy" data-goto="privacy" data-k="nav_priv">Trasparenza</a>
     </nav>
+    <button class="pill" id="navBtn" aria-label="Menu" aria-expanded="false" aria-controls="mainnav">&#9776;</button>
     <div class="rail-right">
       <span class="pill" id="srcPill" title=""><span class="dot idle"></span><span id="srcTxt">INDEX</span></span>
       <select class="pill" id="selLang" aria-label="Language"></select>
@@ -694,7 +765,7 @@ footer a{color:var(--ink-2)}
 <section class="panel" id="search">
   <div class="wrap">
     <div class="panel-head">
-      <h2 data-k="nav_search">Ricerca</h2>
+      <h2>Flight</h2>
       <span class="lbl" id="panelHint"></span>
       <button class="tiny" id="panelToggle" style="margin-inline-start:auto">—</button>
     </div>
@@ -791,10 +862,30 @@ footer a{color:var(--ink-2)}
     </div>
   </section>
 
+  <section id="about">
+    <div class="sec-head">
+      <div>
+        <h2 data-k="about_t">Cos'è Efficiency Life</h2>
+        <p id="aboutLede"></p>
+        <p id="aboutPlat" style="color:var(--ink-3)"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="sec-head">
+      <div>
+        <h2 data-k="svc_t">I nostri servizi</h2>
+        <p id="svcLede"></p>
+      </div>
+    </div>
+    <div class="svc" id="svcGrid"></div>
+  </section>
+
   <section id="method">
     <div class="sec-head">
       <div>
-        <h2 data-k="nav_method">Metodo</h2>
+        <h2 data-k="nav_method">Come funziona</h2>
         <p id="methodLede"></p>
       </div>
     </div>
@@ -1223,14 +1314,30 @@ function renderShapes(){
   }).join('');
 }
 /* I riquadri non sono soglie ma intervalli: 30 significava "fra 1 e 30 giorni"
-   e nessuno poteva indovinarlo. Ora lo scrivono. Il conteggio delle rotte e'
-   sparito: qui il numero accanto a un intervallo veniva letto come "30 giorni,
-   12" invece che come quante tariffe cadono in quel periodo. */
-const winLabel = (w,i) => w === 999 ? '180+' : `${(WINDOWS[i-1]||0)+1}\u2013${w}`;
+   e nessuno poteva indovinarlo. Poi li scrivevano in giorni \u2014 31-60, 61-90 \u2014
+   e nessuno conta in giorni quando pensa a un viaggio: si pensa "fra due
+   mesi". Dal 9 settembre le etichette sono in mesi, ma i valori interni
+   restano gli stessi giorni di sempre, cosi' il filtro e gli indirizzi gia'
+   condivisi continuano a funzionare identici. */
+const winLabel = (w,i) => {
+  if(w ===  30) return T('w_d30');
+  if(w === 999) return `6+ ${T('w_mo')}`;
+  return `${(WINDOWS[i-1]||0)/30}\u2013${w/30} ${T('w_mo')}`;
+};
+/* "Sempre" non e' una finestra in piu': e' tutte le finestre insieme, che e'
+   gia' il modo in cui il motore rappresenta "nessun limite di data". Quindi
+   non c'e' nessuna logica nuova dietro \u2014 solo un pulsante che dice a voce
+   quello che prima era lo stato iniziale muto. Quando e' acceso lui, gli
+   altri si spengono a video: se restassero tutti accesi non si capirebbe la
+   differenza fra "sempre" e "ho scelto tutti e sette". */
+const senzaLimite = () => S.windows.size === WINDOWS.length;
 function renderWindows(){
-  $('#winChips').innerHTML = WINDOWS.map((w,i) =>
-    `<button class="seg${S.windows.has(w)?' on':''}" data-act="win" data-v="${w}">${
-      winLabel(w,i)}</button>`).join('');
+  const tutti = senzaLimite();
+  $('#winChips').innerHTML =
+    `<button class="seg${tutti?' on':''}" data-act="winAny">${esc(T('w_any'))}</button>` +
+    WINDOWS.map((w,i) =>
+      `<button class="seg${!tutti && S.windows.has(w)?' on':''}" data-act="win" data-v="${w}">${
+        esc(winLabel(w,i))}</button>`).join('');
 }
 
 function renderList(){
@@ -1780,12 +1887,31 @@ function renderProse(){
   $('#privLede').textContent = T('privLede');
   $('#trustNote').textContent = `${T('trust')} ${IDX.observed}.`;
   $('#footTag').textContent  = T('plat_note');
+  $('#aboutLede').textContent = T('about_b');
+  $('#aboutPlat').textContent = T('plat_note');
+  $('#svcLede').textContent   = T('svc_b');
+  renderServices();
   const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
   $('#methodGrid').innerHTML = p.method.map(cell).join('');
   $('#privGrid').innerHTML   = p.privacy.map(cell).join('');
   $('#methodNote').innerHTML = fill(p.indexNote);
   $('#footNote').textContent = `${T('obs')} ${IDX.observed} · Travelpayouts / Aviasales · OurAirports · Natural Earth`;
   ccRender();
+}
+
+/* I cinque moduli. Solo il nome e lo stato: una riga di descrizione per
+   ciascuno vorrebbe dire cinque frasi per trentasei lingue, e quattro di
+   quelle frasi descriverebbero cose che non esistono ancora. Flight e' un
+   collegamento vero al motore; gli altri non sono collegamenti affatto —
+   non hanno href, non reagiscono al clic e lo dicono anche a un lettore di
+   schermo. */
+const MODULI = [['Flight',1],['Stay',0],['Rail',0],['Drive',0],['Energy',0]];
+function renderServices(){
+  $('#svcGrid').innerHTML = MODULI.map(([n,attivo]) => attivo
+    ? `<a class="svc-on" href="#search" data-goto="search"><b>${n}</b>
+         <span class="tagline">${esc(T('avail'))}</span></a>`
+    : `<span class="svc-off" aria-disabled="true"><b>${n}</b>
+         <span class="tagline">${esc(T('soon'))}</span></span>`).join('');
 }
 
 /* ── lingua applicata al DOM ────────────────────────────── */
@@ -1999,9 +2125,20 @@ document.addEventListener('click', async e => {
     renderSegs(); renderList();
   }
   else if(act === 'dmode'){ S.dMode = v; renderSegs(); renderList(); frame(); markDirty(); }
+  else if(act === 'winAny'){ S.windows = new Set(WINDOWS); renderSegs(); markDirty(); }
   else if(act === 'win'){
     const w = +v;
-    S.windows.has(w) ? (S.windows.size>1 && S.windows.delete(w)) : S.windows.add(w);
+    /* Se si arrivava da "Sempre", il primo periodo scelto non si aggiunge
+       agli altri sei: li sostituisce. Altrimenti toccare "2-3 mesi" partendo
+       da "Sempre" non cambierebbe niente a schermo. */
+    if(senzaLimite()) S.windows = new Set([w]);
+    else if(S.windows.has(w)){
+      S.windows.delete(w);
+      /* Spento l'ultimo periodo rimasto non si resta senza date: si torna a
+         "Sempre", che e' l'unica altra cosa che quel gesto puo' voler dire. */
+      if(!S.windows.size) S.windows = new Set(WINDOWS);
+    }
+    else S.windows.add(w);
     renderSegs(); markDirty();
   }
   else if(act === 'shape'){
@@ -2075,7 +2212,70 @@ function openPanel(){
   $('#search').scrollIntoView({behavior:'smooth', block:'start'});
   setTimeout(frame, 350);
 }
-$('#navSearch').addEventListener('click', openPanel);
+/* ── navigazione ──────────────────────────────────────────
+   I collegamenti restano veri (<a href="#...">): li seguono i motori di
+   ricerca e funzionano con il tasto centrale. Ma il frammento dell'indirizzo
+   qui non e' un'ancora: e' lo stato della ricerca — lingua, paesi, filtri.
+   Lasciando fare al browser, un clic su "Trasparenza" avrebbe scritto
+   "#privacy" al posto di tutto, e un ricaricamento avrebbe perso i filtri.
+   Quindi si intercetta, si scorre a mano e si riscrive lo stato. */
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-goto]');
+  if(!a) return;
+  e.preventDefault();
+  chiudiMenu();
+  const dove = a.dataset.goto;
+  if(dove === 'search'){ openPanel(); }
+  else if(dove === 'top'){ window.scrollTo({top:0, behavior:'smooth'}); }
+  else { const el = $('#'+dove); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
+  writeURL();
+});
+
+/* ── menu Esplora ─────────────────────────────────────────
+   Si apre al clic, si chiude al clic fuori, con Esc e appena si sceglie una
+   voce. Con Esc il fuoco torna al pulsante, altrimenti chi naviga da
+   tastiera lo perderebbe in fondo alla pagina. */
+const menu = $('#expMenu'), expBtn = $('#expBtn'),
+      navEl = $('#mainnav'), navBtn = $('#navBtn'),
+      stretto = matchMedia('(max-width:860px)');
+
+/* Su telefono la tendina non esiste come tendina: le sue voci sono gia'
+   dentro il pannello del menu, aperte. Quindi li' resta sempre visibile, e
+   il pulsante "Esplora" che la aprirebbe e' nascosto dal foglio di stile. */
+function adattaLarghezza(){
+  if(stretto.matches){ menu.hidden = false; expBtn.setAttribute('aria-expanded','true'); }
+  else { menu.hidden = true; expBtn.setAttribute('aria-expanded','false');
+         navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); }
+}
+stretto.addEventListener('change', adattaLarghezza);
+adattaLarghezza();
+
+function apriMenu(){ menu.hidden = false; expBtn.setAttribute('aria-expanded','true'); }
+function chiudiMenu(){
+  if(stretto.matches){ navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); return; }
+  menu.hidden = true; expBtn.setAttribute('aria-expanded','false');
+}
+expBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  menu.hidden ? apriMenu() : chiudiMenu();
+});
+navBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const aperto = navEl.classList.toggle('open');
+  navBtn.setAttribute('aria-expanded', aperto ? 'true' : 'false');
+});
+document.addEventListener('click', e => {
+  if(!$('#drop').contains(e.target)) chiudiMenu();
+  if(!navEl.contains(e.target) && e.target !== navBtn){
+    navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false');
+  }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(navEl.classList.contains('open')){
+    navEl.classList.remove('open'); navBtn.setAttribute('aria-expanded','false'); navBtn.focus();
+  } else if(!menu.hidden && !stretto.matches){ chiudiMenu(); expBtn.focus(); }
+});
 $('#panelToggle').addEventListener('click', () => {
   const p = $('#search'), closed = p.hasAttribute('data-closed');
   closed ? p.removeAttribute('data-closed') : p.setAttribute('data-closed','');
