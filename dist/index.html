@@ -904,9 +904,9 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
       <a class="cta-home" href="/flight/">Flight<s>&#9654;</s></a>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><b>1.328</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
+      <div class="hstat"><b>1.329</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
       <div class="hstat"><b>1.666</b><span class="lbl" data-k="st_dest">Destinazioni</span></div>
-      <div class="hstat"><b>21.954</b><span class="lbl" data-k="st_fare">Tariffe osservate</span></div>
+      <div class="hstat"><b>345.799</b><span class="lbl" data-k="st_fare">Tariffe osservate</span></div>
       <div class="hstat"><b>220 km/€</b><span class="lbl" data-k="st_best">Miglior rapporto</span></div>
     </div>
   </div>
@@ -1147,10 +1147,10 @@ function applyLang(){
   document.documentElement.dir = RTL ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-k]').forEach(el => { el.textContent = T(el.dataset.k); });
   $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
-  $('#heroEyebrow').textContent = `${T('obs')} ${OBSERVED} · ${T('direct')} · 1.328 ${T('st_air')}`;
+  $('#heroEyebrow').textContent = `${T('obs')} ${OBSERVED} · ${T('direct')} · 1.329 ${T('st_air')}`;
 
   const p = P();
-  const vars = { observed:OBSERVED, fareCount:'21.954', originCount:'1.328',
+  const vars = { observed:OBSERVED, fareCount:'345.799', originCount:'1.329',
                  destCount:'1.666', languageCount:String(LANG_META.length) };
   const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
   const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
