@@ -943,7 +943,8 @@ const WORLD = JSON.parse(document.getElementById('worlddata').textContent);
 const PL    = IDX.places;
 const AP    = Object.fromEntries(CAT.airports.map(a => [a.i, a]));
 const CTRY  = Object.fromEntries(CAT.countries.map(c => [c.k, c]));
-const NDEST = new Set(IDX.deals.map(d => d.d)).size;
+/* Il totale vero delle destinazioni, non quelle delle righe incorporate. */
+const NDEST = IDX.ndest || new Set(IDX.deals.map(d => d.d)).size;
 /* Storico dei prezzi: rotta -> [rilevazioni, decimo percentile, mediana] sugli
    ultimi 90 giorni. Lo riempie build.py leggendo data/history/, che cresce di
    una riga per rotta ogni notte. Finche' e' corto resta vuoto e il sito non
@@ -1278,10 +1279,17 @@ const noAcc = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase
 /* ══════════════════════════════════════════════════════════
    PANNELLO RICERCA
    ══════════════════════════════════════════════════════════ */
-const dealsFrom = {};                       // iata -> quante rotte nell'indice
-for(const r of IDX.deals) dealsFrom[r.o] = (dealsFrom[r.o]||0)+1;
-const dealsTo   = {};                       // paese -> quante rotte in arrivo
-for(const r of IDX.deals){ const k = PL[r.d] && PL[r.d].k; if(k) dealsTo[k] = (dealsTo[k]||0)+1; }
+/* I numeri accanto ai paesi e agli aeroporti nell'elenco. Si contavano dalle
+   righe incorporate, e andava bene finche' dentro la pagina c'era l'indice
+   intero. Adesso dentro ce n'e' una parte — il resto arriva dallo scomparto
+   dell'aeroporto scelto — e contare le righe direbbe "Italia 40" dove le
+   rotte sono quattrocento. I totali veri li scrive build.py, che li conta
+   prima di tagliare. */
+const dealsFrom = IDX.counts || {};         // iata -> quante rotte esistono
+const dealsTo   = IDX.dcounts || {};        // paese -> quante rotte in arrivo
+if(!IDX.dcounts){                           // indice vecchio: si conta a mano
+  for(const r of IDX.deals){ const k = PL[r.d] && PL[r.d].k; if(k) dealsTo[k] = (dealsTo[k]||0)+1; }
+}
 
 const countriesOf = m49 => CAT.countries.filter(c => !m49 || REG_OF[c.g] === m49);
 
@@ -2355,7 +2363,10 @@ function browserRegion(){
   fillSelectors(); applyLang(); renderPanel(); renderTicker();
   $('#stAir').textContent  = fmtN(Object.keys(IDX.counts).length);
   $('#stDest').textContent = fmtN(NDEST);
-  $('#stFare').textContent = fmtN(IDX.deals.length);
+  /* Le tariffe osservate sono tutte quelle raccolte, non le poche righe che
+     stanno dentro la pagina: contare queste direbbe settemila dove sono
+     trecentomila. */
+  $('#stFare').textContent = fmtN(IDX.offer_count || IDX.deals.length);
   const bb = IDX.deals.reduce((m,r) => Math.max(m, r.km*2/r.p), 0);
   $('#stBest').textContent = ratio(bb) + ' km/€';
 
