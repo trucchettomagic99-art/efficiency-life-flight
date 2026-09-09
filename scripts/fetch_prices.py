@@ -22,11 +22,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from flight_data import (SCHEMA, clean_catalog, clean_rows, dump, expand_catalog,
-                         migrate, normalize, places_from, read, representatives)
+                         migrate, normalize, places_from, publishable, read,
+                         representatives)
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = 'https://api.travelpayouts.com/'
 METHODS = {'latest':'aviasales/v3/get_latest_prices', 'dates':'aviasales/v3/prices_for_dates'}
+PAGE_SIZE = 1000
 
 class BudgetExpired(Exception):
     pass
@@ -128,7 +130,7 @@ def collect(client, origin, endpoint, places, today, checkpoint, max_pages):
         return {'origin':origin, 'endpoint':endpoint, 'status':'ok', 'rows':rows, 'issues':dict(issues), 'resumed':True}
     try:
         for page in range(start, max_pages+1):
-            params = {'origin':origin, 'currency':'eur', 'one_way':'false', 'limit':1000, 'page':page}
+            params = {'origin':origin, 'currency':'eur', 'one_way':'false', 'limit':PAGE_SIZE, 'page':page}
             if endpoint == 'latest':
                 params.update(period_type='year', group_by='directions')
             else:
@@ -140,7 +142,10 @@ def collect(client, origin, endpoint, places, today, checkpoint, max_pages):
             if not isinstance(raw, list):
                 raise ValueError('upstream_invalid_data')
             fingerprint = hashlib.sha256(json.dumps(raw, sort_keys=True).encode()).hexdigest()
-            complete = not raw or (endpoint == 'dates' and len(raw) < 1000)
+            # A short page is terminal for both endpoints. Previously only the
+            # dates endpoint used this rule, wasting a second latest request for
+            # almost every origin even when page 1 contained only a few routes.
+            complete = not raw or len(raw) < PAGE_SIZE
             if fingerprint in seen_pages and raw:
                 issues['repeated_page'] += 1
                 return {'origin':origin,'endpoint':endpoint,'status':'partial','rows':rows,'issues':dict(issues)}
@@ -172,6 +177,7 @@ def make_snapshot(old, archived, results, places, today):
     previous.extend(archived)
     fresh = [r for result in results for r in result['rows']]
     rows, issues = clean_rows([*previous, *fresh], places, today)
+    public = publishable(rows)
     reps = representatives(rows)
     prior, _ = clean_rows(previous, places, today)
     prior_reps = representatives(prior)
@@ -192,7 +198,7 @@ def make_snapshot(old, archived, results, places, today):
     index = {'schema':SCHEMA, 'observed':today.isoformat(),
              'sources':{'tp':'travelpayouts/aviasales · observed cache'},
              'places':{k:v for k,v in places.items() if k in used or k in old['places']},
-             'deals':reps,'counts':counts,'offer_count':len(rows),
+             'deals':reps,'counts':counts,'offer_count':len(public),
              'shards':{o:f'/data/origins/{o}.json' for o in counts}}
     return index, rows, issues
 
@@ -282,9 +288,11 @@ def main():
         dump(ROOT/'.cache'/'collection-report.json',report)
         print(str(e))
         return 1
-    report.update(published=True, offers=len(rows), routes=len(index['deals']),
+    public = publishable(rows)
+    report.update(published=True, offers=len(public), archived_offers=len(rows),
+                  quarantined_offers=len(rows)-len(public), routes=len(index['deals']),
                   covered_origins=len(index['counts']), merge_issues=dict(issues),
-                  date_variants=len(rows)-len(index['deals']))
+                  date_variants=len(public)-len(index['deals']))
     stage = ROOT/'.cache'/'collection-stage'
     if stage.exists(): shutil.rmtree(stage)
     grouped = {}
