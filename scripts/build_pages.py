@@ -568,6 +568,12 @@ def main() -> int:
         print('nessun aeroporto con abbastanza rotte: non genero pagine', file=sys.stderr)
         return 1
 
+    # Retire generated airport pages that no longer pass the coverage gate.
+    for folder in ('da', 'from'):
+        for stale in (DIST / folder).glob('*/index.html'):
+            if stale.parent.name.upper() not in good:
+                stale.unlink()
+
     order = sorted(good, key=lambda o: -len(good[o]))
     made = []
     for o in order:

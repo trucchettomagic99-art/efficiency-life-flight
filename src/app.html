@@ -1076,7 +1076,7 @@ function haversine(a,b){
   const h=Math.sin(dLa/2)**2+Math.cos(rad(a.la))*Math.cos(rad(b.la))*Math.sin(dLo/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
 }
-const TODAY = new Date(IDX.observed + 'T00:00:00Z');
+const TODAY = new Date(new Date().toISOString().slice(0,10) + 'T00:00:00Z');
 const daysOut = iso => Math.round((new Date(iso+'T00:00:00Z') - TODAY)/864e5);
 const windowOf = d => { const w = Math.ceil(Math.max(d,1)/30)*30; return w<=180 ? w : 999; };
 
@@ -1157,7 +1157,7 @@ function enrich(raw){
     deal: exp ? exp/price : 1,
     kmpe:(raw.km*2)/price, minpe:raw.dur/price,
     win: windowOf(daysOut(raw.dep)), ck:d.k,
-    id: `${raw.o}-${raw.d}-${yymmdd(raw.dep)}` };
+    id: `${raw.o}-${raw.d}-${yymmdd(raw.dep)}-${yymmdd(raw.ret)}` };
 }
 /* ══════════════════════════════════════════════════════════
    IL PREZZO ATTESO — il motore che distingue un affare da un volo lungo
@@ -1202,13 +1202,45 @@ function histTag(r){
 const IDX_BY_O = {};
 for(const r of IDX.deals) (IDX_BY_O[r.o] ||= []).push(r);
 
+const DATE_BY_O = {}, DATE_PENDING = {};
+async function fetchDates(){
+  const queue = [...S.origins].filter(o => IDX.shards && IDX.shards[o] && !DATE_BY_O[o]);
+  // Bound simultaneous requests when a whole country is selected.
+  async function worker(){
+    while(queue.length){
+      const o = queue.shift();
+      if(!DATE_PENDING[o]) DATE_PENDING[o] = (async () => {
+        try{
+          const res = await fetch(IDX.shards[o], {signal:AbortSignal.timeout(12000)});
+          if(!res.ok) return;
+          const j = await res.json();
+          if(j.schema !== 2 || j.origin !== o || !Array.isArray(j.deals)) return;
+          const rows = j.deals.filter(r => r.o === o && PL[r.d] &&
+            Number.isFinite(r.p) && r.p > 0 && Number.isFinite(r.sc) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(r.dep) && /^\d{4}-\d{2}-\d{2}$/.test(r.ret));
+          if(rows.length) DATE_BY_O[o] = rows;
+        }catch(_){} // Embedded fares remain usable on timeout, 404 or offline.
+        finally{ delete DATE_PENDING[o]; }
+      })();
+      await DATE_PENDING[o];
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(4,queue.length)}, worker));
+}
+
 function rawPool(){
   const out = [];
   const liveBy = {};
   if(S.liveRows) for(const r of S.liveRows) (liveBy[r.o] ||= []).push(r);
   for(const o of S.origins){
-    const rows = liveBy[o] || IDX_BY_O[o];
-    if(rows) out.push(...rows);
+    // Live offers replace the SAME itinerary, not every date from this origin.
+    const merged = new Map();
+    for(const r of [...(DATE_BY_O[o] || IDX_BY_O[o] || []), ...(liveBy[o] || [])]){
+      if(r.dep < new Date().toISOString().slice(0,10)) continue;
+      const k = `${r.o}|${r.d}|${r.dep}|${r.ret}`;
+      merged.set(k,r);
+    }
+    out.push(...merged.values());
   }
   return out;
 }
@@ -1986,6 +2018,8 @@ function readURL(){
 
 /* ── prezzi live ────────────────────────────────────────── */
 async function fetchLive(quiet){
+  await fetchDates();
+  const requestedCurrency = S.cur;
   const origins = [...S.origins].slice(0, 6);
   if(!origins.length) return;
   try{
@@ -2004,11 +2038,12 @@ async function fetchLive(quiet){
     if(!rows.length) throw new Error('nessuna tariffa');
     /* i prezzi live arrivano gia' nella valuta scelta: li riporto a euro,
        perche' tutto il motore ragiona in euro e converte solo a schermo */
+    if(S.cur !== requestedCurrency) return;
     const k = 1 / fx()[3];
     /* la data della rilevazione viaggia con la riga: una tariffa arrivata
        adesso dall'API non porta la data dell'indice notturno */
     const adesso = new Date().toISOString().slice(0,16).replace('T',' ');
-    S.liveRows = rows.map(r => ({...r, p: r.p * k, live:true, obs:adesso}));
+    S.liveRows = rows.map(r => ({...r, p: r.p * k, x: (r.x || 0) * k, live:true, obs:r.obs || adesso}));
     S.live = true;
     $('#srcTxt').textContent = 'LIVE';
     $('#srcPill').querySelector('.dot').classList.remove('idle');

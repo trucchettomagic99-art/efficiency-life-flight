@@ -1,0 +1,1 @@
+{"schema":2,"origin":"SRG","deals":[{"o":"SRG","d":"CGK","p":88.0,"dep":"2026-09-10","ret":"2026-09-11","dur":140,"km":421,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":1}]}

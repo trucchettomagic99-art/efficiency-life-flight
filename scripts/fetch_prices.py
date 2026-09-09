@@ -1,295 +1,320 @@
 #!/usr/bin/env python3
-"""EFFICIENCY LIFE — FLIGHT · raccolta notturna delle tariffe.
+"""Bounded, resumable collection of observed direct round-trip fares.
 
-Interroga la cache prezzi Travelpayouts/Aviasales per ogni aeroporto di partenza
-in data/origins.json, tiene solo i voli diretti andata e ritorno, e riscrive
-data/index.json — l'indice che il sito incorpora.
-
-Gira su GitHub Actions, dove la rete e' libera. Il token arriva dalla variabile
-d'ambiente TP_TOKEN (segreto del repository), non e' mai scritto in un file.
-
-Se una notte l'API non risponde, lo script NON sovrascrive l'indice esistente:
-meglio dati di ieri che una pagina vuota.
+No live Search API is used. Defaults query every catalog origin, then collect
+multiple date pairs from prices_for_dates. Token is only sent in a header.
 """
 from __future__ import annotations
-import json, os, sys, time, pathlib, datetime, re
+import argparse
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-import urllib.request, urllib.error, urllib.parse
+import datetime as dt
+import email.utils
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from flight_data import (SCHEMA, clean_catalog, clean_rows, dump, expand_catalog,
+                         migrate, normalize, places_from, publishable, read,
+                         representatives)
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-DATA = ROOT / 'data'
+ROOT = Path(__file__).resolve().parent.parent
+BASE = 'https://api.travelpayouts.com/'
+METHODS = {'latest':'aviasales/v3/get_latest_prices', 'dates':'aviasales/v3/prices_for_dates'}
+PAGE_SIZE = 1000
 
-# Il token va ripulito da OGNI spazio, non solo da quelli in testa e in coda:
-# incollandolo in un campo web ci si porta dietro con facilita' un a capo o
-# uno spazio in mezzo, e Python rifiuta di comporre un indirizzo che li
-# contiene — la richiesta non parte nemmeno.
-TOKEN = ''.join(os.environ.get('TP_TOKEN', '').split())
-if not TOKEN:
-    sys.exit('TP_TOKEN mancante: aggiungilo nei Secrets del repository.')
-if not re.fullmatch(r'[0-9a-fA-F]{32}', TOKEN):
-    print(f'! TP_TOKEN ha una forma inattesa: {len(TOKEN)} caratteri, '
-          f'mi aspettavo 32 esadecimali. Provo lo stesso.', file=sys.stderr)
-TOKEN_Q = urllib.parse.quote(TOKEN, safe='')
+class BudgetExpired(Exception):
+    pass
 
-API   = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices'
-CITIES   = 'https://api.travelpayouts.com/data/en/cities.json'
-AIRPORTS = 'https://api.travelpayouts.com/data/en/airports.json'
+class FatalAPIError(Exception):
+    pass
 
-MIN_NIGHTS, MAX_NIGHTS = 1, 30      # 1 notte serve al filtro sab-dom; 0 sarebbe same-day
-MIN_PRICE  = 10                     # sotto i 10 EUR sono errori di prezzo
-PER_ORIGIN = 60                     # destinazioni tenute per aeroporto
-WORKERS    = 3                      # richieste in parallelo
-PAUSA      = 0.35                   # secondi fra una richiesta e l'altra
+class RateLimiter:
+    """Paced requests, shared across all worker threads for each endpoint."""
+    def __init__(self, rpm, clock=time.monotonic, sleep=time.sleep):
+        self.interval = 60 / rpm
+        self.clock, self.sleep = clock, sleep
+        self.next = 0
+        self.lock = threading.Lock()
 
-# Sei richieste in parallelo erano troppe: l'API rallentava e i tentativi
-# ripetuti allungavano la corsa fino a farla scadere. Tre alla volta, con una
-# pausa breve, e' piu' lento ma arriva in fondo — e alla fine il tempo totale
-# e' minore, perche' non si spreca in ritentativi.
+    def defer(self, seconds):
+        with self.lock:
+            self.next = max(self.next, self.clock() + max(0, seconds))
 
+    def acquire(self, deadline):
+        while True:
+            with self.lock:
+                now = self.clock()
+                if now >= deadline:
+                    raise BudgetExpired()
+                delay = max(0, self.next-now)
+                if not delay:
+                    self.next = now+self.interval
+                    return
+            self.sleep(min(delay, 1, max(0, deadline-now)))
 
-def safe(x) -> str:
-    """Toglie il token da qualunque testo prima di stamparlo.
-
-    Su un repository pubblico i log delle esecuzioni li legge chiunque. GitHub
-    maschera i secret di suo, ma il messaggio di un'eccezione di rete puo'
-    contenere l'indirizzo completo e non voglio dipendere solo da quello.
-    """
-    return str(x).replace(TOKEN, '***') if TOKEN else str(x)
-
-
-def get(url: str, tries: int = 4, timeout: int = 60):
-    last = None
-    for n in range(tries):
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'efficiency-life-flight/1.0'})
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return json.load(r)
-        except Exception as e:                      # rete, 5xx, rate limit
-            last = e
-            # attesa crescente: 3, 6, 12 secondi. Se e' un limite di frequenza,
-            # insistere subito peggiora le cose.
-            time.sleep(3 * (2 ** n))
-    raise RuntimeError(f'{url.split("?")[0]} non raggiungibile: {safe(last)}')
-
-
-def fetch_origin(iata: str):
-    time.sleep(PAUSA)
-    url = (f'{API}?origin={iata}&currency=eur&period_type=year&group_by=directions'
-           f'&one_way=false&limit=1000&token={TOKEN_Q}')
+def retry_delay(headers):
     try:
-        j = get(url)
-    except Exception as e:
-        print(f'  ! {iata}: {safe(e)}', flush=True)
-        return iata, []
-
-    rows = []
-    for x in j.get('data') or []:
-        if x.get('number_of_changes') != 0:   continue   # solo diretti
-        if not x.get('return_at') and not x.get('return_date'): continue
-        if not x.get('actual'):               continue
-        price, dist = x.get('value') or 0, x.get('distance') or 0
-        if price < MIN_PRICE or dist <= 0:    continue
-        dep = (x.get('depart_date') or '')[:10]
-        ret = (x.get('return_date') or '')[:10]
-        if not (dep and ret):                 continue
+        return max(1, float(headers.get('Retry-After') or headers.get('X-Rate-Limit-Reset') or 60))
+    except ValueError:
         try:
-            d0 = datetime.date.fromisoformat(dep)
-            d1 = datetime.date.fromisoformat(ret)
-        except ValueError:                    continue
-        nights = (d1 - d0).days
-        if not (MIN_NIGHTS <= nights <= MAX_NIGHTS): continue
-        # niente campo 's': la fonte e' una sola e ripeterlo su ogni riga
-        # costava 40 KB di pagina. Chi legge l'indice tratta l'assenza come
-        # 'tp' — l'unica fonte che c'e'.
-        rows.append({'o': iata, 'd': x['destination'], 'p': int(round(price)),
-                     'dep': dep, 'ret': ret, 'dur': int(x.get('duration') or 0),
-                     'km': int(dist), 'n': nights})
+            return max(1, email.utils.parsedate_to_datetime(headers['Retry-After']).timestamp()-time.time())
+        except (KeyError, ValueError, TypeError):
+            return 60
 
-    # una riga per destinazione, la piu' economica; poi le migliori per km/euro
-    best = {}
-    for r in rows:
-        k = r['d']
-        if k not in best or r['p'] < best[k]['p']:
-            best[k] = r
-    # Niente selezione qui: la curva del prezzo atteso si puo' stimare solo
-    # sull'insieme completo, e la scrematura per km/euro da sola butterebbe via
-    # proprio gli affari brevi — un volo di 400 km a 19 euro ha un km/euro
-    # mediocre ed e' comunque l'occasione migliore della lista.
-    out = list(best.values())
-    print(f'  {iata}: {len(out)} rotte', flush=True)
-    return iata, out
+class Client:
+    def __init__(self, token, seconds):
+        self.token = token
+        self.deadline = time.monotonic()+seconds
+        self.limits = {k: RateLimiter(n) for k,n in [('latest',240), ('dates',480), ('metadata',120)]}
+        self.stats = Counter()
+        self.lock = threading.Lock()
+        self.fatal = False
 
+    def get(self, method, params=None):
+        kind = next((k for k,v in METHODS.items() if method == v), 'metadata')
+        limiter = self.limits[kind]
+        url = BASE+method+('?' + urllib.parse.urlencode(params) if params else '')
+        for attempt in range(3):
+            if self.fatal:
+                raise FatalAPIError('API authentication rejected')
+            limiter.acquire(self.deadline)
+            try:
+                req = urllib.request.Request(url, headers={'X-Access-Token':self.token,
+                    'Accept-Encoding':'gzip', 'User-Agent':'efficiency-life-flight/2.0'})
+                with self.lock:
+                    self.stats[kind] += 1
+                with urllib.request.urlopen(req, timeout=min(25, max(1, self.deadline-time.monotonic()))) as res:
+                    raw = res.read()
+                    if res.headers.get('Content-Encoding') == 'gzip':
+                        raw = gzip.decompress(raw)
+                    if res.headers.get('X-Rate-Limit-Remaining') == '0':
+                        limiter.defer(retry_delay(res.headers))
+                    result = json.loads(raw)
+                if isinstance(result, dict) and result.get('success') is not True:
+                    raise ValueError('upstream_unsuccessful_response')
+                return result
+            except urllib.error.HTTPError as e:
+                with self.lock:
+                    self.stats['http_'+str(e.code)] += 1
+                if e.code in (401,403):
+                    self.fatal = True
+                    raise FatalAPIError('API authentication rejected') from None
+                if e.code == 429:
+                    limiter.defer(retry_delay(e.headers))
+                elif e.code >= 500:
+                    limiter.defer(2**attempt)
+                else:
+                    raise ValueError('upstream_http_'+str(e.code)) from None
+            except (OSError, ValueError):
+                limiter.defer(2**attempt)
+        raise ValueError('upstream_retry_exhausted')
 
-def fit_curve(rows):
-    """Stima la curva prezzo-distanza dell'intero indice: p ~ a * km^b.
+def collect(client, origin, endpoint, places, today, checkpoint, max_pages):
+    signature = hashlib.sha256(json.dumps([SCHEMA, origin, endpoint, max_pages, today.isoformat()], sort_keys=True).encode()).hexdigest()[:20]
+    path = checkpoint / (signature+'.json')
+    saved = read(path, {})
+    rows = saved.get('rows', [])
+    issues = Counter(saved.get('issues', {}))
+    seen_pages = set(saved.get('pages', []))
+    start = saved.get('next_page', 1)
+    if saved.get('complete'):
+        return {'origin':origin, 'endpoint':endpoint, 'status':'ok', 'rows':rows, 'issues':dict(issues), 'resumed':True}
+    try:
+        for page in range(start, max_pages+1):
+            params = {'origin':origin, 'currency':'eur', 'one_way':'false', 'limit':PAGE_SIZE, 'page':page}
+            if endpoint == 'latest':
+                params.update(period_type='year', group_by='directions')
+            else:
+                params.update(direct='true', unique='false', sorting='price')
+            payload = client.get(METHODS[endpoint], params)
+            raw = payload.get('data')
+            if raw == {}:
+                raw = []
+            if not isinstance(raw, list):
+                raise ValueError('upstream_invalid_data')
+            fingerprint = hashlib.sha256(json.dumps(raw, sort_keys=True).encode()).hexdigest()
+            complete = not raw or len(raw) < PAGE_SIZE
+            if fingerprint in seen_pages and raw:
+                issues['repeated_page'] += 1
+                return {'origin':origin,'endpoint':endpoint,'status':'partial','rows':rows,'issues':dict(issues)}
+            seen_pages.add(fingerprint)
+            for item in raw:
+                try:
+                    rows.append(normalize(item, origin, endpoint, places, today))
+                except (ValueError, TypeError, KeyError, OverflowError) as e:
+                    issues[str(e) if isinstance(e, ValueError) else 'malformed_row'] += 1
+            dump(path, {'rows':rows,'issues':dict(issues),'pages':sorted(seen_pages), 'next_page':page+1,'complete':complete})
+            if complete:
+                return {'origin':origin,'endpoint':endpoint,'status':'ok','rows':rows,'issues':dict(issues)}
+        issues['page_cap'] += 1
+        status = 'partial'
+    except BudgetExpired:
+        status = 'partial' if rows else 'deferred'
+    except FatalAPIError:
+        raise
+    except ValueError as e:
+        issues[str(e)] += 1
+        status = 'partial' if rows else 'error'
+    return {'origin':origin,'endpoint':endpoint,'status':status,'rows':rows,'issues':dict(issues)}
 
-    In scala logaritmica e' una retta, quindi bastano i minimi quadrati; il
-    problema sono le tariffe anomale, che in un listino aereo abbondano. Tre
-    passate, e a ogni passata si scartano i punti che distano piu' di 2,5
-    deviazioni robuste dalla retta (mediana e MAD, non media e sigma: la media
-    la sposta proprio l'anomalia che vogliamo escludere).
+def make_snapshot(old, archived, results, places, today):
+    """Merge observations, preserving source dates. Expired data never resurrects."""
+    previous = []
+    for r in old['deals']:
+        previous.append(dict(r, obs=r.get('obs',old['observed'])))
+    previous.extend(archived)
+    fresh = [r for result in results for r in result['rows']]
+    rows, issues = clean_rows([*previous, *fresh], places, today)
+    public = publishable(rows)
+    reps = representatives(rows)
+    prior, _ = clean_rows(previous, places, today)
+    prior_reps = representatives(prior)
+    attempted = [r for r in results if r['status'] != 'deferred']
+    good = [r for r in attempted if r['status'] in ('ok','partial')]
+    fresh_origins = {r['o'] for r in fresh}
+    prior_origins = {r['o'] for r in prior_reps}
+    if not attempted or len(good) < .8*len(attempted) or not fresh:
+        raise ValueError('collection_unhealthy: previous index retained')
+    if prior_origins and len(fresh_origins & prior_origins) < .6*len(prior_origins):
+        raise ValueError('existing_origin_coverage_drop: previous index retained')
+    if len(reps) < max(1, .6*len(prior_reps)):
+        raise ValueError('route_coverage_drop: previous index retained')
+    counts = dict(Counter(r['o'] for r in reps))
+    used = {r['o'] for r in rows} | {r['d'] for r in rows}
+    index = {'schema':SCHEMA, 'observed':today.isoformat(),
+             'sources':{'tp':'travelpayouts/aviasales · observed cache'},
+             'places':{k:v for k,v in places.items() if k in used or k in old['places']},
+             'deals':reps,'counts':counts,'offer_count':len(public),
+             'shards':{o:f'/data/origins/{o}.json' for o in counts}}
+    return index, rows, issues
 
-    Serve a rispondere a una domanda che il km/euro non pone: non "quanti
-    chilometri mi da questo prezzo", ma "quanto costa di solito volare cosi'
-    lontano, e questa tariffa quanto sta sotto".
-    """
-    import math
-    pts = [(math.log(r['km']), math.log(r['p'])) for r in rows if r['km'] > 80 and r['p'] > 0]
-    if len(pts) < 200:
-        return None
-    def med(v):
-        s = sorted(v); n = len(s)
-        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
-    use, a, b = pts, 0.0, 0.0
-    for _ in range(3):
-        n = len(use)
-        mx = sum(x for x, _ in use) / n
-        my = sum(y for _, y in use) / n
-        sxy = sum((x - mx) * (y - my) for x, y in use)
-        sxx = sum((x - mx) ** 2 for x, _ in use)
-        if not sxx:
-            return None
-        b = sxy / sxx
-        a = my - b * mx
-        res = [y - (a + b * x) for x, y in pts]
-        m = med(res)
-        mad = med([abs(r - m) for r in res]) or 1e-9
-        cut = 2.5 * 1.4826 * mad
-        nxt = [pt for pt, r in zip(pts, res) if abs(r - m) <= cut]
-        if len(nxt) < 200:
-            break
-        use = nxt
-    return (a, b)
+def append_history(data, rows, today):
+    path = data/'history'/f'{today:%Y-%m}.csv'
+    lines = path.read_text().splitlines() if path.exists() else []
+    fresh = representatives([r for r in rows if r['obs'] == today.isoformat()])
+    keys = {f"{today},{r['o']},{r['d']}" for r in fresh}
+    lines = [ln for ln in lines if ','.join(ln.split(',')[:3]) not in keys]
+    lines += [f"{today},{r['o']},{r['d']},{r['p']}" for r in fresh]
+    path.parent.mkdir(exist_ok=True)
+    path.write_text('\n'.join(dict.fromkeys(lines))+'\n')
 
+def write_airport_module(catalog):
+    """Generate the exact airport allow-list consumed by the Cloudflare live API."""
+    codes = sorted({a.get('i') for a in catalog.get('airports', [])
+                    if isinstance(a.get('i'), str) and len(a['i']) == 3})
+    target = ROOT/'functions'/'api'/'_airports.js'
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text('/* generated by scripts/fetch_prices.py; do not edit */\n'
+                      'export const AIRPORT_CODES = new Set(' +
+                      json.dumps(codes, separators=(',', ':')) + ');\n')
 
-def deal_ratio(r, curve):
-    """Quanto la tariffa sta sotto il prezzo atteso per quella distanza.
-    1.0 = in linea con il mercato, 1.8 = costa il 44% meno del previsto."""
-    import math
-    if not curve or r['km'] <= 0:
-        return 1.0
-    a, b = curve
-    return math.exp(a + b * math.log(r['km'])) / max(r['p'], 1)
-
-
-def pick(rows, curve, limit):
-    """Le righe da tenere per un aeroporto di partenza.
-
-    Meta' per chilometri per euro — il segnale storico del sito — e meta' per
-    scarto dal prezzo atteso, che pesca le occasioni corte che il km/euro
-    condanna. L'unione, non la somma: una rotta che vince su entrambi occupa
-    un posto solo, e resta spazio per l'altra meta'.
-    """
-    by_km = sorted(rows, key=lambda r: -(r['km'] * 2 / r['p']))[:limit * 2 // 3]
-    by_deal = sorted(rows, key=lambda r: -deal_ratio(r, curve))[:limit * 2 // 3]
-    seen, out = set(), []
-    for r in [x for pair in zip(by_km, by_deal) for x in pair]:   # alternati
-        k = r['d']
-        if k in seen:
-            continue
-        seen.add(k)
-        out.append(r)
-        if len(out) >= limit:
-            break
-    return out
-
-
-def append_history(deals, today):
-    """Aggiunge la fotografia di oggi allo storico: un file per mese, una riga
-    per rotta. Sono i dati che fra un mese permetteranno di dire "questo prezzo
-    e' basso" invece di "questo prezzo e' 40 euro" — e non si possono
-    recuperare a posteriori, si accumulano soltanto. Circa 200 KB al mese.
-    """
-    d = DATA / 'history'
-    d.mkdir(exist_ok=True)
-    f = d / f'{today[:7]}.csv'
-    righe = {}
-    if f.exists():
-        for ln in f.read_text().splitlines():
-            if ln.startswith(today + ','):        # gia' passato oggi: si riscrive
-                continue
-            righe[ln] = None
-    for r in deals:
-        righe[f"{today},{r['o']},{r['d']},{r['p']}"] = None
-    f.write_text('\n'.join(righe) + '\n')
-    return f, len(deals)
-
-
-def main() -> int:
-    origins = json.loads((DATA / 'origins.json').read_text())
-    catalog = json.loads((DATA / 'catalog.json').read_text())
-    print(f'Interrogo {len(origins)} aeroporti di partenza…', flush=True)
-
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        results = list(pool.map(fetch_origin, origins))
-
-    tutte = [r for _, rows in results for r in rows]
-    curve = fit_curve(tutte)
-    if curve:
-        print(f'Curva prezzo-distanza: p ~ {2.718281828 ** curve[0]:.2f} * km^{curve[1]:.3f} '
-              f'(su {len(tutte)} tariffe)', flush=True)
-
-    deals, counts = [], {}
-    for iata, rows in results:
-        rows = pick(rows, curve, PER_ORIGIN)
-        if rows:
-            deals += rows
-            counts[iata] = len(rows)
-
-    ok = len(counts)
-    vuoti = [i for i, r in results if not r]
-    print(f'\nRisposte utili: {ok}/{len(origins)} · tariffe grezze: {len(deals)}', flush=True)
-    if vuoti:
-        print(f'Senza rotte: {len(vuoti)} — {" ".join(vuoti[:24])}'
-              + (' …' if len(vuoti) > 24 else ''), flush=True)
-
-    if ok < len(origins) * 0.5 or len(deals) < 500:
-        print(f'ABORT: solo {ok}/{len(origins)} origini e {len(deals)} tariffe. '
-              f'Tengo l\'indice precedente: meglio i dati di ieri che una pagina vuota.',
-              file=sys.stderr)
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--clean-only', action='store_true')
+    parser.add_argument('--data-dir', type=Path, default=ROOT/'data')
+    parser.add_argument('--max-seconds', type=int, default=1080)
+    parser.add_argument('--workers', type=int, default=3, choices=range(1,7))
+    parser.add_argument('--dates-pages', type=int, default=5)
+    parser.add_argument('--latest-pages', type=int, default=2)
+    parser.add_argument('--origin-limit', type=int, default=0)
+    args = parser.parse_args()
+    if args.max_seconds < 1 or args.dates_pages < 1 or args.latest_pages < 1 or args.origin_limit < 0:
+        parser.error('positive budgets and page counts required')
+    today = dt.datetime.now(dt.timezone.utc).date()
+    data = args.data_dir
+    if args.clean_only:
+        print(json.dumps(migrate(data, today)))
+        return 0
+    token = ''.join(os.environ.get('TP_TOKEN','').split())
+    if not token:
+        parser.error('TP_TOKEN missing; use --clean-only for offline migration')
+    client = Client(token, args.max_seconds)
+    old = read(data/'index.json')
+    catalog, catalog_issues = clean_catalog(read(data/'catalog.json'))
+    airports, cities, routes = [], [], []
+    metadata_errors = []
+    for name in ('airports','cities','routes'):
+        try:
+            values = client.get('data/'+('en/' if name != 'routes' else '')+name+'.json')
+            if not isinstance(values,list):
+                raise ValueError('invalid_metadata')
+            if name == 'airports': airports = values
+            if name == 'cities': cities = values
+            if name == 'routes': routes = values
+        except (ValueError, BudgetExpired) as e:
+            metadata_errors.append(name+':'+str(e))
+    places = places_from(catalog, old['places'], airports, cities)
+    catalog = expand_catalog(catalog, places, airports, {r['d'] for r in old['deals']})
+    configured = list(dict.fromkeys([*read(data/'origins.json',[]), *[a['i'] for a in catalog['airports']]]))
+    configured = [o for o in configured if o in places]
+    direct_origins = {r.get('departure_airport_iata') for r in routes if r.get('transfers') == 0}
+    origins = sorted(configured, key=lambda o:(o not in old['counts'], o not in direct_origins, o))
+    established = [o for o in origins if o in old['counts']]
+    new = [o for o in origins if o not in old['counts']]
+    if new:
+        offset = today.toordinal()%len(new); new = new[offset:]+new[:offset]
+    origins = established+new
+    if args.origin_limit: origins = origins[:args.origin_limit]
+    checkpoint = ROOT/'.cache'/'fares-v2'/today.isoformat()
+    checkpoint.mkdir(parents=True, exist_ok=True)
+    print(f'Collecting {len(origins)} origins; {args.max_seconds}s budget; latest + dates', flush=True)
+    results = []
+    for endpoint, pages in [('latest',args.latest_pages), ('dates',args.dates_pages)]:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for result in pool.map(lambda o:collect(client,o,endpoint,places,today,checkpoint,pages), origins):
+                results.append(result)
+                if result['status'] != 'deferred':
+                    print(f"{endpoint} {result['origin']}: {result['status']} {len(result['rows'])} offers", flush=True)
+    archived = []
+    for path in (data/'fares').glob('*.json'):
+        archived.extend(read(path,{}).get('deals',[]))
+    report = {'date':today.isoformat(),'schema':SCHEMA,'configured_origins':len(configured),
+              'queried_origins':len(origins),'requests':dict(client.stats),
+              'catalog_issues':dict(catalog_issues),'metadata_errors':metadata_errors,
+              'endpoints':dict(Counter(r['endpoint']+':'+r['status'] for r in results)),
+              'rejections':dict(sum((Counter(r['issues']) for r in results),Counter()))}
+    try:
+        index, rows, issues = make_snapshot(old, archived, results, places, today)
+    except ValueError as e:
+        report['published'] = False; report['error'] = str(e)
+        dump(ROOT/'.cache'/'collection-report.json',report)
+        print(str(e))
         return 1
-
-    # anagrafica luoghi: nome, paese, coordinate per ogni codice citato
-    places = {}
-    try:
-        for src in (AIRPORTS, CITIES):
-            for p in get(src):
-                c, co = p.get('code'), p.get('coordinates') or {}
-                if c and co.get('lat') is not None:
-                    places[c] = {'n': (p.get('name') or c).replace('|', ' '),
-                                 'k': p.get('country_code') or '',
-                                 'la': round(float(co['lat']), 2),
-                                 'lo': round(float(co['lon']), 2)}
-    except Exception as e:
-        print(f'! anagrafica luoghi non scaricata ({safe(e)}); uso quella esistente', file=sys.stderr)
-        places = json.loads((DATA / 'index.json').read_text()).get('places', {})
-
-    for a in catalog['airports']:                     # gli scali del catalogo non mancano mai
-        places.setdefault(a['i'], {'n': a['c'], 'k': a['k'], 'la': a['la'], 'lo': a['lo']})
-
-    deals = [r for r in deals if r['d'] in places and r['o'] in places]
-    used  = {r['o'] for r in deals} | {r['d'] for r in deals} | {a['i'] for a in catalog['airports']}
-    places = {k: v for k, v in places.items() if k in used}
-    counts = {}
-    for r in deals:
-        counts[r['o']] = counts.get(r['o'], 0) + 1
-
-    out = {'observed': datetime.date.today().isoformat(),
-           'sources': {'tp': 'travelpayouts/aviasales · get_latest_prices'},
-           'places': places, 'deals': deals, 'counts': counts}
-    (DATA / 'index.json').write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')))
-
-    try:
-        f, n = append_history(deals, out['observed'])
-        print(f"Storico: +{n} righe in {f.relative_to(ROOT)}")
-    except Exception as e:
-        print(f'! storico non aggiornato ({safe(e)})', file=sys.stderr)
-
-    dest = len({r['d'] for r in deals})
-    paesi = len({places[r['d']]['k'] for r in deals})
-    print(f'\nOK · {len(deals)} tariffe · {len(counts)} origini · {dest} destinazioni · {paesi} paesi')
+    public = publishable(rows)
+    report.update(published=True, offers=len(public), archived_offers=len(rows),
+                  quarantined_offers=len(rows)-len(public), routes=len(index['deals']),
+                  covered_origins=len(index['counts']), merge_issues=dict(issues),
+                  date_variants=len(public)-len(index['deals']))
+    stage = ROOT/'.cache'/'collection-stage'
+    if stage.exists(): shutil.rmtree(stage)
+    grouped = {}
+    for r in rows: grouped.setdefault(r['o'],[]).append(r)
+    for o, fares in grouped.items():
+        dump(stage/'fares'/(o+'.json'), {'schema':SCHEMA,'origin':o,'deals':fares})
+    dump(stage/'index.json',index)
+    target = data/'fares'
+    if target.exists(): shutil.rmtree(target)
+    shutil.move(str(stage/'fares'),str(target))
+    dump(data/'catalog.json',catalog)
+    dump(data/'origins.json',configured)
+    os.replace(stage/'index.json',data/'index.json')
+    append_history(data,rows,today)
+    write_airport_module(catalog)
+    dump(data/'collection-report.json',report)
+    dump(ROOT/'.cache'/'collection-report.json',report)
+    print(json.dumps(report),flush=True)
     return 0
 
-
 if __name__ == '__main__':
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except FatalAPIError as e:
+        print(str(e)); raise SystemExit(1)
