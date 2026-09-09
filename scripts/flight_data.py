@@ -140,6 +140,8 @@ def validate(row, places, today):
         raise ValueError('same_place')
     if r.get('o') not in places or r.get('d') not in places:
         raise ValueError('unknown_place')
+    if places[r['o']].get('t') == 'city' or places[r['d']].get('t') == 'city':
+        raise ValueError('city_aggregate')
     dep, ret, obs = date(r['dep']), date(r['ret']), date(r['obs'])
     if dep < today or dep > today + dt.timedelta(days=366):
         raise ValueError('departure_outside_horizon')
@@ -174,8 +176,6 @@ def normalize(x, origin, endpoint, places, today):
             raise ValueError('different_origin_airport')
         if o not in places or d not in places:
             raise ValueError('unknown_place')
-        if places[o].get('t') == 'city' or places[d].get('t') == 'city':
-            raise ValueError('city_aggregate')
         r = {'o': o, 'd': d, 'p': x.get('price'), 'dep': x.get('departure_at'),
              'ret': x.get('return_at'), 'dur': x.get('duration') or 0,
              'km': distance(places[o], places[d]), 'distance_source': 'great_circle',
@@ -186,8 +186,6 @@ def normalize(x, origin, endpoint, places, today):
         if x.get('origin') != origin:
             raise ValueError('different_origin')
         d = x.get('destination')
-        if d in places and places[d].get('t') == 'city':
-            raise ValueError('city_aggregate')
         r = {'o': origin, 'd': d, 'p': x.get('value'),
              'dep': x.get('depart_date'), 'ret': x.get('return_date'),
              'dur': x.get('duration') or 0, 'km': x.get('distance') or 0,
