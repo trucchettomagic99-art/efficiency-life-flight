@@ -21,7 +21,8 @@ Non interroga la Search API in background e non garantisce disponibilità live.
    entrambi i voli, poi il prezzo più basso. Date diverse restano separate.
 6. Scarta prezzi non positivi/non finiti, date invalide o passate, soggiorni fuori
    1–30 notti, partenze oltre 366 giorni e rilevazioni più vecchie di 7 giorni.
-   Prezzi sotto 10 EUR restano con un indicatore di revisione nell'archivio.
+   Prezzi sotto 10 EUR restano nell'archivio con un indicatore di revisione, ma
+   sono esclusi da indice pubblico, punteggio, storico e risultati mostrati.
 7. Mantiene al massimo 7 giorni di osservazioni valide. La cache del provider non
    è inventario completo: un risultato vuoto non prova che una rotta non esista.
 
@@ -61,10 +62,11 @@ python scripts/check_build.py
 
 Budget predefiniti: 18 minuti, 3 worker; 240 richieste/minuto per latest,
 480 per dates e 120 per metadati. Si rispettano anche i cooldown del provider
-e gli errori 429. Massimo 2 pagine latest e 5 pages dates per origine;
-le risposte troncate sono segnalate come partial/page_cap, non complete.
-Ogni pagina dates contiene al massimo 1000 record. Non si promette un numero
-prefissato di offerte: dipende dalla copertura effettiva della cache.
+e gli errori 429. Massimo 2 pagine latest e 5 pagine dates per origine;
+una pagina con meno di 1000 record chiude subito la paginazione per entrambi gli
+endpoint. Le risposte ancora piene al limite massimo vengono segnalate come
+partial/page_cap, non complete. Non si promette un numero prefissato di offerte:
+dipende dalla copertura effettiva della cache.
 
 Opzioni: --max-seconds, --workers, --latest-pages, --dates-pages,
 --origin-limit (solo per campioni controllati), --data-dir.
