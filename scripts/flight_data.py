@@ -91,18 +91,21 @@ def places_from(catalog, previous, airports=(), cities=()):
         p = dict(original); p['k'] = country(code, p.get('k'))
         if valid_place(code, p, countries):
             places[code] = p
-    # City names first; exact airport coordinates must win over city centres.
-    for item in [*cities, *airports]:
-        code = item.get('code', '')
-        coord = item.get('coordinates') or {}
-        p = {'n': str(item.get('name') or code).replace('|', ' '),
-             'k': country(code, item.get('country_code')),
-             'la': coord.get('lat'), 'lo': coord.get('lon')}
-        if valid_place(code, p, countries):
-            p['la'], p['lo'] = float(p['la']), float(p['lo'])
-            places[code] = p
+    # City metadata is useful for names, but an exact airport record must win.
+    # Keep the type so city aggregates (LON/PAR/TYO...) cannot masquerade as
+    # airport-specific direct fares in the public index.
+    for kind, items in (('city', cities), ('airport', airports)):
+        for item in items:
+            code = item.get('code', '')
+            coord = item.get('coordinates') or {}
+            p = {'n': str(item.get('name') or code).replace('|', ' '),
+                 'k': country(code, item.get('country_code')),
+                 'la': coord.get('lat'), 'lo': coord.get('lon'), 't': kind}
+            if valid_place(code, p, countries):
+                p['la'], p['lo'] = float(p['la']), float(p['lo'])
+                places[code] = p
     for a in catalog['airports']:
-        places[a['i']] = {'n': a['c'], 'k': a['k'], 'la': a['la'], 'lo': a['lo']}
+        places[a['i']] = {'n': a['c'], 'k': a['k'], 'la': a['la'], 'lo': a['lo'], 't':'airport'}
     return places
 
 def expand_catalog(catalog, places, airports, destinations):
@@ -171,6 +174,8 @@ def normalize(x, origin, endpoint, places, today):
             raise ValueError('different_origin_airport')
         if o not in places or d not in places:
             raise ValueError('unknown_place')
+        if places[o].get('t') == 'city' or places[d].get('t') == 'city':
+            raise ValueError('city_aggregate')
         r = {'o': o, 'd': d, 'p': x.get('price'), 'dep': x.get('departure_at'),
              'ret': x.get('return_at'), 'dur': x.get('duration') or 0,
              'km': distance(places[o], places[d]), 'distance_source': 'great_circle',
@@ -180,7 +185,10 @@ def normalize(x, origin, endpoint, places, today):
             raise ValueError('not_actual_direct')
         if x.get('origin') != origin:
             raise ValueError('different_origin')
-        r = {'o': origin, 'd': x.get('destination'), 'p': x.get('value'),
+        d = x.get('destination')
+        if d in places and places[d].get('t') == 'city':
+            raise ValueError('city_aggregate')
+        r = {'o': origin, 'd': d, 'p': x.get('value'),
              'dep': x.get('depart_date'), 'ret': x.get('return_date'),
              'dur': x.get('duration') or 0, 'km': x.get('distance') or 0,
              'direct_check': 'provider_aggregate'}
