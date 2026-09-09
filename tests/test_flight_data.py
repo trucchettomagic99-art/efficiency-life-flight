@@ -1,0 +1,178 @@
+import datetime as dt
+import importlib.util
+import json
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'scripts'))
+from flight_data import clean_catalog, clean_rows, normalize, validate, representatives, migrate
+from fetch_prices import collect, RateLimiter, make_snapshot, append_history, Client
+
+TODAY = dt.date(2026,9,9)
+PLACES = {'FCO':{'n':'Rome','k':'IT','la':41.8,'lo':12.2},
+          'MAN':{'n':'Manchester','k':'GB','la':53.4,'lo':-2.3}}
+
+def fare(**kw):
+    return dict({'o':'FCO','d':'MAN','p':40,'dep':'2026-10-02','ret':'2026-10-05',
+                 'dur':320,'km':1700,'n':3,'obs':'2026-09-09'}, **kw)
+
+def raw(**kw):
+    return dict({'origin':'FCO','origin_airport':'FCO','destination':'MAN','destination_airport':'MAN',
+                 'price':40,'departure_at':'2026-10-02T16:00:00+02:00',
+                 'return_at':'2026-10-05T20:00:00+01:00','duration':320,
+                 'transfers':0,'return_transfers':0}, **kw)
+
+class FakeClient:
+    def __init__(self,pages): self.pages=iter(pages); self.calls=[]
+    def get(self,method,params):
+        self.calls.append(dict(params)); p=next(self.pages)
+        if isinstance(p,Exception): raise p
+        return {'success':True,'data':p}
+
+class FlightDataTests(unittest.TestCase):
+    def test_catalog_dedup_and_membership(self):
+        catalog=json.loads((ROOT/'data/catalog.json').read_text())
+        original=len(catalog['airports'])
+        clean,issues=clean_catalog(catalog)
+        codes=[a['i'] for a in clean['airports']]
+        self.assertEqual(len(codes),len(set(codes)))
+        self.assertLessEqual(len(codes),original)
+        by={a['i']:a for a in clean['airports']}
+        for c in clean['countries']:
+            self.assertEqual(len(c['a']),len(set(c['a'])))
+            self.assertTrue(all(by[i]['k']==c['k'] for i in c['a']))
+        self.assertEqual(clean,clean_catalog(clean)[0])
+
+    def test_both_legs_must_be_direct(self):
+        for overrides in ({'return_transfers':1},{'return_transfers':None},{'transfers':False}):
+            with self.assertRaises(ValueError): normalize(raw(**overrides),'FCO','dates',PLACES,TODAY)
+
+    def test_dates_schema_and_distance(self):
+        r=normalize(raw(),'FCO','dates',PLACES,TODAY)
+        self.assertEqual(r['dur'],320)  # total, not doubled
+        self.assertEqual(r['n'],3)
+        self.assertEqual(r['direct_check'],'both_legs')
+        self.assertTrue(1600<r['km']<1900)
+
+    def test_reject_airport_alias_substitution(self):
+        with self.assertRaises(ValueError): normalize(raw(origin_airport='CIA'),'FCO','dates',PLACES,TODAY)
+
+    def test_low_price_kept_flagged(self):
+        r=normalize(raw(price=8.99),'FCO','dates',PLACES,TODAY)
+        self.assertEqual(r['p'],8.99)
+        self.assertEqual(r['quality'],'low_price_review')
+
+    def test_invalid_rows_are_rejected(self):
+        for overrides in ({'p':float('nan')},{'p':float('inf')},{'p':True},{'p':0},
+                          {'dep':'2026-09-01'},{'ret':'2026-10-01'},
+                          {'ret':'2026-11-10'},{'dep':'2029-10-02'},
+                          {'obs':'2026-08-01'},{'obs':'2026-09-10'},
+                          {'km':-1},{'d':'ZZZ'},{'dur':-1}):
+            rows,issues=clean_rows([fare(**overrides)],PLACES,TODAY)
+            self.assertEqual(rows,[], overrides)
+            self.assertEqual(sum(issues.values()),1)
+
+    def test_multiple_return_dates_survive(self):
+        rows,_=clean_rows([fare(),fare(ret='2026-10-09')],PLACES,TODAY)
+        self.assertEqual(len(rows),2)
+        self.assertEqual(len(representatives(rows)),1)
+
+    def test_newer_expensive_price_replaces_old_cheaper(self):
+        rows,_=clean_rows([fare(p=20,obs='2026-09-08'),fare(p=50)],PLACES,TODAY)
+        self.assertEqual(rows[0]['p'],50)
+
+    def test_same_observation_prefers_both_leg_verification(self):
+        rows,_=clean_rows([fare(p=20,endpoint='latest'),fare(p=50,endpoint='dates')],PLACES,TODAY)
+        self.assertEqual(rows[0]['p'],50)
+
+    def test_weekend_one_night_kept(self):
+        self.assertEqual(validate(fare(ret='2026-10-03'),PLACES,TODAY)['n'],1)
+
+    def test_pagination_resume_after_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)
+            client=FakeClient([[raw()]*1000, ValueError('network')])
+            first=collect(client,'FCO','dates',PLACES,TODAY,path,3)
+            self.assertEqual(first['status'],'partial')
+            client2=FakeClient([[raw(return_at='2026-10-07')]])
+            second=collect(client2,'FCO','dates',PLACES,TODAY,path,3)
+            self.assertEqual(client2.calls[0]['page'],2)
+            self.assertEqual(second['status'],'ok')
+            self.assertEqual(len(clean_rows(second['rows'],PLACES,TODAY)[0]),2)
+            cached=collect(FakeClient([]),'FCO','dates',PLACES,TODAY,path,3)
+            self.assertTrue(cached['resumed'])
+
+    def test_repeated_page_does_not_loop(self):
+        with tempfile.TemporaryDirectory() as d:
+            client=FakeClient([[raw()]*1000,[raw()]*1000])
+            result=collect(client,'FCO','dates',PLACES,TODAY,Path(d),5)
+            self.assertEqual(result['status'],'partial')
+            self.assertEqual(result['issues']['repeated_page'],1)
+            self.assertEqual(len(client.calls),2)
+
+    def test_successful_empty_is_not_an_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            result=collect(FakeClient([[]]),'FCO','dates',PLACES,TODAY,Path(d),5)
+            self.assertEqual(result['status'],'ok')
+            self.assertEqual(result['rows'],[])
+
+    def test_complete_failure_cannot_publish_retained_rows(self):
+        old={'deals':[fare()], 'observed':'2026-09-09','places':PLACES}
+        with self.assertRaises(ValueError):
+            make_snapshot(old,[],[{'status':'error','rows':[]}],PLACES,TODAY)
+
+    def test_empty_new_airports_do_not_trigger_fifty_percent_abort(self):
+        old={'deals':[fare()], 'observed':'2026-09-09','places':PLACES}
+        results=[{'status':'ok','rows':[fare()]}]+[{'status':'ok','rows':[]}]*9
+        index,rows,_=make_snapshot(old,[],results,PLACES,TODAY)
+        self.assertEqual(len(rows),1)
+        self.assertEqual(index['counts'],{'FCO':1})
+
+    def test_history_once_per_day_and_route_with_decimals(self):
+        with tempfile.TemporaryDirectory() as d:
+            append_history(Path(d),[fare(p=40.55),fare(p=60,ret='2026-10-07')],TODAY)
+            append_history(Path(d),[fare(p=45.15)],TODAY)
+            lines=(Path(d)/'history'/'2026-09.csv').read_text().splitlines()
+            self.assertEqual(lines,['2026-09-09,FCO,MAN,45.15'])
+
+    def test_rate_limit_and_cooldown(self):
+        now=[0.0]
+        def sleep(n): now[0]+=n
+        limit=RateLimiter(240,lambda:now[0],sleep)
+        limit.acquire(100); limit.acquire(100)
+        self.assertAlmostEqual(now[0],.25)
+        limit.defer(2); limit.acquire(100)
+        self.assertAlmostEqual(now[0],2.25)
+
+    def test_client_rejects_unsuccessful_json(self):
+        from unittest.mock import patch, MagicMock
+        client=Client('secret',10)
+        response=MagicMock(); response.__enter__.return_value=response
+        response.headers={}; response.read.return_value=b'{"success":false,"data":[]}'
+        with patch('urllib.request.urlopen',return_value=response), patch.object(client.limits['dates'],'defer'):
+            with self.assertRaisesRegex(ValueError,'retry_exhausted'):
+                client.get('aviasales/v3/prices_for_dates',{'origin':'FCO'})
+
+    def test_cleaning_keeps_valid_missing_countries(self):
+        from flight_data import places_from
+        catalog,_=clean_catalog(json.loads((ROOT/'data/catalog.json').read_text()))
+        places=places_from(catalog,{'DIL':{'n':'Dili','k':'TL','la':-8.56,'lo':125.56},
+            'ECN':{'n':'Ercan','k':'NY','la':35.15,'lo':33.5},
+            'SUI':{'n':'Sukhumi','k':'AB','la':42.87,'lo':41.12}})
+        self.assertEqual(places['DIL']['k'],'TL')
+        self.assertEqual(places['ECN']['k'],'CY')
+        self.assertEqual(places['SUI']['k'],'GE')
+
+    def test_shards_scored_by_same_global_model(self):
+        import build
+        index=[fare(),fare(p=80,ret='2026-10-09')]
+        model=build.modello(index,{})
+        one=[dict(index[0])]; two=[dict(r) for r in index]
+        build.valuta(one,model,{}); build.valuta(two,model,{})
+        self.assertEqual(one[0]['sc'],two[0]['sc'])
+        self.assertEqual(one[0]['x'],two[0]['x'])
+
+if __name__=='__main__': unittest.main()

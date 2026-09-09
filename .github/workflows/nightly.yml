@@ -10,13 +10,15 @@ name: Aggiornamento indice
 # un indice di tariffe aeree vecchio di due giorni e' un indice sbagliato.
 on:
   push:
-    branches: [main]
+    branches: [main, codex/expand-flight-data]
     paths:
       - '.github/workflows/nightly.yml'
       - 'scripts/**'
       - 'src/**'
       - 'public/**'
-      - 'netlify.toml'
+      - 'data/origins.json'
+      - 'data/catalog.json'
+      - 'tests/**'
   schedule:
     - cron: '20 3 * * *'
   workflow_dispatch:        # per lanciarlo a mano dal tab Actions
@@ -42,10 +44,44 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Raccogli le tariffe
+      - name: Verifica raccolta e caricamento dati
+        # Tests fail before spending API quota or changing publication inputs.
+        run: |
+          python -m unittest discover -s tests -v
+          node tests/test_browser_data.cjs
+
+      - name: Data UTC per checkpoint
+        id: date
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Ripristina checkpoint della raccolta
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/fares-v2
+          key: fares-v2-${{ github.ref_name }}-${{ steps.date.outputs.day }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fares-v2-${{ github.ref_name }}-${{ steps.date.outputs.day }}-
+
+      - name: Raccogli tutte le origini e le date
         env:
           TP_TOKEN: ${{ secrets.TP_TOKEN }}
         run: python scripts/fetch_prices.py
+
+      - name: Conserva checkpoint anche in caso di errore
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/fares-v2
+          key: fares-v2-${{ github.ref_name }}-${{ steps.date.outputs.day }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Rapporto della raccolta
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collection-report
+          path: .cache/collection-report.json
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Ricompila il sito
         run: python scripts/build.py
@@ -64,6 +100,7 @@ jobs:
           # non le committiamo la funzione live resta indietro rispetto alla
           # pagina — stessi voli, punteggi diversi.
           git add data/index.json data/history dist/ functions/
+          git add data/catalog.json data/origins.json data/fares/ data/collection-report.json
           if git diff --staged --quiet; then
             echo "Nessuna variazione: niente da pubblicare."
           else

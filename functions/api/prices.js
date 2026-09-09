@@ -18,7 +18,7 @@
  */
 
 /* === MODELLO GENERATO DA build.py — non modificare a mano === */
-const MODELLO = {"a":1.0321861998508228,"b":0.5180343903785304,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[3.1885714285714286,78.70370370370371],"minpe":[0.5283911671924291,8.026315789473685],"price":[31,618],"deal":[0.21726517381099178,3.2291310130184563]}};
+const MODELLO = {"a":1.0321861998508228,"b":0.5180343903785304,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[3.1885714285714286,78.70370370370371],"minpe":[0.5283911671924291,8.026315789473685],"price":[31.0,618.0],"deal":[0.21726517381099178,3.2291310130184563]}};
 /* === fine modello generato === */
 
 /* Le tariffe in tempo reale non passano dal job notturno: arrivano qui e da
@@ -50,7 +50,7 @@ function valuta(rows){
 }
 
 const API = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices';
-const MIN_NIGHTS = 2, MAX_NIGHTS = 30, MIN_PRICE = 10, MAX_ROWS = 60;
+const MIN_NIGHTS = 1, MAX_NIGHTS = 30, MIN_PRICE = 0, MAX_ROWS = 60;
 const CACHE_SECONDS = 6 * 60 * 60;
 
 const json = (body, status = 200, extra = {}) =>
@@ -107,6 +107,8 @@ export async function onRequest(context) {
     const res = await fetch(upstream, { signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     payload = await res.json();
+    if(payload.success !== true || (!Array.isArray(payload.data) &&
+        !(payload.data && Object.keys(payload.data).length === 0))) throw new Error('Invalid upstream response');
   } catch (e) {
     return json({ ok: false, error: String((e && e.message) || e) }, 502);
   }
@@ -116,15 +118,15 @@ export async function onRequest(context) {
   const minPrice = ['eur','usd','gbp','chf','cad','aud','sgd'].includes(cur) ? MIN_PRICE : 0;
 
   const best = new Map();
-  for (const x of (payload && payload.data) || []) {
+  for (const x of (Array.isArray(payload.data) ? payload.data : [])) {
     if (x.number_of_changes !== 0 || !x.actual) continue;
     const price = Math.round((x.value || 0) * 100) / 100;
     const km = Math.round(x.distance || 0);
-    if (price < minPrice || km <= 0) continue;
+    if (!Number.isFinite(price) || !Number.isFinite(km) || price <= minPrice || km <= 0) continue;
 
     const dep = String(x.depart_date || '').slice(0, 10);
     const ret = String(x.return_date || '').slice(0, 10);
-    if (!dep || !ret) continue;
+    if (!dep || !ret || dep < new Date().toISOString().slice(0,10)) continue;
 
     const nights = Math.round((Date.parse(ret) - Date.parse(dep)) / 864e5);
     if (!(nights >= MIN_NIGHTS && nights <= MAX_NIGHTS)) continue;

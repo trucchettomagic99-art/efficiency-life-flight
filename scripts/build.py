@@ -118,7 +118,7 @@ def history_stats(days: int = 90, min_obs: int = 5) -> dict:
             if len(parti) != 4 or parti[0] < limite:
                 continue
             try:
-                serie.setdefault(f'{parti[1]}-{parti[2]}', []).append(int(parti[3]))
+                serie.setdefault(f'{parti[1]}-{parti[2]}', []).append(float(parti[3]))
             except ValueError:
                 continue
     out = {}
@@ -323,6 +323,34 @@ def main() -> int:
     dati = json.loads(idx)
     M = modello(dati['deals'], storico)
     valuta(dati['deals'], M, storico)
+    # All date variants use the same model as route representatives. The
+    # browser downloads only the selected origins, never the complete archive.
+    from flight_data import public_rows
+    shard_dir = DIST / 'data' / 'origins'
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    shards = {}
+    for origin in dati.get('shards', {}):
+        source = DATA / 'fares' / (origin + '.json')
+        if not source.is_file():
+            raise ValueError(f'archive missing for {origin}')
+        packet = json.loads(source.read_text())
+        valuta(packet['deals'], M, storico)
+        packet['deals'] = public_rows(packet['deals'])
+        content = json.dumps(packet, separators=(',', ':'), allow_nan=False)
+        import hashlib
+        version = hashlib.sha256(content.encode()).hexdigest()[:16]
+        filename = f'{origin}-{version}.json'
+        (shard_dir / filename).write_text(content)
+        shards[origin] = '/data/origins/' + filename
+    # Remove old generations from this build. Cached old HTML falls back to
+    # its embedded representatives if an old shard no longer exists.
+    wanted = {p.rsplit('/', 1)[-1] for p in shards.values()}
+    for path in shard_dir.glob('*.json'):
+        if path.name not in wanted:
+            path.unlink()
+    if shards:
+        dati['shards'] = shards
+    dati['deals'] = public_rows(dati['deals'])
     idx = json.dumps(dati, separators=(',', ':'))
     if M['curva']:
         print(f"curva prezzo-distanza: p ~ {math.exp(M['a']):.2f} * km^{M['b']:.3f}")
