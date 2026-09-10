@@ -222,7 +222,7 @@ function applyLang(){
   const vars = { fxDate:FX_DATE, observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
                  destCount:'__ST_DEST__', languageCount:String(LANG_META.length), currencyCount:String(CUR.length) };
   const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
-  const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
+  const cell = ([h,b]) => `<div class="mcell"><h3>${esc(h)}</h3><p>${fill(b)}</p></div>`;
   $('#lede').textContent       = T('lede');
   $('#aboutLede').textContent  = T('about_b');
   $('#aboutPlat').textContent  = T('plat_note');
