@@ -256,6 +256,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 
 .rangeRow{display:flex;align-items:center;gap:10px;min-width:0}
 .rangeRow input[type=range]{flex:1 1 0;min-width:0;-webkit-appearance:none;appearance:none;height:2px;background:var(--rule-hi);outline:0}
+.rangeRow input[type=range]:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
 .rangeRow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--signal);border-radius:50%;cursor:pointer}
 .rangeRow input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--signal);border:0;border-radius:50%;cursor:pointer}
 .rangeRow output{flex:none;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--signal);min-width:78px;text-align:end;white-space:nowrap}
@@ -264,10 +265,12 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .dual .track i{position:absolute;top:0;bottom:0;background:var(--signal);display:block}
 .dual input[type=range]{position:absolute;inset-inline:0;width:100%;margin:0;height:18px;
   -webkit-appearance:none;appearance:none;background:transparent;pointer-events:none;outline:0}
+.dual input[type=range]:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
 .dual input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;
   width:13px;height:13px;border-radius:50%;background:var(--signal);border:2px solid var(--void);cursor:pointer}
 .dual input[type=range]::-moz-range-thumb{pointer-events:auto;
   width:13px;height:13px;border-radius:50%;background:var(--signal);border:2px solid var(--void);cursor:pointer}
+#find:focus,#find:focus-visible{outline:2px solid var(--signal);outline-offset:1px;border-color:var(--signal)}
 .seg em{font-style:normal;opacity:.6;font-size:9px;margin-inline-start:5px}
 .seg.on em{opacity:.85}
 .limits{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 26px}
@@ -797,7 +800,7 @@ footer a{color:var(--ink-2)}
 <section class="panel" id="search">
   <div class="wrap">
     <div class="panel-head">
-      <h2>Flight</h2>
+      <h2 data-k="nav_search">Ricerca</h2>
       <span class="lbl" id="panelHint"></span>
       <button class="tiny" id="panelToggle" style="margin-inline-start:auto">—</button>
     </div>
@@ -832,6 +835,7 @@ footer a{color:var(--ink-2)}
             <div class="segbar" id="dMode" hidden></div>
             <div class="segbar" id="contBar"></div>
             <input type="text" id="find" autocomplete="off" spellcheck="false"
+              aria-label="Cerca un paese o un aeroporto" placeholder="Cerca un paese o un aeroporto"
               style="width:100%;background:var(--deck2);border:1px solid var(--rule-hi);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px">
             <div class="picklist" id="ctryList"></div>
             <div class="lbl" id="apLbl" data-k="f_airport">Aeroporto</div>
@@ -841,8 +845,8 @@ footer a{color:var(--ink-2)}
       </div>
 
       <div class="step full">
-        <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Giorni alla partenza</em></h3>
-        <p class="hint" data-k="f_window_h">Fra quanti giorni parti, contati da oggi. Puoi scegliere piu' intervalli.</p>
+        <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Periodo di partenza</em></h3>
+        <p class="hint" data-k="f_window_h">Quando intendi partire, contato da oggi. Puoi scegliere piu' intervalli.</p>
         <div class="segbar" id="winChips"></div>
         <div class="lbl" style="margin-top:16px" data-k="f_shape">Forma del viaggio</div>
         <div class="segbar" id="shapeChips"></div>
@@ -851,14 +855,14 @@ footer a{color:var(--ink-2)}
             <div class="rangeRow">
               <div class="dual" id="dualDist">
                 <div class="track"><i id="distFill"></i></div>
-                <input type="range" id="rngDistMin" min="0" max="36000" step="500" value="0" aria-label="min">
-                <input type="range" id="rngDistMax" min="0" max="36000" step="500" value="36000" aria-label="max">
+                <input type="range" id="rngDistMin" min="0" max="36000" step="500" value="0" aria-label="Distanza minima" aria-valuemin="0" aria-valuemax="36000" aria-valuenow="0" aria-controls="outDist">
+                <input type="range" id="rngDistMax" min="0" max="36000" step="500" value="36000" aria-label="Distanza massima" aria-valuemin="0" aria-valuemax="36000" aria-valuenow="36000" aria-controls="outDist">
               </div>
-              <output id="outDist"></output></div></div>
+              <output id="outDist" aria-live="polite"></output></div></div>
           <div><span class="lbl" data-k="f_budget">Budget massimo</span>
-            <div class="rangeRow"><input type="range" id="rngBudget" min="20" max="2000" step="10" value="2000"><output id="outBudget"></output></div></div>
+            <div class="rangeRow"><input type="range" id="rngBudget" min="20" max="2000" step="10" value="2000" aria-label="Budget massimo" aria-valuemin="20" aria-valuemax="2000" aria-valuenow="2000" aria-controls="outBudget"><output id="outBudget" aria-live="polite"></output></div></div>
           <div><span class="lbl" data-k="f_bag">Bagaglio in stiva</span>
-            <div class="rangeRow"><input type="range" id="rngBag" min="0" max="150" step="5" value="0"><output id="outBag"></output></div></div>
+            <div class="rangeRow"><input type="range" id="rngBag" min="0" max="150" step="5" value="0" aria-label="Bagaglio in stiva" aria-valuemin="0" aria-valuemax="150" aria-valuenow="0" aria-controls="outBag"><output id="outBag" aria-live="polite"></output></div></div>
         </div>
       </div>
 
@@ -1313,7 +1317,9 @@ function renderSegs(){
   $('#dMode').hidden = FROM();
   $('#apLbl').hidden = !FROM();
   $('#apList').hidden = !FROM();
-  $('#find').placeholder = T('f_searchph');
+  const ph = T('f_searchph');
+  $('#find').placeholder = ph;
+  $('#find').setAttribute('aria-label', ph);
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === S.geo));
   $('#find').value = findOf();
   renderWindows();
@@ -1469,13 +1475,34 @@ function updateReady(){
 
 function renderLimits(){
   $('#lblDist').textContent = `${T('th_dist')} (km)`;
+  const distTxt = S.minDist
+    ? `${fmtN(S.minDist)} – ${fmtN(S.maxDist)} km`
+    : `≤ ${fmtN(S.maxDist)} km`;
   $('#outDist').textContent = S.minDist
     ? `${fmtN(S.minDist)} – ${fmtN(S.maxDist)}`
     : `≤ ${fmtN(S.maxDist)} km`;
-  $('#outBudget').textContent = `≤ ${money(S.maxBudget)}`;
-  $('#outBag').textContent    = `+ ${money(S.bagFee)}`;
-  $('#rngDistMin').value = S.minDist; $('#rngDistMax').value = S.maxDist;
-  $('#rngBudget').value = S.maxBudget; $('#rngBag').value = S.bagFee;
+  const budTxt = `≤ ${money(S.maxBudget)}`;
+  const bagTxt = `+ ${money(S.bagFee)}`;
+  $('#outBudget').textContent = budTxt;
+  $('#outBag').textContent    = bagTxt;
+  const rMin = $('#rngDistMin'), rMax = $('#rngDistMax');
+  const rBud = $('#rngBudget'), rBag = $('#rngBag');
+  rMin.value = S.minDist;
+  rMin.setAttribute('aria-valuenow', S.minDist);
+  rMin.setAttribute('aria-valuetext', `${fmtN(S.minDist)} km`);
+  rMin.setAttribute('aria-label', `${T('th_dist')} min`);
+  rMax.value = S.maxDist;
+  rMax.setAttribute('aria-valuenow', S.maxDist);
+  rMax.setAttribute('aria-valuetext', `${fmtN(S.maxDist)} km`);
+  rMax.setAttribute('aria-label', `${T('th_dist')} max`);
+  rBud.value = S.maxBudget;
+  rBud.setAttribute('aria-valuenow', S.maxBudget);
+  rBud.setAttribute('aria-valuetext', budTxt);
+  rBud.setAttribute('aria-label', T('f_budget'));
+  rBag.value = S.bagFee;
+  rBag.setAttribute('aria-valuenow', S.bagFee);
+  rBag.setAttribute('aria-valuetext', bagTxt);
+  rBag.setAttribute('aria-label', T('f_bag'));
   const f = $('#distFill');
   f.style.insetInlineStart = (S.minDist/36000*100) + '%';
   f.style.width = ((S.maxDist-S.minDist)/36000*100) + '%';
@@ -2032,7 +2059,7 @@ async function fetchLive(quiet){
   if(!origins.length) return;
   try{
     const res = await Promise.all(origins.map(o =>
-      fetch(`/api/prices?origin=${o}&currency=${S.cur.toLowerCase()}`, {headers:{accept:'application/json'}})
+      fetch(`/api/prices?origin=${o}&currency=eur`, {headers:{accept:'application/json'}})
         .then(r => r.ok ? r.json() : null).catch(() => null)));
     const rows = [];
     res.forEach((j,i) => {
@@ -2044,14 +2071,11 @@ async function fetchLive(quiet){
       for(const r of j.deals) if(PL[r.d] && PL[r.o] && r.sc != null) rows.push(r);
     });
     if(!rows.length) throw new Error('nessuna tariffa');
-    /* i prezzi live arrivano gia' nella valuta scelta: li riporto a euro,
-       perche' tutto il motore ragiona in euro e converte solo a schermo */
     if(S.cur !== requestedCurrency) return;
-    const k = 1 / fx()[3];
     /* la data della rilevazione viaggia con la riga: una tariffa arrivata
        adesso dall'API non porta la data dell'indice notturno */
     const adesso = new Date().toISOString().slice(0,16).replace('T',' ');
-    S.liveRows = rows.map(r => ({...r, p: r.p * k, x: (r.x || 0) * k, live:true, obs:r.obs || adesso}));
+    S.liveRows = rows.map(r => ({...r, live:true, obs:r.obs || adesso}));
     S.live = true;
     $('#srcTxt').textContent = 'LIVE';
     $('#srcPill').querySelector('.dot').classList.remove('idle');
@@ -2195,7 +2219,13 @@ let ft;
 $('#find').addEventListener('input', e => { clearTimeout(ft);
   ft = setTimeout(() => { FROM() ? (S.oFind = e.target.value) : (S.dFind = e.target.value); renderList(); }, 160); });
 $('#find').addEventListener('keydown', e => {
-  if(e.key === 'Escape'){ e.target.value = ''; FROM() ? (S.oFind='') : (S.dFind=''); renderList(); } });
+  if(e.key === 'Escape'){ e.target.value = ''; FROM() ? (S.oFind='') : (S.dFind=''); renderList(); }
+  else if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    const first = (FROM() ? $('#apList') : $('#ctryList'))?.querySelector('input');
+    if(first) first.focus();
+  }
+});
 $('#rngDistMin').addEventListener('input', e => {
   S.minDist = Math.min(+e.target.value, S.maxDist - 500);
   renderLimits(); markDirty();

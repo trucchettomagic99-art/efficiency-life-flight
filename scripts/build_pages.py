@@ -29,8 +29,9 @@ TP_TRS, TP_CAMPAIGN, TP_P_FLIGHT = B.TP_TRS, B.TP_CAMPAIGN, B.TP_P_FLIGHT
 TP_P_ACT, TP_C_ACT, TP_ACT_URL = B.TP_P_ACT, B.TP_C_ACT, B.TP_ACT_URL
 PROSE = B.prose_data()['locales']
 
-MIN_ROUTES = 6          # sotto questa soglia la pagina sarebbe povera: non la creo
-TOP        = 12         # righe in tabella
+MIN_ROUTES_FOR_SEO_PAGE = 6          # sotto questa soglia la pagina sarebbe povera: non la creo
+MIN_ROUTES = MIN_ROUTES_FOR_SEO_PAGE
+TOP        = 12                      # righe in tabella
 
 L = {
  'it': {
@@ -310,8 +311,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <link rel="alternate" hreflang="{lang}" href="{url}">
 <link rel="alternate" hreflang="{other}" href="{alt}">
 <link rel="alternate" hreflang="x-default" href="{SITE}/{L['en']['dir']}/{iata.lower()}/">
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="dark light">
@@ -321,6 +323,8 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{SITE}/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{SITE}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
@@ -437,8 +441,9 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="{url}">
 {alternate_links()}
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="dark light">
@@ -543,8 +548,8 @@ COUNTRY_EN: dict[str, str] = {}
 
 
 def main() -> int:
-    idx = json.loads((DATA / 'index.json').read_text())
-    cat = json.loads((DATA / 'catalog.json').read_text())
+    idx = json.loads((DATA / 'index.json').read_text(encoding='utf-8'))
+    cat = json.loads((DATA / 'catalog.json').read_text(encoding='utf-8'))
     AP = {a['i']: a for a in cat['airports']}
     places, obs = idx['places'], idx['observed']
 
@@ -583,7 +588,7 @@ def main() -> int:
         for lang in ('it', 'en'):
             d = DIST / L[lang]['dir'] / o.lower()
             d.mkdir(parents=True, exist_ok=True)
-            (d / 'index.html').write_text(page(lang, AP[o], good[o], places, obs, others))
+            (d / 'index.html').write_text(page(lang, AP[o], good[o], places, obs, others), encoding='utf-8')
             made.append(f"/{L[lang]['dir']}/{o.lower()}/")
 
     # Una landing statica per ciascuna lingua dell'app. Non moltiplico ogni
@@ -607,7 +612,7 @@ def main() -> int:
         d.mkdir(parents=True, exist_ok=True)
         (d / 'index.html').write_text(locale_page(
             code, showcase, places, AP, obs, len(idx['deals']), len(idx['counts']),
-            len({r['d'] for r in idx['deals']})))
+            len({r['d'] for r in idx['deals']})), encoding='utf-8')
         locale_made.append(f"/lang/{meta['path']}/")
 
     # sitemap: la radice piu' tutte le pagine appena scritte
@@ -625,7 +630,7 @@ def main() -> int:
     (DIST / 'sitemap.xml').write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        + '\n'.join(urls) + '\n</urlset>\n')
+        + '\n'.join(urls) + '\n</urlset>\n', encoding='utf-8')
 
     # ── l'indice degli aeroporti dentro la home ────────────────────────
     # Senza un collegamento dalla radice queste pagine sono orfane: la
@@ -634,7 +639,7 @@ def main() -> int:
     # home elenca tutti gli scali, nella lingua del percorso.
     home = DIST / 'index.html'
     if home.is_file():
-        h = home.read_text()
+        h = home.read_text(encoding='utf-8')
         if '<!--HUB-->' in h:
             voci = []
             for lang in ('it', 'en'):
@@ -653,7 +658,7 @@ def main() -> int:
                 f'href="/lang/{esc(meta["path"])}/">{esc(meta["name"])}</a> '
                 for meta in PROSE.values())
             voci.append(f'<nav class="locale-index" aria-label="Language">{lingue}</nav>')
-            home.write_text(h.replace('<!--HUB-->', ''.join(voci)))
+            home.write_text(h.replace('<!--HUB-->', ''.join(voci)), encoding='utf-8')
             print(f'indice nella home: {len(order) * 2} aeroporti + {len(PROSE)} lingue')
 
     size = sum(f.stat().st_size for f in DIST.rglob('index.html') if f.parent != DIST)

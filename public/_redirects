@@ -1,3 +1,8 @@
+# Vecchio dominio Netlify: 301 forzato verso il dominio ufficiale
+https://efficiencylife-flight.netlify.app/*  https://efficiency-life.com/:splat  301!
+http://efficiencylife-flight.netlify.app/*   https://efficiency-life.com/:splat  301!
+
 # www porta al dominio senza prefisso: un solo indirizzo canonico,
 # una sola pagina da indicizzare.
-https://www.efficiency-life.com/*  https://efficiency-life.com/:splat  301
+https://www.efficiency-life.com/*  https://efficiency-life.com/:splat  301!
+http://www.efficiency-life.com/*   https://efficiency-life.com/:splat  301!

@@ -16,12 +16,12 @@ def dump(path, value):
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + '.tmp')
-    tmp.write_text(json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False) + '\n')
+    tmp.write_text(json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False) + '\n', encoding='utf-8')
     os.replace(tmp, path)
 
 def read(path, default=None):
     try:
-        return json.loads(pathlib.Path(path).read_text())
+        return json.loads(pathlib.Path(path).read_text(encoding='utf-8'))
     except FileNotFoundError:
         return default
 
@@ -145,7 +145,7 @@ def validate(row, places, today):
     dep, ret, obs = date(r['dep']), date(r['ret']), date(r['obs'])
     if dep < today or dep > today + dt.timedelta(days=366):
         raise ValueError('departure_outside_horizon')
-    if not 1 <= (ret-dep).days <= 30:
+    if not 1 <= (ret-dep).days <= 60:
         raise ValueError('invalid_stay')
     if not 0 <= (today-obs).days <= MAX_AGE:
         raise ValueError('stale_observation')

@@ -10,7 +10,7 @@ import { AIRPORT_CODES } from './_airports.js';
  */
 
 /* === MODELLO GENERATO DA build.py — non modificare a mano === */
-const MODELLO = {"a":0.18107894663260016,"b":0.6921670286043566,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[2.7760141093474426,65.47540983606558],"minpe":[0.4194528875379939,6.746987951807229],"price":[35.0,1211.0],"deal":[0.2286533077357166,4.105778266853938]}};
+const MODELLO = {"a":0.1810789466327165,"b":0.6921670286043501,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[2.7760141093474426,65.47540983606558],"minpe":[0.4194528875379939,6.746987951807229],"price":[35.0,1211.0],"deal":[0.22865330773573286,4.105778266854236]}};
 /* === fine modello generato === */
 
 const STAY = [[800,3,4],[2000,5,7],[4000,8,10],[7000,12,14],[1e9,15,21]];
@@ -37,7 +37,7 @@ function valuta(rows){
 }
 
 const API = 'https://api.travelpayouts.com/aviasales/v3/get_latest_prices';
-const MIN_NIGHTS = 1, MAX_NIGHTS = 30, MIN_PRICE_EUR = 10, MAX_ROWS = 60;
+const MIN_NIGHTS = 1, MAX_NIGHTS = 60, MIN_PRICE_EUR = 10, MAX_ROWS = 60;
 const CACHE_SECONDS = 6 * 60 * 60;
 
 const json = (body, status = 200, extra = {}) =>

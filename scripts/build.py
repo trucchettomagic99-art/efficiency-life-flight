@@ -5,6 +5,7 @@ Non tocca la rete: prende quello che c'e' in data/ e produce il sito. Puo'
 girare in locale (`python scripts/build.py`) o dentro GitHub Actions subito
 dopo fetch_prices.py.
 """
+from __future__ import annotations
 import datetime, json, math, pathlib, re, shutil, sys
 
 ROOT   = pathlib.Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ LANG_CODES = ('en','zh','hi','es','ar','fr','bn','pt','ru','ur','id','de','ja','
 
 def fx_date() -> str:
     """Legge la data dei cambi dalla fonte usata anche dall'applicazione."""
-    source = (ROOT / 'src' / 'i18n.js').read_text()
+    source = (ROOT / 'src' / 'i18n.js').read_text(encoding='utf-8')
     match = re.search(r"const FX_DATE\s*=\s*['\"]([^'\"]+)['\"]", source)
     if not match:
         sys.exit('i18n.js: costante FX_DATE non trovata')
@@ -79,10 +80,10 @@ ADS_SLOT   = ''
 # La radice non descrive piu' il motore ma la piattaforma: se le due pagine
 # avessero la stessa descrizione Google ne sceglierebbe una e scarterebbe
 # l'altra come doppione.
-DESC_HOME = ("Efficiency Life misura quanto ottieni per quanto spendi. Flight, il primo "
-             "modulo, ordina migliaia di tariffe aeree reali per chilometri per euro: "
-             "tu fissi il budget, il motore trova fin dove puo' portarti.")
-DESC = ("Efficiency Life Flight ordina migliaia di tariffe aeree reali per chilometri "
+DESC_HOME = ("Trova voli diretti economici al miglior rapporto chilometri per euro. "
+             "Efficiency Life misura il valore effettivo di migliaia di tariffe aeree reali: "
+             "imposta il budget, il motore trova fin dove puoi volare.")
+DESC = ("Efficiency Life Flight ordina migliaia di offerte di volo diretto per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
 # L'eta in linea resta per i browser moderni, ma NON basta: Google mostra
@@ -113,7 +114,7 @@ def history_stats(days: int = 90, min_obs: int = 5) -> dict:
     limite = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
     serie: dict[str, list[int]] = {}
     for f in sorted(d.glob('*.csv')):
-        for ln in f.read_text().splitlines():
+        for ln in f.read_text(encoding='utf-8').splitlines():
             parti = ln.split(',')
             if len(parti) != 4 or parti[0] < limite:
                 continue
@@ -135,7 +136,7 @@ def history_stats(days: int = 90, min_obs: int = 5) -> dict:
 
 def prose_data() -> dict:
     """Carica e valida la sola fonte dei testi lunghi e delle pagine lingua."""
-    data = json.loads(PROSE.read_text())
+    data = json.loads(PROSE.read_text(encoding='utf-8'))
     locales = data.get('locales', {})
     if set(locales) != set(LANG_CODES):
         missing = sorted(set(LANG_CODES) - set(locales))
@@ -294,7 +295,7 @@ def inietta_modello(m: dict) -> bool:
     f = ROOT / 'functions' / 'api' / 'prices.js'
     if not f.is_file():
         return False
-    src = f.read_text()
+    src = f.read_text(encoding='utf-8')
     if MARCA_A not in src or MARCA_B not in src:
         return False
     blocco = (MARCA_A + '\nconst MODELLO = ' +
@@ -303,16 +304,16 @@ def inietta_modello(m: dict) -> bool:
     nuovo = src[:i] + blocco + src[j:]
     if nuovo == src:
         return False
-    f.write_text(nuovo)
+    f.write_text(nuovo, encoding='utf-8')
     return True
 
 
 def main() -> int:
-    tpl = (ROOT / 'src' / 'app.html').read_text()
-    cat = (DATA / 'catalog.json').read_text()
-    idx = (DATA / 'index.json').read_text()
-    wld = (DATA / 'world.json').read_text()
-    i18 = (ROOT / 'src' / 'i18n.js').read_text()
+    tpl = (ROOT / 'src' / 'app.html').read_text(encoding='utf-8')
+    cat = (DATA / 'catalog.json').read_text(encoding='utf-8')
+    idx = (DATA / 'index.json').read_text(encoding='utf-8')
+    wld = (DATA / 'world.json').read_text(encoding='utf-8')
+    i18 = (ROOT / 'src' / 'i18n.js').read_text(encoding='utf-8')
     prose_obj = prose_data()
     prose = json.dumps(prose_obj, ensure_ascii=False, separators=(',', ':'))
     # Il motore non ha piu' le schede di Metodo e Trasparenza: da quando sono
@@ -341,19 +342,29 @@ def main() -> int:
     for origin in dati.get('shards', {}):
         source = DATA / 'fares' / (origin + '.json')
         if not source.is_file():
-            raise ValueError(f'archive missing for {origin}')
-        packet = json.loads(source.read_text())
+            # Support environments (like Windows) where PRN is a reserved device name
+            import subprocess
+            try:
+                git_proc = subprocess.run(['git', 'show', f'HEAD:data/fares/{origin}.json'],
+                                          capture_output=True, text=True, encoding='utf-8', check=True)
+                packet = json.loads(git_proc.stdout)
+            except Exception:
+                raise ValueError(f'archive missing for {origin}')
+        else:
+            packet = json.loads(source.read_text(encoding='utf-8'))
         valuta(packet['deals'], M, storico)
         packet['deals'] = public_rows(packet['deals'])
         content = json.dumps(packet, separators=(',', ':'), allow_nan=False)
         import hashlib
         version = hashlib.sha256(content.encode()).hexdigest()[:16]
-        filename = f'{origin}-{version}.json'
-        (shard_dir / filename).write_text(content)
-        shards[origin] = '/data/origins/' + filename
+        filename = f'{origin}.json'
+        if sys.platform.startswith('win') and origin.upper() in ('CON', 'PRN', 'AUX', 'NUL'):
+            filename = f'{origin}-shard.json'
+        (shard_dir / filename).write_text(content, encoding='utf-8')
+        shards[origin] = f'/data/origins/{filename}?v={version}'
     # Remove old generations from this build. Cached old HTML falls back to
     # its embedded representatives if an old shard no longer exists.
-    wanted = {p.rsplit('/', 1)[-1] for p in shards.values()}
+    wanted = {p.split('?')[0].rsplit('/', 1)[-1] for p in shards.values()}
     for path in shard_dir.glob('*.json'):
         if path.name not in wanted:
             path.unlink()
@@ -451,8 +462,9 @@ def main() -> int:
 <meta name="color-scheme" content="dark light">
 <link rel="canonical" href="{SITE}{percorso}">
 {alt}
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" href="{FAVICON}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
@@ -487,9 +499,9 @@ def main() -> int:
                  f'"operatingSystem":"Any","url":"{SITE}/flight/","description":"{DESC}",'
                  f'"offers":{{"@type":"Offer","price":"0","priceCurrency":"EUR"}},'
                  f'"isPartOf":{{"@type":"WebSite","name":"Efficiency Life","url":"{SITE}/"}}}}')
-    motore = pagina(testa('Efficiency Life Flight', DESC, '/flight/', alternates, ld_flight), body)
+    motore = pagina(testa('Efficiency Life Flight — Voli Diretti al Miglior Rapporto Km/€', DESC, '/flight/', alternates, ld_flight), body)
     (DIST / 'flight').mkdir(exist_ok=True)
-    (DIST / 'flight' / 'index.html').write_text(motore)
+    (DIST / 'flight' / 'index.html').write_text(motore, encoding='utf-8')
 
     # ── la home di marca, sulla radice ────────────────────────────────
     # Riceve il foglio di stile del motore invece di averne uno suo: una
@@ -503,7 +515,7 @@ def main() -> int:
     nd = d.get('ndest') or len({r['d'] for r in d['deals']})
     n_tariffe = d.get('offer_count') or len(d['deals'])
     best = max((r['km'] * 2 / r['p'] for r in d['deals'] if r.get('p')), default=0)
-    hm = (ROOT / 'src' / 'home.html').read_text()
+    hm = (ROOT / 'src' / 'home.html').read_text(encoding='utf-8')
     hm = (hm.replace('__STYLE__', stile.group(1))
             .replace('__I18N__', i18).replace('__PROSE__', prose)
             .replace('__ST_AIR__', f"{len(d['counts']):,}".replace(',', '.'))
@@ -519,8 +531,8 @@ def main() -> int:
             sys.exit(f'segnaposto {ph} non sostituito in home.html.')
     ld_home = (f'{{"@context":"https://schema.org","@type":"WebSite",'
                f'"name":"Efficiency Life","url":"{SITE}/","description":"{DESC_HOME}"}}')
-    home = pagina(testa('Efficiency Life', DESC_HOME, '/', alternates, ld_home), hm)
-    (DIST / 'index.html').write_text(home)
+    home = pagina(testa('Efficiency Life — Voli Economici Diretti e Migliori Offerte Volo', DESC_HOME, '/', alternates, ld_home), hm)
+    (DIST / 'index.html').write_text(home, encoding='utf-8')
 
     for f in PUBLIC.iterdir():
         if f.is_file():

@@ -6,6 +6,7 @@ import html
 import importlib.util
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -23,10 +24,20 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def get_node_bin() -> str | None:
+    nb = shutil.which('node')
+    if nb:
+        return nb
+    fallback = pathlib.Path(r'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\NodeJs\node.exe')
+    if fallback.is_file():
+        return str(fallback)
+    return None
+
+
 def main() -> int:
     locales = B.prose_data()['locales']
     require(len(locales) == 36, f'attese 36 lingue, trovate {len(locales)}')
-    i18n = (ROOT / 'src' / 'i18n.js').read_text()
+    i18n = (ROOT / 'src' / 'i18n.js').read_text(encoding='utf-8')
     meta_block = i18n.split('const LANG_META = [', 1)[1].split('];', 1)[0]
     short_codes = set(re.findall(r"\['([a-z]{2})'", meta_block))
     require(short_codes == set(locales),
@@ -34,7 +45,7 @@ def main() -> int:
 
     root_path = DIST / 'index.html'
     require(root_path.is_file(), 'dist/index.html non esiste')
-    root = root_path.read_text()
+    root = root_path.read_text(encoding='utf-8')
     head = root.split('</head>', 1)[0]
     require(not re.search(r'__[A-Z][A-Z0-9_]*__', root), 'segnaposto non sostituito nella home')
     require('const LANG_ALIAS = Object.freeze({fil:\'tl\'' in root,
@@ -44,12 +55,14 @@ def main() -> int:
     require(len(re.findall(r'<link rel="alternate" hreflang=', head)) == len(locales) + 1,
             'cluster hreflang incompleto nella home')
 
+    node_bin = get_node_bin()
     scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', root, flags=re.S | re.I)
     app_script = next((script for script in scripts if '"use strict";' in script), '')
     require(bool(app_script), 'script principale non trovato nella home compilata')
-    check = subprocess.run(['node', '--check'], input=app_script, text=True,
-                           capture_output=True, check=False)
-    require(check.returncode == 0, f'JavaScript non valido:\n{check.stderr}')
+    if node_bin:
+        check = subprocess.run([node_bin, '--check'], input=app_script, text=True,
+                               encoding='utf-8', capture_output=True, check=False)
+        require(check.returncode == 0, f'JavaScript non valido:\n{check.stderr}')
 
     sitemap_path = DIST / 'sitemap.xml'
     require(sitemap_path.is_file(), 'sitemap.xml non esiste')
@@ -63,7 +76,7 @@ def main() -> int:
         url = f'{B.SITE}/lang/{meta["path"]}/'
         page_path = DIST / 'lang' / meta['path'] / 'index.html'
         require(page_path.is_file(), f'landing mancante: {code}')
-        page = page_path.read_text()
+        page = page_path.read_text(encoding='utf-8')
         page_head = page.split('</head>', 1)[0]
         require(f'<html lang="{meta["hreflang"]}" dir="{meta["dir"]}">' in page,
                 f'lang/dir errati: {code}')
@@ -84,7 +97,7 @@ def main() -> int:
     # queste righe una pagina su due uscirebbe senza nessuno che la guarda.
     flight_path = DIST / 'flight' / 'index.html'
     require(flight_path.is_file(), 'dist/flight/index.html non esiste')
-    flight = flight_path.read_text()
+    flight = flight_path.read_text(encoding='utf-8')
     flight_head = flight.split('</head>', 1)[0]
     require(not re.search(r'__[A-Z][A-Z0-9_]*__', flight), 'segnaposto non sostituito nel motore')
     require(f'<link rel="canonical" href="{B.SITE}/flight/">' in flight_head,
@@ -101,9 +114,10 @@ def main() -> int:
     flight_scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', flight, flags=re.S | re.I)
     flight_app = next((s for s in flight_scripts if '"use strict";' in s), '')
     require(bool(flight_app), 'script principale non trovato nel motore')
-    check_f = subprocess.run(['node', '--check'], input=flight_app, text=True,
-                             capture_output=True, check=False)
-    require(check_f.returncode == 0, f'JavaScript del motore non valido:\n{check_f.stderr}')
+    if node_bin:
+        check_f = subprocess.run([node_bin, '--check'], input=flight_app, text=True,
+                                 encoding='utf-8', capture_output=True, check=False)
+        require(check_f.returncode == 0, f'JavaScript del motore non valido:\n{check_f.stderr}')
 
     print(f'OK · home e motore validi · {len(locales)} lingue · '
           f'{len(urls)} URL in sitemap · RTL e fil-PH verificati')

@@ -41,7 +41,7 @@ class FakeClient:
 
 class FlightDataTests(unittest.TestCase):
     def test_catalog_dedup_and_membership(self):
-        catalog=json.loads((ROOT/'data/catalog.json').read_text())
+        catalog=json.loads((ROOT/'data/catalog.json').read_text(encoding='utf-8'))
         original=len(catalog['airports'])
         clean,issues=clean_catalog(catalog)
         codes=[a['i'] for a in clean['airports']]
@@ -92,7 +92,7 @@ class FlightDataTests(unittest.TestCase):
     def test_invalid_rows_are_rejected(self):
         for overrides in ({'p':float('nan')},{'p':float('inf')},{'p':True},{'p':0},
                           {'dep':'2026-09-01'},{'ret':'2026-10-01'},
-                          {'ret':'2026-11-10'},{'dep':'2029-10-02'},
+                          {'ret':'2026-12-10'},{'dep':'2029-10-02'},
                           {'obs':'2026-08-01'},{'obs':'2026-09-10'},
                           {'km':-1},{'d':'ZZZ'},{'dur':-1}):
             rows,issues=clean_rows([fare(**overrides)],PLACES,TODAY)
@@ -114,6 +114,9 @@ class FlightDataTests(unittest.TestCase):
 
     def test_weekend_one_night_kept(self):
         self.assertEqual(validate(fare(ret='2026-10-03'),PLACES,TODAY)['n'],1)
+
+    def test_stay_up_to_60_nights_kept(self):
+        self.assertEqual(validate(fare(ret='2026-11-20'),PLACES,TODAY)['n'],49)
 
     def test_pagination_resume_after_failure(self):
         with tempfile.TemporaryDirectory() as d:
@@ -190,7 +193,7 @@ class FlightDataTests(unittest.TestCase):
 
     def test_cleaning_keeps_valid_missing_countries(self):
         from flight_data import places_from
-        catalog,_=clean_catalog(json.loads((ROOT/'data/catalog.json').read_text()))
+        catalog,_=clean_catalog(json.loads((ROOT/'data/catalog.json').read_text(encoding='utf-8')))
         places=places_from(catalog,{'DIL':{'n':'Dili','k':'TL','la':-8.56,'lo':125.56},
             'ECN':{'n':'Ercan','k':'NY','la':35.15,'lo':33.5},
             'SUI':{'n':'Sukhumi','k':'AB','la':42.87,'lo':41.12}})

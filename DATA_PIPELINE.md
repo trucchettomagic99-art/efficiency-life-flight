@@ -20,7 +20,7 @@ Non interroga la Search API in background e non garantisce disponibilità live.
    anche quando è più alto. A parità di osservazione preferisce il controllo di
    entrambi i voli, poi il prezzo più basso. Date diverse restano separate.
 6. Scarta prezzi non positivi/non finiti, date invalide o passate, soggiorni fuori
-   1–30 notti, partenze oltre 366 giorni e rilevazioni più vecchie di 7 giorni.
+   1–60 notti, partenze oltre 366 giorni e rilevazioni più vecchie di 7 giorni.
    Prezzi sotto 10 EUR restano nell'archivio con un indicatore di revisione, ma
    sono esclusi da indice pubblico, punteggio, storico e risultati mostrati.
 7. Mantiene al massimo 7 giorni di osservazioni valide. La cache del provider non

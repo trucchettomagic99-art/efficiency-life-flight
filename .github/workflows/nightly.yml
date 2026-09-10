@@ -104,7 +104,7 @@ jobs:
           # non le committiamo la funzione live resta indietro rispetto alla
           # pagina — stessi voli, punteggi diversi.
           git add data/index.json data/history dist/ functions/
-          git add data/catalog.json data/origins.json data/fares/ data/collection-report.json
+          git add data/catalog.json data/origins.json data/origin_schedule.json data/fares/ data/collection-report.json
           if git diff --staged --quiet; then
             echo "Nessuna variazione: niente da pubblicare."
           else

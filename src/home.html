@@ -219,8 +219,8 @@ function applyLang(){
   $('#heroEyebrow').textContent = `${T('obs')} ${OBSERVED} · ${T('direct')} · __ST_AIR__ ${T('st_air')}`;
 
   const p = P();
-  const vars = { observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
-                 destCount:'__ST_DEST__', languageCount:String(LANG_META.length) };
+  const vars = { fxDate:FX_DATE, observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
+                 destCount:'__ST_DEST__', languageCount:String(LANG_META.length), currencyCount:String(CUR.length) };
   const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
   const cell = ([h,b]) => `<div class="mcell"><h4>${esc(h)}</h4><p>${fill(b)}</p></div>`;
   $('#lede').textContent       = T('lede');
