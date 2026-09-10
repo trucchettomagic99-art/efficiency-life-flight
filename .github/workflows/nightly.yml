@@ -87,6 +87,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      # Va PRIMA di build.py, che e' il passo che copia public/ dentro dist/.
+      # L'anteprima social si ridisegna dall'indice appena raccolto: quella di
+      # prima era dipinta a mano e mostrava una tariffa che non esisteva, con
+      # numeri fermi a mesi addietro. Cosi' non puo' invecchiare. Se il browser
+      # non parte si tiene l'immagine di ieri e l'indice esce lo stesso: un
+      # guaio molto piu' piccolo di un indice fermo.
+      - name: Ridisegna l'anteprima social
+        continue-on-error: true
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python scripts/genera_og.py
+
       - name: Ricompila il sito
         run: python scripts/build.py
 
@@ -103,7 +116,7 @@ jobs:
           # functions/: build.py ci riscrive le costanti del modello, e se
           # non le committiamo la funzione live resta indietro rispetto alla
           # pagina — stessi voli, punteggi diversi.
-          git add data/index.json data/history dist/ functions/
+          git add data/index.json data/history dist/ functions/ public/og.png
           git add data/catalog.json data/origins.json data/origin_schedule.json data/fares/ data/collection-report.json
           if git diff --staged --quiet; then
             echo "Nessuna variazione: niente da pubblicare."
