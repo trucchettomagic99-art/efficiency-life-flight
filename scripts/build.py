@@ -86,13 +86,19 @@ DESC_HOME = ("Trova voli diretti economici al miglior rapporto chilometri per eu
 DESC = ("Efficiency Life Flight ordina migliaia di offerte di volo diretto per chilometri "
         "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
         "la trova il motore.")
-# L'eta in linea resta per i browser moderni, ma NON basta: Google mostra
-# l'icona accanto al risultato solo se Googlebot-Image riesce a SCARICARE un
-# file, e un data: URI non e' un file da scaricare. In piu' l'SVG non e' fra i
-# formati che accetta (BMP, GIF, ICO, PNG, JPEG, PPM, TIFF). Da qui i file
-# veri in public/: favicon.ico, icon-192.png, apple-touch-icon.png. Senza,
-# nei risultati compare il mappamondo grigio.
-FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2303070E'/><path d='M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z' fill='%232E8DFF'/><path d='M3.5 23.9h25' stroke='%235FE3FF' stroke-width='2.2' stroke-linecap='round'/></svg>"
+# L'icona: solo file veri in public/, nessun data: URI.
+#
+# Qui c'era anche un'eta disegnata in SVG dentro un data: URI, come ultima
+# delle dichiarazioni <link rel="icon">. Le pagine per aeroporto non l'hanno
+# mai avuta; ce l'avevano solo la home e il motore — cioe' le due che nei
+# risultati escono col mappamondo grigio. Google mostra l'icona solo se
+# Googlebot-Image riesce a SCARICARE un file, e un data: URI non e' un file
+# da scaricare; l'SVG per giunta non e' fra i formati che accetta (BMP, GIF,
+# ICO, PNG, JPEG, PPM, TIFF). Quando piu' dichiarazioni convivono l'ultima
+# tende a vincere, e l'ultima era proprio quella non scaricabile: e' la
+# spiegazione piu' probabile del mappamondo, quindi via. Restano favicon.ico,
+# favicon-48x48.png, icon-192.png e apple-touch-icon.png, che a 192 pixel
+# bastano e avanzano anche per la linguetta del browser.
 
 
 def history_stats(days: int = 90, min_obs: int = 5) -> dict:
@@ -465,7 +471,6 @@ def main() -> int:
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="icon" href="{FAVICON}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Efficiency Life">
