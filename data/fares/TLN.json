@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TLN","deals":[{"o":"TLN","d":"ORY","p":232.0,"dep":"2026-10-13","ret":"2026-10-15","dur":185,"km":691,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"TLN","deals":[{"o":"TLN","d":"ORY","p":232.0,"dep":"2026-10-13","ret":"2026-10-15","dur":185,"km":691,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

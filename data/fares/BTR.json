@@ -1,1 +1,1 @@
-{"schema":2,"origin":"BTR","deals":[{"o":"BTR","d":"CLT","p":407.0,"dep":"2026-11-13","ret":"2026-11-15","dur":276,"km":1085,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"BTR","deals":[{"o":"BTR","d":"CLT","p":407.0,"dep":"2026-11-13","ret":"2026-11-15","dur":276,"km":1085,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

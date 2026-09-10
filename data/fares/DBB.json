@@ -1,1 +1,1 @@
-{"schema":2,"origin":"DBB","deals":[{"o":"DBB","d":"RUH","p":264.0,"dep":"2026-09-18","ret":"2026-09-25","dur":365,"km":1907,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"DBB","deals":[{"o":"DBB","d":"RUH","p":264.0,"dep":"2026-09-18","ret":"2026-09-25","dur":365,"km":1907,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":7}]}

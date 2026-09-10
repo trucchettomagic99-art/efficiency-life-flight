@@ -1,1 +1,1 @@
-{"schema":2,"origin":"FMA","deals":[{"o":"FMA","d":"AEP","p":205.0,"dep":"2027-01-01","ret":"2027-01-08","dur":210,"km":928,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"FMA","deals":[{"o":"FMA","d":"AEP","p":205.0,"dep":"2027-01-01","ret":"2027-01-08","dur":210,"km":928,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":7}]}

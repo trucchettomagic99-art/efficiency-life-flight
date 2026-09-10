@@ -1,1 +1,1 @@
-{"schema":2,"origin":"CRA","deals":[{"o":"CRA","d":"BGY","p":31.0,"dep":"2026-11-25","ret":"2026-11-29","dur":250,"km":1124,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"CRA","deals":[{"o":"CRA","d":"BGY","p":31.0,"dep":"2026-11-25","ret":"2026-11-29","dur":250,"km":1124,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":4}]}

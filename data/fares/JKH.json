@@ -1,1 +1,1 @@
-{"schema":2,"origin":"JKH","deals":[{"o":"JKH","d":"ATH","p":163.0,"dep":"2026-09-25","ret":"2026-09-27","dur":100,"km":198,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"JKH","deals":[{"o":"JKH","d":"ATH","p":163.0,"dep":"2026-09-25","ret":"2026-09-27","dur":100,"km":198,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

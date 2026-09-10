@@ -1,1 +1,1 @@
-{"schema":2,"origin":"USU","deals":[{"o":"USU","d":"ENI","p":124.0,"dep":"2026-12-11","ret":"2026-12-13","dur":80,"km":129,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"USU","deals":[{"o":"USU","d":"ENI","p":124.0,"dep":"2026-12-11","ret":"2026-12-13","dur":80,"km":129,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

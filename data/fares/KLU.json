@@ -1,1 +1,1 @@
-{"schema":2,"origin":"KLU","deals":[{"o":"KLU","d":"PMI","p":107.0,"dep":"2026-09-11","ret":"2026-09-13","dur":260,"km":1226,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"KLU","deals":[{"o":"KLU","d":"PMI","p":107.0,"dep":"2026-09-11","ret":"2026-09-13","dur":260,"km":1226,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

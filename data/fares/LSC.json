@@ -1,1 +1,1 @@
-{"schema":2,"origin":"LSC","deals":[{"o":"LSC","d":"IQQ","p":61.0,"dep":"2026-10-08","ret":"2026-10-19","dur":220,"km":1047,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":11}]}
+{"schema":2,"origin":"LSC","deals":[{"o":"LSC","d":"IQQ","p":61.0,"dep":"2026-10-08","ret":"2026-10-19","dur":220,"km":1047,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":11}]}

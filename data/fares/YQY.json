@@ -1,1 +1,1 @@
-{"schema":2,"origin":"YQY","deals":[{"o":"YQY","d":"YYZ","p":461.0,"dep":"2026-10-21","ret":"2026-10-24","dur":309,"km":1562,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"YQY","deals":[{"o":"YQY","d":"YYZ","p":461.0,"dep":"2026-10-21","ret":"2026-10-24","dur":309,"km":1562,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":3}]}

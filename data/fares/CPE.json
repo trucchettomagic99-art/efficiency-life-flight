@@ -1,1 +1,1 @@
-{"schema":2,"origin":"CPE","deals":[{"o":"CPE","d":"MEX","p":238.0,"dep":"2026-10-18","ret":"2026-10-23","dur":214,"km":898,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":5}]}
+{"schema":2,"origin":"CPE","deals":[{"o":"CPE","d":"MEX","p":238.0,"dep":"2026-10-18","ret":"2026-10-23","dur":214,"km":898,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":5}]}

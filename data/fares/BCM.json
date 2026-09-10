@@ -1,1 +1,1 @@
-{"schema":2,"origin":"BCM","deals":[{"o":"BCM","d":"LTN","p":92.0,"dep":"2026-11-27","ret":"2026-12-01","dur":405,"km":2056,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"BCM","deals":[{"o":"BCM","d":"LTN","p":92.0,"dep":"2026-11-27","ret":"2026-12-01","dur":405,"km":2056,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":4}]}

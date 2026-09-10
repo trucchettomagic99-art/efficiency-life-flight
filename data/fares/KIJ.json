@@ -1,1 +1,1 @@
-{"schema":2,"origin":"KIJ","deals":[{"o":"KIJ","d":"ICN","p":306.0,"dep":"2026-09-21","ret":"2026-09-27","dur":270,"km":1114,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":6}]}
+{"schema":2,"origin":"KIJ","deals":[{"o":"KIJ","d":"ICN","p":306.0,"dep":"2026-09-21","ret":"2026-09-27","dur":270,"km":1114,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":6}]}

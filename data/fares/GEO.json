@@ -1,1 +1,1 @@
-{"schema":2,"origin":"GEO","deals":[{"o":"GEO","d":"BOG","p":369.0,"dep":"2026-10-25","ret":"2026-10-29","dur":365,"km":1770,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"GEO","deals":[{"o":"GEO","d":"BOG","p":369.0,"dep":"2026-10-25","ret":"2026-10-29","dur":365,"km":1770,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":4}]}

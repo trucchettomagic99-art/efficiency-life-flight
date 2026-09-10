@@ -1,1 +1,1 @@
-{"schema":2,"origin":"MFR","deals":[{"o":"MFR","d":"LAX","p":293.0,"dep":"2026-10-12","ret":"2026-10-21","dur":254,"km":1015,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":9}]}
+{"schema":2,"origin":"MFR","deals":[{"o":"MFR","d":"LAX","p":293.0,"dep":"2026-10-12","ret":"2026-10-21","dur":254,"km":1015,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":9}]}

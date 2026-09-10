@@ -1,1 +1,1 @@
-{"schema":2,"origin":"HRI","deals":[{"o":"HRI","d":"MSQ","p":968.0,"dep":"2026-12-29","ret":"2027-01-26","dur":1160,"km":7103,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":28}]}
+{"schema":2,"origin":"HRI","deals":[{"o":"HRI","d":"MSQ","p":968.0,"dep":"2026-12-29","ret":"2027-01-26","dur":1160,"km":7103,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":28}]}

@@ -1,1 +1,1 @@
-{"schema":2,"origin":"STX","deals":[{"o":"STX","d":"SJU","p":210.0,"dep":"2027-01-22","ret":"2027-01-24","dur":90,"km":151,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"STX","deals":[{"o":"STX","d":"SJU","p":210.0,"dep":"2027-01-22","ret":"2027-01-24","dur":90,"km":151,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}

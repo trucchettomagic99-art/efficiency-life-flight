@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TSV","deals":[{"o":"TSV","d":"BNE","p":151.0,"dep":"2026-10-22","ret":"2026-10-27","dur":225,"km":1112,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-09","s":"tp","endpoint":"dates","n":5}]}
+{"schema":2,"origin":"TSV","deals":[{"o":"TSV","d":"BNE","p":151.0,"dep":"2026-10-22","ret":"2026-10-27","dur":225,"km":1112,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":5}]}
