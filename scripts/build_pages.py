@@ -323,6 +323,8 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{SITE}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -453,6 +455,8 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="{esc(meta['locale'])}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(title)}">

@@ -473,6 +473,9 @@ def main() -> int:
 <meta property="og:description" content="{descr}">
 <meta property="og:url" content="{SITE}{percorso}">
 <meta property="og:image" content="{SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Efficiency Life Flight: il conteggio di aeroporti, destinazioni e tariffe verificate, con una tariffa d&#39;esempio in chilometri per euro.">
 <meta property="og:locale" content="it_IT">
 {og_alternates}
 <meta name="twitter:card" content="summary_large_image">
