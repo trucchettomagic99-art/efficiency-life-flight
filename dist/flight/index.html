@@ -552,7 +552,11 @@ section{scroll-margin-top:64px}
 
 .method{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));border-inline-start:1px solid var(--rule)}
 .mcell{border-inline-end:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 20px 24px}
-.mcell h4{font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:9px 0 8px}
+/* h3, non h4: le schede stanno dentro sezioni con un h2, e saltare un livello
+   fa perdere la struttura a chi naviga per intestazioni con un lettore di
+   schermo. L'aspetto non cambia: il peso 700 e' quello che il vecchio h4
+   prendeva per conto suo, mentre gli h3 del sito nascono a 800. */
+.mcell h3{font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:9px 0 8px;font-weight:700}
 .mcell p{margin:0;color:var(--ink-2);font-size:13.5px;line-height:1.6}
 .mcell code{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--signal);
   background:var(--signal-soft);padding:1px 5px;border-radius:2px}
