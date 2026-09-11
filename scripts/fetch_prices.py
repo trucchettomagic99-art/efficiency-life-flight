@@ -21,9 +21,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from flight_data import (SCHEMA, clean_catalog, clean_rows, dump, expand_catalog,
-                         migrate, normalize, places_from, publishable, read,
-                         representatives)
+from flight_data import (SCHEMA, clean_catalog, clean_rows, collapse_city_twins,
+                         dump, expand_catalog, migrate, nome_shard, normalize,
+                         places_from, publishable, read, representatives)
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = 'https://api.travelpayouts.com/'
@@ -174,9 +174,9 @@ def make_snapshot(old, archived, results, places, today):
     fresh = [r for result in results for r in result['rows']]
     rows, issues = clean_rows([*previous, *fresh], places, today)
     public = publishable(rows)
-    reps = representatives(rows)
+    reps = collapse_city_twins(representatives(rows), places)
     prior, _ = clean_rows(previous, places, today)
-    prior_reps = representatives(prior)
+    prior_reps = collapse_city_twins(representatives(prior), places)
     attempted = [r for r in results if r['status'] != 'deferred']
     good = [r for r in attempted if r['status'] in ('ok','partial')]
     fresh_origins = {r['o'] for r in fresh}
@@ -219,10 +219,15 @@ def should_query_origin(origin: str, schedule: dict, today: dt.date, active_in_c
     return (days_since >= 7 and (today.toordinal() + origin_num) % 7 == 0) or days_since >= 12
 
 
-def append_history(data, rows, today):
+def append_history(data, rows, today, places):
+    # `places` serve a non archiviare due volte la stessa tariffa sotto due
+    # aeroporti della stessa citta': lo storico e' la base del "nel 10% piu'
+    # basso degli ultimi 90 giorni", e un prezzo attribuito all'aeroporto
+    # sbagliato falserebbe proprio quella soglia.
     path = data/'history'/f'{today:%Y-%m}.csv'
     lines = path.read_text(encoding='utf-8').splitlines() if path.exists() else []
-    fresh = representatives([r for r in rows if r['obs'] == today.isoformat()])
+    fresh = collapse_city_twins(
+        representatives([r for r in rows if r['obs'] == today.isoformat()]), places)
     keys = {f"{today},{r['o']},{r['d']}" for r in fresh}
     lines = [ln for ln in lines if ','.join(ln.split(',')[:3]) not in keys]
     lines += [f"{today},{r['o']},{r['d']},{r['p']}" for r in fresh]
@@ -328,7 +333,7 @@ def main():
     grouped = {}
     for r in rows: grouped.setdefault(r['o'],[]).append(r)
     for o, fares in grouped.items():
-        dump(stage/'fares'/(o+'.json'), {'schema':SCHEMA,'origin':o,'deals':fares})
+        dump(stage/'fares'/nome_shard(o), {'schema':SCHEMA,'origin':o,'deals':fares})
     dump(stage/'index.json',index)
     target = data/'fares'
     if target.exists(): shutil.rmtree(target)
@@ -336,7 +341,7 @@ def main():
     dump(data/'catalog.json',catalog)
     dump(data/'origins.json',configured)
     os.replace(stage/'index.json',data/'index.json')
-    append_history(data,rows,today)
+    append_history(data,rows,today,index['places'])
     write_airport_module(catalog)
 
     # Update origin schedule for smart night queries

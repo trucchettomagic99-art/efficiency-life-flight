@@ -341,20 +341,33 @@ def main() -> int:
     valuta(dati['deals'], M, storico)
     # All date variants use the same model as route representatives. The
     # browser downloads only the selected origins, never the complete archive.
-    from flight_data import public_rows
+    from flight_data import nome_shard, public_rows
     shard_dir = DIST / 'data' / 'origins'
     shard_dir.mkdir(parents=True, exist_ok=True)
     shards = {}
     for origin in dati.get('shards', {}):
-        source = DATA / 'fares' / (origin + '.json')
-        if not source.is_file():
-            # Support environments (like Windows) where PRN is a reserved device name
+        # In lettura si accettano due nomi: quello nuovo e quello storico. Il
+        # rinominare i device riservati (PRN -> PRN-shard.json) avviene la
+        # prima notte in cui gira fetch_prices; fino ad allora l'archivio sta
+        # ancora sotto il vecchio nome, e una build che non lo trovasse
+        # fallirebbe su un file che esiste. In scrittura invece un nome solo.
+        candidati = [nome_shard(origin)]
+        if f'{origin}.json' not in candidati:
+            candidati.append(f'{origin}.json')
+        source = next((p for p in (DATA / 'fares' / c for c in candidati) if p.is_file()), None)
+        if source is None:
+            # Su Windows PRN.json non e' apribile nemmeno se il checkout lo
+            # contiene: si legge allora direttamente dall'oggetto Git.
             import subprocess
-            try:
-                git_proc = subprocess.run(['git', 'show', f'HEAD:data/fares/{origin}.json'],
-                                          capture_output=True, text=True, encoding='utf-8', check=True)
-                packet = json.loads(git_proc.stdout)
-            except Exception:
+            for nome in candidati:
+                try:
+                    git_proc = subprocess.run(['git', 'show', f'HEAD:data/fares/{nome}'],
+                                              capture_output=True, text=True, encoding='utf-8', check=True)
+                    packet = json.loads(git_proc.stdout)
+                    break
+                except Exception:
+                    continue
+            else:
                 raise ValueError(f'archive missing for {origin}')
         else:
             packet = json.loads(source.read_text(encoding='utf-8'))
@@ -363,9 +376,7 @@ def main() -> int:
         content = json.dumps(packet, separators=(',', ':'), allow_nan=False)
         import hashlib
         version = hashlib.sha256(content.encode()).hexdigest()[:16]
-        filename = f'{origin}.json'
-        if sys.platform.startswith('win') and origin.upper() in ('CON', 'PRN', 'AUX', 'NUL'):
-            filename = f'{origin}-shard.json'
+        filename = nome_shard(origin)
         (shard_dir / filename).write_text(content, encoding='utf-8')
         shards[origin] = f'/data/origins/{filename}?v={version}'
     # Remove old generations from this build. Cached old HTML falls back to

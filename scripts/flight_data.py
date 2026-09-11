@@ -220,6 +220,18 @@ def clean_rows(rows, places, today, observed=None):
             issues[str(e) if isinstance(e, ValueError) else 'malformed_row'] += 1
     return sorted(best.values(), key=key), issues
 
+# Windows non permette file che si chiamino come i suoi device storici, con
+# qualunque estensione: PRN.json e' un nome illegale. PRN e' Pristina, e il
+# file esiste davvero. Finche' il nome dipendeva dal sistema operativo, Linux
+# in CI scriveva PRN.json e Windows PRN-shard.json, e i due si rincorrevano a
+# ogni commit; peggio, un `git checkout` su Windows falliva proprio su quel
+# percorso. Il suffisso ora e' incondizionato: un nome solo, ovunque.
+RISERVATI = {'CON', 'PRN', 'AUX', 'NUL',
+             *(f'COM{n}' for n in range(1, 10)), *(f'LPT{n}' for n in range(1, 10))}
+
+def nome_shard(origin):
+    return f'{origin}-shard.json' if origin.upper() in RISERVATI else f'{origin}.json'
+
 def publishable(rows):
     """Rows safe to influence the public model, history and search results."""
     return [r for r in rows if r.get('quality') != 'low_price_review']
@@ -232,6 +244,51 @@ def representatives(rows):
             best[k] = r
     return sorted(best.values(), key=key)
 
+# Quanto ci fidiamo che il volo sia davvero diretto, e da li' quale riga vince.
+FIDUCIA = {'both_legs': 2, 'provider_aggregate': 1}
+
+def collapse_city_twins(rows, places):
+    """Toglie la stessa tariffa quando il fornitore la attribuisce a due aeroporti.
+
+    L'11 settembre la classifica da Bologna mostrava due volte Bruxelles allo
+    stesso prezzo, con le stesse date e la stessa durata al minuto: una riga
+    verso BRU (Zaventem) e una verso CRL (Charleroi), che distano
+    quarantasei chilometri. Non erano due voli: era **lo stesso volo** visto da
+    due interrogazioni diverse. L'endpoint `latest` restituisce una tariffa per
+    citta' e la attribuisce all'aeroporto principale anche quando il volo parte
+    dal secondario; l'endpoint `dates` restituisce lo stesso volo con
+    l'aeroporto giusto, verificato tratta per tratta.
+
+    Il doppione non e' solo rumore: la riga sbagliata prometteva Zaventem per un
+    volo che atterra a Charleroi. Su 23.190 righe il fenomeno ne toccava 280, in
+    140 coppie — e in tutte e 140 esattamente una portava `both_legs`. Da qui la
+    regola: a parita' di origine, citta' di destinazione, prezzo, date e durata
+    si tiene la riga verificata meglio. Nulla va perso, perche' l'altra diceva
+    lo stesso prezzo per gli stessi giorni.
+
+    Volutamente stretta: serve che coincida *anche* la durata, cosi' due voli
+    davvero distinti per lo stesso giorno restano entrambi.
+    """
+    def citta(iata):
+        p = places.get(iata) or {}
+        return p.get('n') or iata, p.get('k')
+
+    gruppi = {}
+    for r in rows:
+        gruppi.setdefault((r['o'], citta(r['d']), r['p'], r['dep'], r['ret'], r['dur']), []).append(r)
+
+    tenute = []
+    for insieme in gruppi.values():
+        if len(insieme) == 1:
+            tenute.append(insieme[0])
+            continue
+        # piu' verificata; a parita', l'endpoint per date; poi il codice IATA,
+        # perche' due corse sugli stessi dati devono dare lo stesso indice.
+        tenute.append(max(insieme, key=lambda r: (FIDUCIA.get(r.get('direct_check'), 0),
+                                                  r.get('endpoint') == 'dates',
+                                                  r['d'])))
+    return sorted(tenute, key=key)
+
 def public_rows(rows):
     # Keep every distinct valid date pair, except quarantined observations.
     return [{k: r[k] for k in ('o','d','p','dep','ret','dur','km','n','obs','s','x','sc') if k in r}
@@ -243,7 +300,7 @@ def migrate(data, today):
     places = places_from(catalog, old['places'])
     rows, rejected = clean_rows(old['deals'], places, today, old['observed'])
     issues.update(rejected)
-    reps = representatives(rows)
+    reps = collapse_city_twins(representatives(rows), places)
     index = dict(old, places=places, deals=reps, counts=dict(Counter(r['o'] for r in reps)))
     # Cleaning never pretends that old prices have just been observed.
     dump(data / 'catalog.json', catalog)

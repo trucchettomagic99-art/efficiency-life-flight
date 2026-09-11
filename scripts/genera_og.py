@@ -218,9 +218,39 @@ def main() -> int:
         page.screenshot(path=str(USCITA), clip={'x': 0, 'y': 0, 'width': 1200, 'height': 630})
         browser.close()
 
-    print(f"public/og.png · {USCITA.stat().st_size/1024:.0f} KB · esempio reale "
+    prima = USCITA.stat().st_size
+    alleggerisci(USCITA)
+    dopo = USCITA.stat().st_size
+
+    print(f"public/og.png · {dopo/1024:.0f} KB (erano {prima/1024:.0f}) · esempio reale "
           f"{n['ex_da']} → {n['ex_a']} a {n['ex_prezzo']} ({n['ex_kmpe']})")
     return 0
+
+
+def alleggerisci(percorso: pathlib.Path) -> None:
+    """Riduce il PNG a una tavolozza: stesso disegno, poco piu' di un terzo del peso.
+
+    L'immagine si rigenera ogni notte e viene committata, quindi il suo peso si
+    somma per sempre nella storia di Git. Ma e' un disegno piatto: 3.575 colori
+    distinti su 756.000 pixel. Una tavolozza da 256 la porta da 165 KB a 70 —
+    il 58% in meno — senza che si veda la differenza, perche' i colori veri
+    sono molti meno di 256 e le sfumature stanno solo nell'alone dietro il
+    globo.
+
+    E' la risposta giusta al peso: l'alternativa che era stata proposta —
+    togliere la data e rigenerarla una volta al mese — avrebbe fatto
+    ricomparire il difetto che questo script esiste per risolvere, cioe'
+    un'anteprima che mostra numeri e una tariffa che non valgono piu'.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        print('avviso: Pillow assente, immagine lasciata non compressa')
+        return
+    with Image.open(percorso) as im:
+        tavolozza = im.convert('RGB').quantize(colors=256, method=Image.MEDIANCUT,
+                                               dither=Image.FLOYDSTEINBERG)
+    tavolozza.save(percorso, optimize=True)
 
 
 if __name__ == '__main__':
