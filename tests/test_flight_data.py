@@ -8,8 +8,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
-from flight_data import (clean_catalog, clean_rows, normalize, public_rows,
-                         validate, representatives, migrate)
+from flight_data import (clean_catalog, clean_rows, collapse_city_twins, normalize,
+                         public_rows, validate, representatives, migrate)
 from fetch_prices import collect, RateLimiter, make_snapshot, append_history, Client
 
 TODAY = dt.date(2026,9,9)
@@ -112,6 +112,40 @@ class FlightDataTests(unittest.TestCase):
         rows,_=clean_rows([fare(p=20,endpoint='latest'),fare(p=50,endpoint='dates')],PLACES,TODAY)
         self.assertEqual(rows[0]['p'],50)
 
+    # Due aeroporti della stessa citta', stessa tariffa: il fornitore la
+    # attribuisce all'aeroporto principale sull'endpoint `latest` e a quello
+    # vero sull'endpoint `dates`. Si tiene la riga verificata tratta per tratta.
+    DUE_BRUXELLES = {'BLQ':{'n':'Bologna','k':'IT','la':44.5,'lo':11.3},
+                     'BRU':{'n':'Brussels','k':'BE','la':50.5,'lo':4.3},
+                     'CRL':{'n':'Brussels','k':'BE','la':50.3,'lo':4.3}}
+
+    def gemelle(self, **extra):
+        base = dict(o='BLQ', p=59, dep='2026-12-11', ret='2026-12-13', dur=205,
+                    n=2, obs='2026-09-09')
+        return [dict(base, d='BRU', km=835, direct_check='provider_aggregate', endpoint='latest'),
+                dict(base, d='CRL', km=828, direct_check='both_legs', endpoint='dates', **extra)]
+
+    def test_city_twin_keeps_the_verified_airport(self):
+        tenute = collapse_city_twins(self.gemelle(), self.DUE_BRUXELLES)
+        self.assertEqual([r['d'] for r in tenute], ['CRL'])
+
+    def test_city_twin_survives_when_the_flights_really_differ(self):
+        # Stessa citta' e stesso prezzo, ma durata diversa: sono due voli veri.
+        righe = self.gemelle()
+        righe[1]['dur'] = 240
+        self.assertEqual(len(collapse_city_twins(righe, self.DUE_BRUXELLES)), 2)
+
+    def test_different_cities_are_never_collapsed(self):
+        righe = self.gemelle()
+        luoghi = dict(self.DUE_BRUXELLES, CRL={'n':'Charleroi','k':'BE','la':50.3,'lo':4.3})
+        self.assertEqual(len(collapse_city_twins(righe, luoghi)), 2)
+
+    def test_lone_aggregate_row_is_kept(self):
+        # Se la citta' ha una riga sola, anche non verificata, non si butta:
+        # per molte destinazioni e' l'unico dato che abbiamo.
+        sola = [self.gemelle()[0]]
+        self.assertEqual([r['d'] for r in collapse_city_twins(sola, self.DUE_BRUXELLES)], ['BRU'])
+
     def test_weekend_one_night_kept(self):
         self.assertEqual(validate(fare(ret='2026-10-03'),PLACES,TODAY)['n'],1)
 
@@ -168,8 +202,8 @@ class FlightDataTests(unittest.TestCase):
 
     def test_history_once_per_day_and_route_with_decimals(self):
         with tempfile.TemporaryDirectory() as d:
-            append_history(Path(d),[fare(p=40.55),fare(p=60,ret='2026-10-07')],TODAY)
-            append_history(Path(d),[fare(p=45.15)],TODAY)
+            append_history(Path(d),[fare(p=40.55),fare(p=60,ret='2026-10-07')],TODAY,PLACES)
+            append_history(Path(d),[fare(p=45.15)],TODAY,PLACES)
             lines=(Path(d)/'history'/'2026-09.csv').read_text().splitlines()
             self.assertEqual(lines,['2026-09-09,FCO,MAN,45.15'])
 
