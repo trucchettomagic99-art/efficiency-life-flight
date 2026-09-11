@@ -96,7 +96,7 @@ jobs:
       - name: Ridisegna l'anteprima social
         continue-on-error: true
         run: |
-          pip install playwright
+          pip install playwright pillow
           python -m playwright install --with-deps chromium
           python scripts/genera_og.py
 
