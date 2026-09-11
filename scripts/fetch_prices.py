@@ -193,7 +193,10 @@ def make_snapshot(old, archived, results, places, today):
              'sources':{'tp':'travelpayouts/aviasales · observed cache'},
              'places':{k:v for k,v in places.items() if k in used or k in old['places']},
              'deals':reps,'counts':counts,'offer_count':len(public),
-             'shards':{o:f'/data/origins/{o}.json' for o in counts}}
+             # nome_shard anche qui: build.py riscrive comunque questa mappa
+             # con la versione, ma finche' i due file dicevano cose diverse su
+             # PRN restava una trappola per chiunque leggesse data/index.json.
+             'shards':{o:f'/data/origins/{nome_shard(o)}' for o in counts}}
     return index, rows, issues
 
 def should_query_origin(origin: str, schedule: dict, today: dt.date, active_in_counts: bool) -> bool:

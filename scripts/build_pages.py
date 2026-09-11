@@ -384,6 +384,64 @@ def fill(text: str, values: dict[str, object]) -> str:
     return out
 
 
+def pagina_404() -> str:
+    """La pagina per gli indirizzi che non esistono.
+
+    Senza questo file Cloudflare Pages risponde **200 con la home** a
+    qualunque indirizzo inventato: /pagina-che-non-esiste/, /da/zzz/,
+    /flight/qualsiasi-cosa. Per Google e' un "soft 404", e significa che uno
+    spazio infinito di indirizzi falsi restituisce lo stesso contenuto della
+    home — cioe' contenuto duplicato senza fondo, la stessa famiglia di guaio
+    del doppione www che ci e' costato il posizionamento.
+
+    Basta un 404.html nella radice della cartella pubblicata: Pages lo serve
+    con lo stato 404 vero. Resta fuori dalla sitemap e porta `noindex`, perche'
+    la sua unica funzione e' dire "qui non c'e' niente" a chi passa e a chi
+    scansiona. Il motore intanto se ne avvantaggia da solo: quando uno
+    scomparto manca ora riceve un 404 pulito invece di HTML travestito da
+    JSON.
+    """
+    return f"""<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pagina non trovata — Efficiency Life</title>
+<meta name="robots" content="noindex,follow">
+<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>{CSS}
+.e404{{max-width:52ch;margin:0 auto;padding:18vh 20px 10vh;text-align:center}}
+.e404 .cod{{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;letter-spacing:.2em;
+  text-transform:uppercase;color:#2E8DFF}}
+.e404 h1{{margin:14px 0 10px;font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:-.03em}}
+.e404 p{{color:#9EB3CC;line-height:1.6;margin:0 0 26px}}
+.e404 .vie{{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}}
+.e404 .vie a{{display:inline-block;padding:11px 20px;border:1px solid rgba(120,170,235,.36);
+  border-radius:3px;text-decoration:none;color:inherit}}
+.e404 .vie a.primo{{background:#2E8DFF;border-color:#2E8DFF;color:#03070E;font-weight:600}}
+</style>
+</head>
+<body>
+<main class="e404">
+  <div class="cod">Errore 404</div>
+  <h1>Questa pagina non esiste.</h1>
+  <p>L&#8217;indirizzo &egrave; sbagliato, oppure la pagina &egrave; stata
+     tolta. Le tariffe invece ci sono tutte, e si aggiornano ogni notte.</p>
+  <div class="vie">
+    <a class="primo" href="/flight/">Cerca un volo</a>
+    <a href="/">Torna alla home</a>
+  </div>
+</main>
+</body>
+</html>
+"""
+
+
 def alternate_links() -> str:
     rows = [
         f'<link rel="alternate" hreflang="{esc(meta["hreflang"])}" '
@@ -666,6 +724,8 @@ def main() -> int:
             voci.append(f'<nav class="locale-index" aria-label="Language">{lingue}</nav>')
             home.write_text(h.replace('<!--HUB-->', ''.join(voci)), encoding='utf-8')
             print(f'indice nella home: {len(order) * 2} aeroporti + {len(PROSE)} lingue')
+
+    (DIST / '404.html').write_text(pagina_404(), encoding='utf-8')
 
     size = sum(f.stat().st_size for f in DIST.rglob('index.html') if f.parent != DIST)
     print(f'{len(made) + len(locale_made)} pagine ({len(order)} aeroporti × 2 + '
