@@ -341,7 +341,7 @@ def main() -> int:
     valuta(dati['deals'], M, storico)
     # All date variants use the same model as route representatives. The
     # browser downloads only the selected origins, never the complete archive.
-    from flight_data import nome_shard, public_rows
+    from flight_data import collapse_city_twins, nome_shard, public_rows
     shard_dir = DIST / 'data' / 'origins'
     shard_dir.mkdir(parents=True, exist_ok=True)
     shards = {}
@@ -371,6 +371,12 @@ def main() -> int:
                 raise ValueError(f'archive missing for {origin}')
         else:
             packet = json.loads(source.read_text(encoding='utf-8'))
+        # Anche qui, non solo nell'indice: lo scomparto porta tutte le date di
+        # quell'origine, ed e' quello che la pagina scarica quando scegli
+        # l'aeroporto di partenza. Senza questa riga la classifica risultava
+        # pulita ma il doppione ricompariva appena si selezionava l'origine.
+        # Va prima di public_rows, che toglie il campo su cui si decide.
+        packet['deals'] = collapse_city_twins(packet['deals'], dati['places'])
         valuta(packet['deals'], M, storico)
         packet['deals'] = public_rows(packet['deals'])
         content = json.dumps(packet, separators=(',', ':'), allow_nan=False)
