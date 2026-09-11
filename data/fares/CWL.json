@@ -1,1 +1,1 @@
-{"schema":2,"origin":"CWL","deals":[{"o":"CWL","d":"ACE","p":231.0,"dep":"2026-09-10","ret":"2026-09-17","dur":450,"km":2638,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"CWL","deals":[{"o":"CWL","d":"ALC","p":208.0,"dep":"2026-10-21","ret":"2026-10-26","dur":295,"km":1474,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":5}]}

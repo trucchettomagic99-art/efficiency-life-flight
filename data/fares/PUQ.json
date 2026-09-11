@@ -1,1 +1,1 @@
-{"schema":2,"origin":"PUQ","deals":[{"o":"PUQ","d":"SCL","p":154.0,"dep":"2026-12-28","ret":"2027-01-04","dur":491,"km":2180,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"PUQ","deals":[{"o":"PUQ","d":"SCL","p":154.0,"dep":"2026-12-28","ret":"2027-01-04","dur":491,"km":2180,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":7}]}

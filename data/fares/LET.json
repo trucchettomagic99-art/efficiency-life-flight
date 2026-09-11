@@ -1,1 +1,1 @@
-{"schema":2,"origin":"LET","deals":[{"o":"LET","d":"BOG","p":278.0,"dep":"2026-09-22","ret":"2026-09-24","dur":245,"km":1094,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"LET","deals":[{"o":"LET","d":"BOG","p":278.0,"dep":"2026-09-22","ret":"2026-09-24","dur":245,"km":1094,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":2}]}

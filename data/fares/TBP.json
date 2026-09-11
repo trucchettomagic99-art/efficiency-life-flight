@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TBP","deals":[{"o":"TBP","d":"LIM","p":130.0,"dep":"2026-11-05","ret":"2026-11-08","dur":225,"km":1008,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"TBP","deals":[{"o":"TBP","d":"LIM","p":130.0,"dep":"2026-11-05","ret":"2026-11-08","dur":225,"km":1008,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":3}]}

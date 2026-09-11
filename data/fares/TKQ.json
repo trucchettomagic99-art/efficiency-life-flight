@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TKQ","deals":[{"o":"TKQ","d":"DAR","p":384.0,"dep":"2026-09-18","ret":"2026-09-21","dur":280,"km":1077,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"TKQ","deals":[{"o":"TKQ","d":"DAR","p":384.0,"dep":"2026-09-18","ret":"2026-09-21","dur":280,"km":1077,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":3}]}

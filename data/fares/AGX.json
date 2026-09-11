@@ -1,1 +1,1 @@
-{"schema":2,"origin":"AGX","deals":[{"o":"AGX","d":"COK","p":322.0,"dep":"2026-11-05","ret":"2026-11-09","dur":170,"km":468,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"AGX","deals":[{"o":"AGX","d":"COK","p":322.0,"dep":"2026-11-05","ret":"2026-11-09","dur":170,"km":468,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":4}]}

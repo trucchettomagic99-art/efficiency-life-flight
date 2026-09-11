@@ -1,1 +1,1 @@
-{"schema":2,"origin":"VSA","deals":[{"o":"VSA","d":"MEX","p":93.0,"dep":"2026-09-13","ret":"2026-09-21","dur":178,"km":678,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":8}]}
+{"schema":2,"origin":"VSA","deals":[{"o":"VSA","d":"MEX","p":93.0,"dep":"2026-09-13","ret":"2026-09-21","dur":178,"km":678,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":8}]}

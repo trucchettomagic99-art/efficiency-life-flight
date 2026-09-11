@@ -1,1 +1,1 @@
-{"schema":2,"origin":"NLP","deals":[{"o":"NLP","d":"CPT","p":195.0,"dep":"2027-02-25","ret":"2027-03-06","dur":295,"km":1537,"direct_check":"provider_aggregate","found_at":"2026-09-04T12:36:58Z","obs":"2026-09-10","s":"tp","endpoint":"latest","n":9}]}
+{"schema":2,"origin":"NLP","deals":[{"o":"NLP","d":"CPT","p":195.0,"dep":"2027-02-25","ret":"2027-03-06","dur":295,"km":1537,"direct_check":"provider_aggregate","found_at":"2026-09-04T12:36:58Z","obs":"2026-09-11","s":"tp","endpoint":"latest","n":9}]}

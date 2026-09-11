@@ -1,1 +1,1 @@
-{"schema":2,"origin":"SLU","deals":[{"o":"SLU","d":"BGI","p":283.0,"dep":"2026-12-02","ret":"2026-12-05","dur":90,"km":193,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"SLU","deals":[{"o":"SLU","d":"BGI","p":283.0,"dep":"2026-12-02","ret":"2026-12-05","dur":90,"km":193,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":3}]}

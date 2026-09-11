@@ -1,1 +1,1 @@
-{"schema":2,"origin":"YXX","deals":[{"o":"YXX","d":"YXY","p":9.0,"dep":"2026-11-26","ret":"2026-11-30","dur":960,"km":1527,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":4,"quality":"low_price_review"}]}
+{"schema":2,"origin":"YXX","deals":[{"o":"YXX","d":"YXY","p":9.0,"dep":"2026-11-26","ret":"2026-11-30","dur":960,"km":1527,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":4,"quality":"low_price_review"}]}

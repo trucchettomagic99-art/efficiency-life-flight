@@ -1,1 +1,1 @@
-{"schema":2,"origin":"KNU","deals":[{"o":"KNU","d":"BOM","p":140.0,"dep":"2026-09-14","ret":"2026-09-29","dur":265,"km":1122,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":15}]}
+{"schema":2,"origin":"KNU","deals":[{"o":"KNU","d":"BOM","p":140.0,"dep":"2026-09-14","ret":"2026-09-29","dur":265,"km":1122,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":15}]}

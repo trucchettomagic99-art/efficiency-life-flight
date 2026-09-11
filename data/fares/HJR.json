@@ -1,1 +1,1 @@
-{"schema":2,"origin":"HJR","deals":[{"o":"HJR","d":"DEL","p":147.0,"dep":"2027-02-20","ret":"2027-02-22","dur":160,"km":502,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"HJR","deals":[{"o":"HJR","d":"DEL","p":147.0,"dep":"2027-02-20","ret":"2027-02-22","dur":160,"km":502,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":2}]}

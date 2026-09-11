@@ -1,1 +1,1 @@
-{"schema":2,"origin":"GOH","deals":[{"o":"GOH","d":"CPH","p":1683.0,"dep":"2026-09-14","ret":"2026-09-15","dur":580,"km":3541,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-10","s":"tp","endpoint":"dates","n":1}]}
+{"schema":2,"origin":"GOH","deals":[{"o":"GOH","d":"CPH","p":1683.0,"dep":"2026-09-14","ret":"2026-09-15","dur":580,"km":3541,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":1}]}
