@@ -1,1 +1,1 @@
-{"schema":2,"origin":"PNT","deals":[{"o":"PNT","d":"SCL","p":305.0,"dep":"2026-12-31","ret":"2027-01-05","dur":383,"km":2039,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":5}]}
+{"schema":2,"origin":"PNT","deals":[{"o":"PNT","d":"SCL","p":305.0,"dep":"2026-12-31","ret":"2027-01-05","dur":383,"km":2039,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":5}]}

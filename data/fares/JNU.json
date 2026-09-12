@@ -1,1 +1,1 @@
-{"schema":2,"origin":"JNU","deals":[{"o":"JNU","d":"ANC","p":389.0,"dep":"2026-10-01","ret":"2026-10-04","dur":363,"km":915,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"JNU","deals":[{"o":"JNU","d":"ANC","p":389.0,"dep":"2026-10-01","ret":"2026-10-04","dur":363,"km":915,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":3}]}

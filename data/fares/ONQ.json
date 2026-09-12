@@ -1,1 +1,1 @@
-{"schema":2,"origin":"ONQ","deals":[{"o":"ONQ","d":"IST","p":79.0,"dep":"2026-09-25","ret":"2026-09-27","dur":125,"km":281,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"ONQ","deals":[{"o":"ONQ","d":"IST","p":79.0,"dep":"2026-09-25","ret":"2026-09-27","dur":125,"km":281,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":2}]}

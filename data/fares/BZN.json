@@ -1,1 +1,1 @@
-{"schema":2,"origin":"BZN","deals":[{"o":"BZN","d":"SEA","p":347.0,"dep":"2026-09-24","ret":"2026-09-27","dur":221,"km":871,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"BZN","deals":[{"o":"BZN","d":"SEA","p":347.0,"dep":"2026-09-24","ret":"2026-09-27","dur":221,"km":871,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":3}]}

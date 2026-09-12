@@ -1,1 +1,1 @@
-{"schema":2,"origin":"VII","deals":[{"o":"VII","d":"SGN","p":66.0,"dep":"2026-11-20","ret":"2026-11-24","dur":220,"km":883,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"VII","deals":[{"o":"VII","d":"SGN","p":66.0,"dep":"2026-11-20","ret":"2026-11-24","dur":220,"km":883,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":4}]}

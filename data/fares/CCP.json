@@ -1,1 +1,1 @@
-{"schema":2,"origin":"CCP","deals":[{"o":"CCP","d":"SCL","p":53.0,"dep":"2026-12-08","ret":"2026-12-10","dur":140,"km":429,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"CCP","deals":[{"o":"CCP","d":"SCL","p":63.0,"dep":"2026-12-08","ret":"2026-12-10","dur":140,"km":429,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":2}]}

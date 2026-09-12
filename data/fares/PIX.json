@@ -1,1 +1,1 @@
-{"schema":2,"origin":"PIX","deals":[{"o":"PIX","d":"LIS","p":548.0,"dep":"2026-09-12","ret":"2026-09-17","dur":315,"km":1662,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":5}]}
+{"schema":2,"origin":"PIX","deals":[{"o":"PIX","d":"LIS","p":548.0,"dep":"2026-09-12","ret":"2026-09-17","dur":315,"km":1662,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":5}]}

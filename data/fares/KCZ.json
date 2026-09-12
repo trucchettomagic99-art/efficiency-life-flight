@@ -1,1 +1,1 @@
-{"schema":2,"origin":"KCZ","deals":[{"o":"KCZ","d":"NRT","p":204.0,"dep":"2026-09-26","ret":"2026-09-27","dur":195,"km":661,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":1}]}
+{"schema":2,"origin":"KCZ","deals":[{"o":"KCZ","d":"NRT","p":204.0,"dep":"2026-09-26","ret":"2026-09-27","dur":195,"km":661,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":1}]}

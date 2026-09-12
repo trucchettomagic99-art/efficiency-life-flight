@@ -1,1 +1,1 @@
-{"schema":2,"origin":"CIH","deals":[{"o":"CIH","d":"HAK","p":289.0,"dep":"2026-09-30","ret":"2026-10-04","dur":345,"km":1832,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"CIH","deals":[{"o":"CIH","d":"HAK","p":289.0,"dep":"2026-09-30","ret":"2026-10-04","dur":345,"km":1832,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":4}]}

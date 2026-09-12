@@ -1,1 +1,1 @@
-{"schema":2,"origin":"IQQ","deals":[{"o":"IQQ","d":"SCL","p":53.0,"dep":"2026-11-03","ret":"2026-11-05","dur":279,"km":1430,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":2}]}
+{"schema":2,"origin":"IQQ","deals":[{"o":"IQQ","d":"SCL","p":53.0,"dep":"2026-11-03","ret":"2026-11-05","dur":279,"km":1430,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":2}]}

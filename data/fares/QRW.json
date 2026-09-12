@@ -1,1 +1,1 @@
-{"schema":2,"origin":"QRW","deals":[{"o":"QRW","d":"LOS","p":127.0,"dep":"2026-09-22","ret":"2026-09-28","dur":120,"km":297,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-11","s":"tp","endpoint":"dates","n":6}]}
+{"schema":2,"origin":"QRW","deals":[{"o":"QRW","d":"LOS","p":127.0,"dep":"2026-09-22","ret":"2026-09-28","dur":120,"km":297,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":6}]}
