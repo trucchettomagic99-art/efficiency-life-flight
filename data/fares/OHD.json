@@ -1,1 +1,1 @@
-{"schema":2,"origin":"OHD","deals":[{"o":"OHD","d":"DTM","p":49.0,"dep":"2026-11-11","ret":"2026-11-15","dur":310,"km":1524,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"OHD","deals":[{"o":"OHD","d":"DTM","p":49.0,"dep":"2026-11-11","ret":"2026-11-15","dur":310,"km":1524,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":4}]}

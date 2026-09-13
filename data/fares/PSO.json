@@ -1,1 +1,1 @@
-{"schema":2,"origin":"PSO","deals":[{"o":"PSO","d":"CLO","p":167.0,"dep":"2026-10-09","ret":"2026-10-12","dur":120,"km":250,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"PSO","deals":[{"o":"PSO","d":"CLO","p":167.0,"dep":"2026-10-09","ret":"2026-10-12","dur":120,"km":250,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":3}]}

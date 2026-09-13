@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TYD","deals":[{"o":"TYD","d":"BQS","p":162.0,"dep":"2026-10-01","ret":"2026-10-08","dur":190,"km":570,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"TYD","deals":[{"o":"TYD","d":"BQS","p":162.0,"dep":"2026-10-01","ret":"2026-10-08","dur":190,"km":570,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":7}]}

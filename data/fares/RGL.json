@@ -1,1 +1,1 @@
-{"schema":2,"origin":"RGL","deals":[{"o":"RGL","d":"AEP","p":397.0,"dep":"2026-12-28","ret":"2027-01-27","dur":385,"km":2087,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":30}]}
+{"schema":2,"origin":"RGL","deals":[{"o":"RGL","d":"AEP","p":397.0,"dep":"2026-12-28","ret":"2027-01-27","dur":385,"km":2087,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":30}]}

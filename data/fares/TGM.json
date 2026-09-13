@@ -1,1 +1,1 @@
-{"schema":2,"origin":"TGM","deals":[{"o":"TGM","d":"BSL","p":35.0,"dep":"2026-11-02","ret":"2026-11-06","dur":260,"km":1291,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"TGM","deals":[{"o":"TGM","d":"BSL","p":35.0,"dep":"2026-11-02","ret":"2026-11-06","dur":260,"km":1291,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":4}]}

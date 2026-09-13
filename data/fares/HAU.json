@@ -1,1 +1,1 @@
-{"schema":2,"origin":"HAU","deals":[{"o":"HAU","d":"GDN","p":139.0,"dep":"2026-09-19","ret":"2026-10-04","dur":215,"km":974,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":15}]}
+{"schema":2,"origin":"HAU","deals":[{"o":"HAU","d":"GDN","p":139.0,"dep":"2026-09-19","ret":"2026-10-04","dur":215,"km":974,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":15}]}

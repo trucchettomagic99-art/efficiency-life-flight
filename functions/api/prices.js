@@ -10,7 +10,7 @@ import { AIRPORT_CODES } from './_airports.js';
  */
 
 /* === MODELLO GENERATO DA build.py — non modificare a mano === */
-const MODELLO = {"a":0.17608300488736273,"b":0.692985568299592,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[2.816901408450704,65.42857142857143],"minpe":[0.4194260485651214,6.724137931034483],"price":[35.0,1257.0],"deal":[0.2284836651340811,4.0613983182254625]}};
+const MODELLO = {"a":0.16223980036901064,"b":0.6948027547747624,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[2.8074324324324325,65.82608695652173],"minpe":[0.42,6.75],"price":[35.0,1248.0],"deal":[0.22795456508385578,4.078867076942385]}};
 /* === fine modello generato === */
 
 const STAY = [[800,3,4],[2000,5,7],[4000,8,10],[7000,12,14],[1e9,15,21]];

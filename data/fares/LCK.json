@@ -1,1 +1,1 @@
-{"schema":2,"origin":"LCK","deals":[{"o":"LCK","d":"SRQ","p":128.0,"dep":"2026-11-08","ret":"2026-11-12","dur":277,"km":1383,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":4}]}
+{"schema":2,"origin":"LCK","deals":[{"o":"LCK","d":"SRQ","p":128.0,"dep":"2026-11-08","ret":"2026-11-12","dur":277,"km":1383,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":4}]}

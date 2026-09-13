@@ -1,1 +1,1 @@
-{"schema":2,"origin":"KOP","deals":[{"o":"KOP","d":"DMK","p":70.0,"dep":"2026-11-02","ret":"2026-11-05","dur":150,"km":589,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"KOP","deals":[{"o":"KOP","d":"DMK","p":70.0,"dep":"2026-11-02","ret":"2026-11-05","dur":150,"km":589,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":3}]}

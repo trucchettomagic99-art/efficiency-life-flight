@@ -1,1 +1,1 @@
-{"schema":2,"origin":"VIL","deals":[{"o":"VIL","d":"MAD","p":45.0,"dep":"2026-10-19","ret":"2026-11-03","dur":400,"km":2195,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":15}]}
+{"schema":2,"origin":"VIL","deals":[{"o":"VIL","d":"MAD","p":45.0,"dep":"2026-10-19","ret":"2026-11-03","dur":400,"km":2195,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":15}]}

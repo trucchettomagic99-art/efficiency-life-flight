@@ -1,1 +1,1 @@
-{"schema":2,"origin":"VCS","deals":[{"o":"VCS","d":"SGN","p":118.0,"dep":"2027-01-07","ret":"2027-01-14","dur":125,"km":50,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-12","s":"tp","endpoint":"dates","n":7}]}
+{"schema":2,"origin":"VCS","deals":[{"o":"VCS","d":"SGN","p":118.0,"dep":"2027-01-07","ret":"2027-01-14","dur":125,"km":50,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-13","s":"tp","endpoint":"dates","n":7}]}
