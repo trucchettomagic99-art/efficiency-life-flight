@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""Pagine indicizzabili per aeroporto e pagine di ingresso per lingua.
+"""Pagine indicizzabili per aeroporto, directory gerarchica e pagine di ingresso per lingua.
 
-Perche' esistono: il sito e' un'applicazione a pagina singola, e per Google
-una pagina sola vale una porta d'ingresso sola. Queste sono 400 e passa porte:
-leggere (una ventina di KB), statiche, con la classifica gia' scritta nel
-codice HTML invece che costruita dal JavaScript, e ognuna risponde a una
-ricerca diversa — "voli economici da Bergamo", "cheap flights from Manchester".
-
-Da ciascuna si entra nell'applicazione con l'aeroporto gia' impostato.
-
-Le pagine linguistiche aggiungono un ingresso statico localizzato per tutte
-le 36 lingue, con dati reali, canonical e un cluster hreflang completo.
+Genera:
+- 1300 pagine aeroporto (/from/{iata}/ e /da/{iata}/) con related airports contestuali.
+- Directory gerarchica aeroporti (/airports/ e /aeroporti/ con hub continentali).
+- 36 landing statiche per ciascuna lingua (/lang/{path}/).
+- Sitemap con <lastmod> reale basato sulle osservazioni effettive dei prezzi.
+- Indice compatto ed elegante nella homepage con collegamento alla directory.
 
 Gira dopo build.py, dallo stesso indice. Non tocca la rete.
 """
 from __future__ import annotations
-import json, pathlib, sys, datetime, html, importlib.util, shutil
+import json, pathlib, sys, datetime, html, importlib.util, shutil, math
+from collections import defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / 'data'
 DIST = ROOT / 'dist'
 
-# riuso gli interruttori di build.py: un solo posto dove cambiarli
+sys.path.insert(0, str(ROOT / 'scripts'))
+import location_authority as la
+
 spec = importlib.util.spec_from_file_location('b', ROOT / 'scripts' / 'build.py')
 B = importlib.util.module_from_spec(spec); spec.loader.exec_module(B)
 SITE, TP_MARKER, TP_LINK = B.SITE, B.TP_MARKER, B.TP_LINK
@@ -29,31 +28,43 @@ TP_TRS, TP_CAMPAIGN, TP_P_FLIGHT = B.TP_TRS, B.TP_CAMPAIGN, B.TP_P_FLIGHT
 TP_P_ACT, TP_C_ACT, TP_ACT_URL = B.TP_P_ACT, B.TP_C_ACT, B.TP_ACT_URL
 PROSE = B.prose_data()['locales']
 
-MIN_ROUTES_FOR_SEO_PAGE = 6          # sotto questa soglia la pagina sarebbe povera: non la creo
+MIN_ROUTES_FOR_SEO_PAGE = 6
 MIN_ROUTES = MIN_ROUTES_FOR_SEO_PAGE
-TOP        = 12                      # righe in tabella
+TOP = 12
+
+CONTINENT_MAP = {
+    'Europa': {'slug_en': 'europe', 'slug_it': 'europa', 'name_en': 'Europe', 'name_it': 'Europa'},
+    'Nord America': {'slug_en': 'north-america', 'slug_it': 'nord-america', 'name_en': 'North America', 'name_it': 'Nord America'},
+    'America Latina & Caraibi': {'slug_en': 'latin-america', 'slug_it': 'america-latina', 'name_en': 'Latin America & Caribbean', 'name_it': 'America Latina e Caraibi'},
+    'Asia': {'slug_en': 'asia', 'slug_it': 'asia', 'name_en': 'Asia', 'name_it': 'Asia'},
+    'Medio Oriente': {'slug_en': 'middle-east', 'slug_it': 'medio-oriente', 'name_en': 'Middle East', 'name_it': 'Medio Oriente'},
+    'Africa': {'slug_en': 'africa', 'slug_it': 'africa', 'name_en': 'Africa', 'name_it': 'Africa'},
+    'Oceania': {'slug_en': 'oceania', 'slug_it': 'oceania', 'name_en': 'Oceania', 'name_it': 'Oceania'},
+}
+CONTINENT_ORDER = ['Europa', 'Nord America', 'America Latina & Caraibi', 'Asia', 'Medio Oriente', 'Africa', 'Oceania']
 
 L = {
  'it': {
   'dir': 'da',
+  'dir_root': 'aeroporti',
   'title': 'Voli economici da {city} ({iata}) — le destinazioni col miglior rapporto km/€',
   'desc': 'Le {n} migliori destinazioni in partenza da {airport}: voli diretti andata e '
           'ritorno ordinati per chilometri per euro, non per prezzo. Tariffe reali rilevate il {obs}.',
   'h1': 'Voli economici da {city}',
   'kicker': '{iata} · {airport}',
-  'intro': 'Da <b>{airport}</b> l\'indice contiene <b>{n} destinazioni</b> raggiungibili con un volo '
-           'diretto andata e ritorno, in <b>{k} paesi</b>. Qui sotto non sono ordinate per prezzo, ma per '
-           '<b>chilometri per euro</b>: quanta distanza ti porti a casa per ogni euro speso. È un modo '
-           'diverso di scegliere — non parti dalla meta, parti da quanto lontano vuoi andare.',
-  'best': 'La più conveniente è <b>{dest}</b> ({dc}, {country}): {km} km andata e ritorno a '
-          '{price} €, cioè <b>{ratio} km per euro</b>, con partenza il {dep} e rientro il {ret}.',
+  'intro': "Da <b>{airport}</b> l'indice contiene <b>{n} destinazioni</b> raggiungibili con un volo "
+           "diretto andata e ritorno, in <b>{k} paesi</b>. Qui sotto non sono ordinate per prezzo, ma per "
+           "<b>chilometri per euro</b>: quanta distanza ti porti a casa per ogni euro speso. "
+           "È un modo diverso di scegliere: non parti dalla meta, parti da quanto lontano vuoi arrivare.",
+  'best': 'La meta col valore più alto è <b>{dest}</b> ({dc}, {country}): {km} km andata e ritorno a '
+          '{price} €, cioè <b>{ratio} km per ogni euro</b> speso, partendo il {dep} e rientrando il {ret}.',
   'th': ['#', 'Destinazione', 'Paese', 'Date', 'Prezzo A/R', 'Km A/R', 'Km/€', 'Notti', ''],
   'cta': 'Apri il motore con {iata} già impostato',
   'ctaSub': 'Filtri, mappamondo, 36 lingue, 59 valute',
-  'near': 'Altri aeroporti di partenza',
+  'near': 'Aeroporti vicini e correlati',
   'h2': 'Le migliori {t} destinazioni da {iata}',
-  'obs': 'Tariffe rilevate il {obs} · voli diretti andata e ritorno · prezzi indicativi, '
-         'da verificare sul sito dell\'operatore prima di prenotare.',
+  'obs': "Tariffe rilevate il {obs} · voli diretti andata e ritorno · prezzi indicativi, "
+         "da verificare sul sito dell'operatore prima di prenotare.",
   'book': 'Prenota',
   'act': 'Attività',
   'home': 'Efficiency Life Flight',
@@ -62,6 +73,7 @@ L = {
  },
  'en': {
   'dir': 'from',
+  'dir_root': 'airports',
   'title': 'Cheap flights from {city} ({iata}) — best destinations by km per euro',
   'desc': 'The {n} best destinations departing from {airport}: non-stop return flights ranked by '
           'kilometres per euro, not by price. Real fares observed on {obs}.',
@@ -76,7 +88,7 @@ L = {
   'th': ['#', 'Destination', 'Country', 'Dates', 'Return fare', 'Km return', 'Km/€', 'Nights', ''],
   'cta': 'Open the engine with {iata} preset',
   'ctaSub': 'Filters, globe, 36 languages, 59 currencies',
-  'near': 'Other departure airports',
+  'near': 'Nearby and related departure airports',
   'h2': 'The best {t} destinations from {iata}',
   'obs': 'Fares observed on {obs} · non-stop return · indicative prices, confirm on the '
          'operator\'s site before booking.',
@@ -114,8 +126,8 @@ letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--i
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;
 text-transform:uppercase;color:var(--ink-3);margin:0}
 .lbl.sig{color:var(--signal)}
-h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(28px,5vw,52px);
-line-height:1;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
+h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(26px,4.5vw,48px);
+line-height:1.08;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
 h2{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(18px,2.4vw,26px);
 text-transform:uppercase;letter-spacing:-.02em;margin:44px 0 14px}
 header{padding:clamp(28px,5vw,56px) 0 26px;border-bottom:1px solid var(--rule);
@@ -161,15 +173,38 @@ border:1px solid var(--rule-hi);padding:6px 11px;border-radius:2px;color:var(--i
 line-height:1.7;max-width:80ch}
 footer{border-top:1px solid var(--rule);margin-top:48px;padding:26px 0 40px;color:var(--ink-3);font-size:12.5px}
 footer a{color:var(--ink-2)}
-"""
 
+/* Breadcrumbs & Hub Directory styles */
+.crumb{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crumb a{color:var(--ink-2);text-decoration:none}
+.crumb a:hover{color:var(--signal)}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:24px 0}
+.dir-card{border:1px solid var(--rule-hi);border-radius:4px;padding:20px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.dir-card:hover{border-color:var(--signal)}
+.dir-card h3{font-family:Archivo,sans-serif;font-size:18px;margin:0 0 6px;color:var(--ink);text-transform:uppercase}
+.dir-card p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.dir-card .num{font-family:ui-monospace,monospace;font-size:11px;color:var(--signal);display:block;margin-top:10px}
+.country-sec{margin:36px 0}
+.country-sec h3{font-family:Archivo,sans-serif;font-size:18px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:14px;color:var(--ink)}
+.ap-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ap-item{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.ap-item:hover{border-color:var(--signal)}
+.ap-item strong{font-family:ui-monospace,monospace;font-size:13px;color:var(--signal);letter-spacing:.05em}
+.ap-item span{font-size:13px;font-weight:600;color:var(--ink);margin:2px 0}
+.ap-item em{font-style:normal;font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3)}
+.hub-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.hub-cta{font-size:13px;color:var(--signal);text-decoration:none;font-weight:600}
+.hub-cta strong{color:var(--signal-2)}
+.hub-continents,.hub-top{margin:8px 0;font-size:12.5px;line-height:1.8}
+.lbl-s{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);margin-inline-end:8px}
+.hub-pill{display:inline-block;padding:3px 9px;border:1px solid var(--rule-hi);border-radius:2px;font-family:ui-monospace,monospace;font-size:11px;margin:2px 4px 2px 0;text-decoration:none;color:var(--ink-2)}
+.hub-pill:hover{border-color:var(--signal);color:var(--signal)}
+"""
 
 def esc(x) -> str:
     return html.escape(str(x), quote=True)
 
-
 def book_url(o: str, d: str, dep: str, ret: str, cur: str = 'eur') -> str:
-    """Aviasales sulla rotta esatta, dietro il redirect affiliato se configurato."""
     from urllib.parse import quote
     ddmm = lambda s: s[8:10] + s[5:7]
     url = f'https://www.aviasales.com/search/{o}{ddmm(dep)}{d}{ddmm(ret)}1?currency={cur}'
@@ -184,9 +219,7 @@ def book_url(o: str, d: str, dep: str, ret: str, cur: str = 'eur') -> str:
                    .replace('{campaign}', quote(TP_CAMPAIGN))
                    .replace('{url}', quote(url, safe='')))
 
-
 def act_url(city: str) -> str:
-    """Klook sulla citta' di destinazione, dietro il redirect affiliato."""
     from urllib.parse import quote
     if not (TP_MARKER and TP_P_ACT and TP_ACT_URL):
         return ''
@@ -197,12 +230,7 @@ def act_url(city: str) -> str:
                    .replace('{campaign}', quote(TP_C_ACT))
                    .replace('{url}', quote(url, safe='')))
 
-
 def fit_curve(rows):
-    """p ~ a * km^b sull'intero indice, minimi quadrati nei logaritmi con tre
-    passate di sfoltimento robusto (mediana e MAD). E' la stessa curva che usa
-    l'applicazione: le pagine per aeroporto devono dire la stessa cosa."""
-    import math
     pts = [(math.log(r['km']), math.log(r['p'])) for r in rows if r['km'] > 80 and r['p'] > 0]
     if len(pts) < 200:
         return None
@@ -229,26 +257,120 @@ def fit_curve(rows):
         use = nxt
     return (a, b)
 
-
 CURVE = None
-
 
 def deal_badge(r) -> str:
     v = deal_pct(r)
-    return f'<s class="deal">\u2212{v}%</s>' if v and v >= 25 else ''
+    return f'<s class="deal">−{v}%</s>' if v and v >= 25 else ''
+
+def deal_pct(r) -> int:
+    if not CURVE or r['km'] <= 80 or r['p'] <= 0:
+        return 0
+    ref = math.exp(CURVE[0]) * (r['km'] ** CURVE[1])
+    if r['p'] >= ref * 0.95:
+        return 0
+    return round((1 - r['p'] / ref) * 100)
+
+IT_CITY = {
+ 'Rome':'Roma','Milan':'Milano','Venice':'Venezia','Venezia':'Venezia','Florence':'Firenze',
+ 'Naples':'Napoli','Turin':'Torino','Genoa':'Genova','Padua':'Padova','Bolzano':'Bolzano',
+ 'Sevilla':'Siviglia','Seville':'Siviglia','Barcelona':'Barcellona','Lisbon':'Lisbona',
+ 'Athens':'Atene','Rhodes':'Rodi','Corfu':'Corfù','Crete':'Creta','Thessaloniki':'Salonicco',
+ 'Munich':'Monaco di Baviera','Cologne':'Colonia','Frankfurt':'Francoforte','Hamburg':'Amburgo',
+ 'Nuremberg':'Norimberga','Stuttgart':'Stoccarda','Dusseldorf':'Düsseldorf','Vienna':'Vienna',
+ 'Geneva':'Ginevra','Zurich':'Zurigo','Basel':'Basilea','Brussels':'Bruxelles',
+ 'Copenhagen':'Copenaghen','Stockholm':'Stoccolma','Oslo':'Oslo','Helsinki':'Helsinki',
+ 'Warsaw':'Varsavia','Krakow':'Cracovia','Prague':'Praga','Budapest':'Budapest',
+ 'Bucharest':'Bucarest','Sofia':'Sofia','Belgrade':'Belgrado','Zagreb':'Zagabria',
+ 'Dubrovnik':'Ragusa di Dalmazia','Split':'Spalato','Sarajevo':'Sarajevo','Skopje':'Skopje',
+ 'Tirana':'Tirana','London':'Londra','Edinburgh':'Edimburgo','Dublin':'Dublino',
+ 'Paris':'Parigi','Nice':'Nizza','Lyon':'Lione','Marseille':'Marsiglia','Bordeaux':'Bordeaux',
+ 'Toulouse':'Tolosa','Madrid':'Madrid','Malaga':'Malaga','Valencia':'Valencia','Alicante':'Alicante',
+ 'Palma de Mallorca':'Palma di Maiorca','Ibiza':'Ibiza','Porto':'Porto',
+ 'Tokyo':'Tokyo','Kyoto':'Kyoto','Osaka':'Osaka','Beijing':'Pechino','Shanghai':'Shanghai',
+ 'Hong Kong':'Hong Kong','Singapore':'Singapore','Bangkok':'Bangkok','Seoul':'Seul',
+ 'Cairo':'Il Cairo','Marrakesh':'Marrakech','Casablanca':'Casablanca','Tunis':'Tunisi',
+ 'Dubai':'Dubai','Abu Dhabi':'Abu Dhabi','Doha':'Doha','Istanbul':'Istanbul',
+ 'New York':'New York','Los Angeles':'Los Angeles','Chicago':'Chicago','San Francisco':'San Francisco',
+ 'Miami':'Miami','Boston':'Boston','Washington':'Washington','Toronto':'Toronto','Montreal':'Montréal',
+ 'Mexico City':'Città del Messico','Buenos Aires':'Buenos Aires','Rio de Janeiro':'Rio de Janeiro',
+ 'Sao Paulo':'San Paolo','Sydney':'Sydney','Melbourne':'Melbourne','Auckland':'Auckland',
+}
+
+def cityname(name, lang):
+    return IT_CITY.get(name, name) if lang == 'it' else name
+
+COUNTRY: dict[str, str] = {}
+COUNTRY_EN: dict[str, str] = {}
 
 
-def deal_pct(r):
-    """Quanto la tariffa sta sotto il prezzo atteso per la sua distanza, in
-    percento. Vuoto se la curva non e' stimabile."""
-    import math
-    if not CURVE or r['km'] <= 0:
-        return None
-    exp = math.exp(CURVE[0] + CURVE[1] * math.log(r['km']))
-    return round((1 - r['p'] / exp) * 100)
+def compute_related_airports(good: dict, AP: dict, cat: dict, target_count: int = 12) -> dict[str, list[dict]]:
+    def haversine(lat1, lon1, lat2, lon2):
+        R = 6371
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
+        return 2 * R * math.asin(math.sqrt(a))
+
+    c_meta = {c['k']: c for c in cat['countries']}
+    related_codes = {}
+
+    for o in good:
+        src = AP[o]
+        lat1, lon1 = src['la'], src['lo']
+        country = src['k']
+        region = c_meta.get(country, {}).get('g', '')
+
+        twins = []
+        canonical_city = la.canonical_city_code(o)
+        if canonical_city in la.CITY_TO_COMMERCIAL_AIRPORTS:
+            for ap in la.CITY_TO_COMMERCIAL_AIRPORTS[canonical_city]:
+                if ap != o and ap in good:
+                    twins.append(ap)
+
+        candidates = []
+        for other in good:
+            if other == o or other in twins:
+                continue
+            d = haversine(lat1, lon1, AP[other]['la'], AP[other]['lo'])
+            is_same_c = (AP[other]['k'] == country)
+            is_same_r = (c_meta.get(AP[other]['k'], {}).get('g', '') == region)
+            tier = 0 if is_same_c else (1 if is_same_r else 2)
+            if d < 300:
+                tier = 0
+            candidates.append((tier, d, -len(good[other]), other))
+        candidates.sort()
+
+        res = list(twins)
+        for _, _, _, other in candidates:
+            if len(res) >= target_count:
+                break
+            res.append(other)
+        related_codes[o] = res[:target_count]
+
+    # Two-way reinforcement for under-linked airports (<4 inlinks)
+    inlinks = defaultdict(set)
+    for o, targets in related_codes.items():
+        for t in targets:
+            inlinks[t].add(o)
+
+    for o in good:
+        if len(inlinks[o]) < 4:
+            neighbors = sorted(
+                good.keys(),
+                key=lambda x: haversine(AP[o]['la'], AP[o]['lo'], AP[x]['la'], AP[x]['lo']) if x != o else 99999
+            )
+            for n in neighbors[:10]:
+                if o not in related_codes[n] and len(related_codes[n]) < 16:
+                    related_codes[n].append(o)
+                    inlinks[o].add(n)
+                if len(inlinks[o]) >= 4:
+                    break
+
+    return {o: [AP[x] for x in related_codes[o]] for o in good}
 
 
-def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) -> str:
+def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, reg_key: str = 'Europa') -> str:
     t = L[lang]
     other = 'en' if lang == 'it' else 'it'
     city = cityname(ap['c'], lang)
@@ -267,9 +389,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
         return d.strftime('%d %b %Y') if d.year != now_year else d.strftime('%d %b')
 
     title = t['title'].format(**fmt)
-    desc  = t['desc'].format(**fmt)
-    url   = f"{SITE}/{t['dir']}/{iata.lower()}/"
-    alt   = f"{SITE}/{L[other]['dir']}/{iata.lower()}/"
+    desc = t['desc'].format(**fmt)
+    url = f"{SITE}/{t['dir']}/{iata.lower()}/"
+    alt = f"{SITE}/{L[other]['dir']}/{iata.lower()}/"
 
     body = []
     for i, r in enumerate(rows[:TOP], 1):
@@ -303,6 +425,20 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
         f'<a href="{SITE}/{t["dir"]}/{o["i"].lower()}/">{o["i"]} · {esc(cityname(o["c"], lang))}</a>'
         for o in others)
 
+    dir_root = t['dir_root']
+    cont_meta = CONTINENT_MAP.get(reg_key, CONTINENT_MAP['Europa'])
+    cont_slug = cont_meta['slug_' + lang]
+    cont_name = cont_meta['name_' + lang]
+
+    breadcrumb = (
+        f'<div class="crumb">'
+        f'<a href="{SITE}/">Home</a> &rsaquo; '
+        f'<a href="{SITE}/{dir_root}/">{"Directory" if lang == "it" else "Airports"}</a> &rsaquo; '
+        f'<a href="{SITE}/{dir_root}/{cont_slug}/">{esc(cont_name)}</a> &rsaquo; '
+        f'<span>{iata}</span>'
+        f'</div>'
+    )
+
     return f"""<!doctype html>
 <html lang="{lang}">
 <head>
@@ -328,7 +464,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 <meta property="og:image" content="{SITE}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Efficiency Life Flight: il conteggio di aeroporti, destinazioni e tariffe verificate, con una tariffa d&#39;esempio in chilometri per euro.">
+<meta property="og:image:alt" content="Efficiency Life Flight: tariffe verificate in km per euro.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{SITE}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -348,6 +484,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 </div></div>
 
 <header><div class="wrap">
+  {breadcrumb}
   <p class="lbl sig">{esc(t['kicker'].format(**fmt))}</p>
   <h1>{esc(t['h1'].format(**fmt))}</h1>
   <p class="intro">{t['intro'].format(**fmt)}</p>
@@ -371,7 +508,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 </main>
 
 <footer><div class="wrap">
-  <a href="{SITE}/flight/">{esc(t['back'])}</a> · Travelpayouts / Aviasales · OurAirports
+  <a href="{SITE}/flight/">{esc(t['back'])}</a> · <a href="{SITE}/{dir_root}/">{"Tutti gli aeroporti" if lang == "it" else "All airports"}</a> · Travelpayouts / Aviasales · OurAirports
   · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
 </div></footer>
 </body>
@@ -379,94 +516,206 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 """
 
 
-def fill(text: str, values: dict[str, object]) -> str:
-    """Sostituisce solo i segnaposto noti, lasciando intatto l'HTML tradotto."""
-    out = text
-    for key, value in values.items():
-        out = out.replace('{' + key + '}', esc(value))
-    return out
+def directory_index_page(lang: str, region_airports: dict, total_airports: int, total_countries: int, obs: str) -> str:
+    other = 'en' if lang == 'it' else 'it'
+    dir_root = 'aeroporti' if lang == 'it' else 'airports'
+    other_dir_root = 'airports' if lang == 'it' else 'aeroporti'
+    url = f"{SITE}/{dir_root}/"
+    alt = f"{SITE}/{other_dir_root}/"
 
+    title = ('Directory Aeroporti — Tutti i {n} aeroporti per continente e paese' if lang == 'it'
+             else 'Airport Directory — All {n} departure airports by continent and country').format(n=total_airports)
+    desc = ('Indice completo di tutti i {n} aeroporti di partenza in {k} paesi. '
+            'Voli diretti andata e ritorno ordinati per chilometri per euro.').format(n=total_airports, k=total_countries)
 
-def pagina_404() -> str:
-    """La pagina per gli indirizzi che non esistono.
+    cards = []
+    for reg_key in CONTINENT_ORDER:
+        if reg_key not in region_airports:
+            continue
+        meta = CONTINENT_MAP[reg_key]
+        slug = meta['slug_' + lang]
+        name = meta['name_' + lang]
+        aps = region_airports[reg_key]
+        num_aps = len(aps)
+        countries = len({a['k'] for a in aps})
+        cards.append(
+            f'<a class="dir-card" href="{SITE}/{dir_root}/{slug}/">'
+            f'<h3>{esc(name)}</h3>'
+            f'<p>{"Esplora rotte e offerte dirette da" if lang == "it" else "Explore non-stop routes and deals from"} '
+            f'<b>{num_aps}</b> {"aeroporti in" if lang == "it" else "airports across"} <b>{countries}</b> {"paesi" if lang == "it" else "countries"}.</p>'
+            f'<span class="num">{"Vedi aeroporti in" if lang == "it" else "View airports in"} {esc(name)} &rarr;</span>'
+            f'</a>'
+        )
 
-    Senza questo file Cloudflare Pages risponde **200 con la home** a
-    qualunque indirizzo inventato: /pagina-che-non-esiste/, /da/zzz/,
-    /flight/qualsiasi-cosa. Per Google e' un "soft 404", e significa che uno
-    spazio infinito di indirizzi falsi restituisce lo stesso contenuto della
-    home — cioe' contenuto duplicato senza fondo, la stessa famiglia di guaio
-    del doppione www che ci e' costato il posizionamento.
-
-    Basta un 404.html nella radice della cartella pubblicata: Pages lo serve
-    con lo stato 404 vero. Resta fuori dalla sitemap e porta `noindex`, perche'
-    la sua unica funzione e' dire "qui non c'e' niente" a chi passa e a chi
-    scansiona. Il motore intanto se ne avvantaggia da solo: quando uno
-    scomparto manca ora riceve un 404 pulito invece di HTML travestito da
-    JSON.
-    """
     return f"""<!doctype html>
-<html lang="it">
+<html lang="{lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pagina non trovata — Efficiency Life</title>
-<meta name="robots" content="noindex,follow">
-<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="dark light">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="canonical" href="{url}">
+<link rel="alternate" hreflang="{lang}" href="{url}">
+<link rel="alternate" hreflang="{other}" href="{alt}">
+<link rel="alternate" hreflang="x-default" href="{SITE}/airports/">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>{CSS}
-.e404{{max-width:52ch;margin:0 auto;padding:18vh 20px 10vh;text-align:center}}
-.e404 .cod{{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;letter-spacing:.2em;
-  text-transform:uppercase;color:#2E8DFF}}
-.e404 h1{{margin:14px 0 10px;font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:-.03em}}
-.e404 p{{color:#9EB3CC;line-height:1.6;margin:0 0 26px}}
-.e404 .vie{{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}}
-.e404 .vie a{{display:inline-block;padding:11px 20px;border:1px solid rgba(120,170,235,.36);
-  border-radius:3px;text-decoration:none;color:inherit}}
-.e404 .vie a.primo{{background:#2E8DFF;border-color:#2E8DFF;color:#03070E;font-weight:600}}
-</style>
+<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>{CSS}</style>
 </head>
 <body>
-<main class="e404">
-  <div class="cod">Errore 404</div>
-  <h1>Questa pagina non esiste.</h1>
-  <p>L&#8217;indirizzo &egrave; sbagliato, oppure la pagina &egrave; stata
-     tolta. Le tariffe invece ci sono tutte, e si aggiornano ogni notte.</p>
-  <div class="vie">
-    <a class="primo" href="/flight/">Cerca un volo</a>
-    <a href="/">Torna alla home</a>
-  </div>
+<div class="rail"><div class="wrap">
+  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="alt" href="{alt}">{'English' if lang == 'it' else 'Italiano'}</a>
+</div></div>
+
+<header><div class="wrap">
+  <p class="lbl sig">EFFICIENCY LIFE · DIRECTORY</p>
+  <h1>{'Directory Aeroporti' if lang == 'it' else 'Airport Directory'}</h1>
+  <p class="intro">{esc(desc)}</p>
+</div></header>
+
+<main class="wrap">
+  <h2>{'Scegli per Continente' if lang == 'it' else 'Browse by Continent'}</h2>
+  <div class="dir-grid">{''.join(cards)}</div>
 </main>
+
+<footer><div class="wrap">
+  <a href="{SITE}/flight/">{'Motore di ricerca voli' if lang == 'it' else 'Flight search engine'}</a> · Travelpayouts / Aviasales · OurAirports
+  · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
+</div></footer>
 </body>
 </html>
 """
 
 
-def alternate_links() -> str:
-    rows = [
-        f'<link rel="alternate" hreflang="{esc(meta["hreflang"])}" '
-        f'href="{SITE}/lang/{esc(meta["path"])}/">'
-        for meta in PROSE.values()
-    ]
-    rows.append(f'<link rel="alternate" hreflang="x-default" href="{SITE}/">')
-    return '\n'.join(rows)
+def continent_directory_page(lang: str, reg_key: str, airports_in_reg: list[dict], AP: dict, good: dict, cat: dict, obs: str) -> str:
+    other = 'en' if lang == 'it' else 'it'
+    dir_root = 'aeroporti' if lang == 'it' else 'airports'
+    other_dir_root = 'airports' if lang == 'it' else 'aeroporti'
+
+    meta = CONTINENT_MAP[reg_key]
+    slug = meta['slug_' + lang]
+    other_slug = meta['slug_' + other]
+    name = meta['name_' + lang]
+
+    url = f"{SITE}/{dir_root}/{slug}/"
+    alt = f"{SITE}/{other_dir_root}/{other_slug}/"
+
+    title = ('Aeroporti in {name} — Voli diretti e migliori destinazioni' if lang == 'it'
+             else 'Airports in {name} — Non-stop flights and best destinations').format(name=name)
+    desc = ('Elenco dei {n} aeroporti in {name} con rotte dirette andata e ritorno '
+            'ordinate per chilometri per euro.').format(n=len(airports_in_reg), name=name)
+
+    # Group airports by country
+    c_meta = {c['k']: c for c in cat['countries']}
+    by_country = defaultdict(list)
+    for a in airports_in_reg:
+        by_country[a['k']].append(a)
+
+    # Sort countries by localized name
+    def get_cname(c_code):
+        c_info = c_meta.get(c_code, {})
+        return c_info.get(lang) or c_info.get('en') or c_code
+
+    sorted_countries = sorted(by_country.keys(), key=lambda c: get_cname(c))
+
+    sections = []
+    for c_code in sorted_countries:
+        c_name = get_cname(c_code)
+        c_aps = sorted(by_country[c_code], key=lambda a: -len(good[a['i']]))
+        ap_links = []
+        for a in c_aps:
+            iata = a['i']
+            routes = len(good[iata])
+            city = cityname(a['c'], lang)
+            dest_page = f"{SITE}/{L[lang]['dir']}/{iata.lower()}/"
+            ap_links.append(
+                f'<a class="ap-item" href="{dest_page}">'
+                f'<strong>{iata}</strong>'
+                f'<span>{esc(city)} · {esc(a["n"])}</span>'
+                f'<em>{routes} {"destinazioni dirette" if lang == "it" else "non-stop destinations"}</em>'
+                f'</a>'
+            )
+        sections.append(
+            f'<div class="country-sec">'
+            f'<h3>{esc(c_name)} ({len(c_aps)})</h3>'
+            f'<div class="ap-list">{"".join(ap_links)}</div>'
+            f'</div>'
+        )
+
+    breadcrumb = (
+        f'<div class="crumb">'
+        f'<a href="{SITE}/">Home</a> &rsaquo; '
+        f'<a href="{SITE}/{dir_root}/">{"Directory" if lang == "it" else "Airports"}</a> &rsaquo; '
+        f'<span>{esc(name)}</span>'
+        f'</div>'
+    )
+
+    return f"""<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="canonical" href="{url}">
+<link rel="alternate" hreflang="{lang}" href="{url}">
+<link rel="alternate" hreflang="{other}" href="{alt}">
+<link rel="alternate" hreflang="x-default" href="{SITE}/airports/{meta['slug_en']}/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>{CSS}</style>
+</head>
+<body>
+<div class="rail"><div class="wrap">
+  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="alt" href="{alt}">{'English' if lang == 'it' else 'Italiano'}</a>
+</div></div>
+
+<header><div class="wrap">
+  {breadcrumb}
+  <p class="lbl sig">EFFICIENCY LIFE · {esc(name.upper())}</p>
+  <h1>{esc(title)}</h1>
+  <p class="intro">{esc(desc)}</p>
+</div></header>
+
+<main class="wrap">
+  {''.join(sections)}
+</main>
+
+<footer><div class="wrap">
+  <a href="{SITE}/flight/">{'Motore di ricerca' if lang == 'it' else 'Flight search engine'}</a> · <a href="{SITE}/{dir_root}/">{"Tutti i continenti" if lang == "it" else "All continents"}</a> · Travelpayouts / Aviasales · OurAirports
+  · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
+</div></footer>
+</body>
+</html>
+"""
 
 
-def locale_page(code: str, rows: list, places: dict, airports: dict,
-                obs: str, fare_count: int, origin_count: int, dest_count: int) -> str:
-    """Landing leggera e indicizzabile per una delle lingue dell'app."""
+def locale_page(code: str, rows: list, places: dict, airports: dict, obs: str,
+                tot_deals: int, tot_origins: int, tot_dests: int) -> str:
     meta = PROSE[code]
     title = meta['seo']['title']
     desc = meta['seo']['description']
-    url = f'{SITE}/lang/{meta["path"]}/'
-    values = {
-        'fareCount': fare_count, 'originCount': origin_count, 'destCount': dest_count,
-        'languageCount': len(PROSE), 'currencyCount': 59, 'observed': obs,
-        'fxDate': B.fx_date(),
-    }
+    url = f"{SITE}/lang/{meta['path']}/"
+    values = dict(
+        deals=f"{tot_deals:,}".replace(',', ' '), origins=f"{tot_origins:,}".replace(',', ' '),
+        destinations=f"{tot_dests:,}".replace(',', ' '), updateDate=obs,
+    )
     summary = fill(meta['indexNote'], values)
     warning = fill(meta['privacy'][3][1], values)
     cards = ''.join(
@@ -546,7 +795,7 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
     <thead><tr><th>#</th><th>IATA</th><th class="n">€</th><th class="n">KM ↔</th><th class="n">KM/€</th></tr></thead>
     <tbody>{''.join(body)}</tbody>
   </table></div>
-  <a class="go" href="{SITE}/flight/#l={code}"><b>Efficiency Life Flight →</b></a>
+  <a class="go" href="{SITE}/flight/#l={code}"><b>Efficiency Life Flight &rarr;</b></a>
   {cards}
   <p class="note">{warning}</p>
   <nav class="near" aria-label="Language">{language_nav}</nav>
@@ -557,61 +806,63 @@ def locale_page(code: str, rows: list, places: dict, airports: dict,
 """
 
 
-
-# Le citta' nel catalogo sono in inglese. Per le pagine italiane conta:
-# nessuno cerca "voli economici da Rome". Copro l'Italia per intero e le mete
-# che in italiano hanno un nome proprio; per le altre l'inglese va benissimo.
-IT_CITY = {
- 'Rome':'Roma','Milan':'Milano','Venice':'Venezia','Venezia':'Venezia','Florence':'Firenze',
- 'Naples':'Napoli','Turin':'Torino','Genoa':'Genova','Padua':'Padova','Bolzano':'Bolzano',
- 'Sevilla':'Siviglia','Seville':'Siviglia','Barcelona':'Barcellona','Lisbon':'Lisbona',
- 'Athens':'Atene','Rhodes':'Rodi','Corfu':'Corfù','Crete':'Creta','Thessaloniki':'Salonicco',
- 'Munich':'Monaco di Baviera','Cologne':'Colonia','Frankfurt':'Francoforte','Hamburg':'Amburgo',
- 'Nuremberg':'Norimberga','Stuttgart':'Stoccarda','Dusseldorf':'Düsseldorf','Vienna':'Vienna',
- 'Prague':'Praga','Krakow':'Cracovia','Warsaw':'Varsavia','Wroclaw':'Breslavia',
- 'Bucharest':'Bucarest','Sofia':'Sofia','Istanbul':'Istanbul','Ankara':'Ankara',
- 'Zurich':'Zurigo','Geneva':'Ginevra','Basel':'Basilea','Berne':'Berna',
- 'Copenhagen':'Copenaghen','Stockholm':'Stoccolma','Gothenburg':'Göteborg','Oslo':'Oslo',
- 'Helsinki':'Helsinki','Reykjavik':'Reykjavík','Dublin':'Dublino','Cork':'Cork',
- 'Edinburgh':'Edimburgo','London':'Londra','Birmingham':'Birmingham','Glasgow':'Glasgow',
- 'Paris':'Parigi','Nice':'Nizza','Marseille':'Marsiglia','Lyon':'Lione','Toulouse':'Tolosa',
- 'Bordeaux':'Bordeaux','Strasbourg':'Strasburgo','Brussels':'Bruxelles','Antwerp':'Anversa',
- 'Amsterdam':'Amsterdam','Eindhoven':'Eindhoven','Luxembourg':'Lussemburgo',
- 'Tirana':'Tirana','Belgrade':'Belgrado','Zagreb':'Zagabria','Split':'Spalato',
- 'Dubrovnik':'Ragusa di Dalmazia','Sarajevo':'Sarajevo','Skopje':'Skopje','Podgorica':'Podgorica',
- 'Ljubljana':'Lubiana','Bratislava':'Bratislava','Budapest':'Budapest','Kiev':'Kiev','Kyiv':'Kiev',
- 'Moscow':'Mosca','Saint Petersburg':'San Pietroburgo','Riga':'Riga','Vilnius':'Vilnius',
- 'Tallinn':'Tallinn','Minsk':'Minsk','Chisinau':'Chișinău','Yerevan':'Erevan','Tbilisi':'Tbilisi',
- 'Baku':'Baku','Malta':'Malta','Valletta':'La Valletta','Larnaca':'Larnaca','Paphos':'Pafo',
- 'Nicosia':'Nicosia','Tenerife':'Tenerife','Gran Canaria':'Gran Canaria','Mallorca':'Maiorca',
- 'Palma de Mallorca':'Palma di Maiorca','Palma':'Palma di Maiorca','Ibiza':'Ibiza',
- 'Malaga':'Malaga','Madrid':'Madrid','Valencia':'Valencia','Alicante':'Alicante','Bilbao':'Bilbao',
- 'Porto':'Porto','Faro':'Faro','Funchal':'Funchal','Azores':'Azzorre',
- 'Cairo':'Il Cairo','Marrakesh':'Marrakech','Marrakech':'Marrakech','Casablanca':'Casablanca',
- 'Tangier':'Tangeri','Tunis':'Tunisi','Algiers':'Algeri','Sharm el Sheikh':'Sharm el Sheikh',
- 'Hurghada':'Hurghada','Tel Aviv':'Tel Aviv','Amman':'Amman','Dubai':'Dubai',
- 'Abu Dhabi':'Abu Dhabi','Doha':'Doha','Riyadh':'Riad','Jeddah':'Gedda','Muscat':'Mascate',
- 'New York':'New York','Chicago':'Chicago','Los Angeles':'Los Angeles','Miami':'Miami',
- 'Boston':'Boston','Washington':'Washington','San Francisco':'San Francisco',
- 'Toronto':'Toronto','Montreal':'Montréal','Mexico City':'Città del Messico','Havana':'L\'Avana',
- 'Sao Paulo':'San Paolo','Rio de Janeiro':'Rio de Janeiro','Buenos Aires':'Buenos Aires',
- 'Lima':'Lima','Bogota':'Bogotà','Santiago':'Santiago del Cile',
- 'Tokyo':'Tokyo','Osaka':'Osaka','Seoul':'Seul','Beijing':'Pechino','Shanghai':'Shanghai',
- 'Guangzhou':'Canton','Hong Kong':'Hong Kong','Taipei':'Taipei','Bangkok':'Bangkok',
- 'Singapore':'Singapore','Kuala Lumpur':'Kuala Lumpur','Jakarta':'Giacarta','Bali':'Bali',
- 'Denpasar':'Bali','Manila':'Manila','Hanoi':'Hanoi','Ho Chi Minh City':'Ho Chi Minh',
- 'New Delhi':'Nuova Delhi','Delhi':'Nuova Delhi','Mumbai':'Mumbai','Bengaluru':'Bangalore',
- 'Sydney':'Sydney','Melbourne':'Melbourne','Auckland':'Auckland','Perth':'Perth',
- 'Johannesburg':'Johannesburg','Cape Town':'Città del Capo','Nairobi':'Nairobi',
- 'Addis Ababa':'Addis Abeba','Mauritius':'Maurizio','Seychelles':'Seychelles',
- 'Dakar':'Dakar','Accra':'Accra','Lagos':'Lagos','Abidjan':'Abidjan','Bamako':'Bamako',
-}
-def cityname(name, lang):
-    return IT_CITY.get(name, name) if lang == 'it' else name
+def fill(text: str, values: dict[str, object]) -> str:
+    out = text
+    for key, value in values.items():
+        out = out.replace('{' + key + '}', esc(value))
+    return out
 
 
-COUNTRY: dict[str, str] = {}
-COUNTRY_EN: dict[str, str] = {}
+def pagina_404() -> str:
+    return f"""<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pagina non trovata — Efficiency Life</title>
+<meta name="robots" content="noindex,follow">
+<meta name="theme-color" content="#03070E" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>{CSS}
+.e404{{max-width:52ch;margin:0 auto;padding:18vh 20px 10vh;text-align:center}}
+.e404 .cod{{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;letter-spacing:.2em;
+  text-transform:uppercase;color:#2E8DFF}}
+.e404 h1{{margin:14px 0 10px;font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:-.03em}}
+.e404 p{{color:#9EB3CC;line-height:1.6;margin:0 0 26px}}
+.e404 .vie{{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}}
+.e404 .vie a{{display:inline-block;padding:11px 20px;border:1px solid rgba(120,170,235,.36);
+  border-radius:3px;text-decoration:none;color:inherit}}
+.e404 .vie a.primo{{background:#2E8DFF;border-color:#2E8DFF;color:#03070E;font-weight:600}}
+</style>
+</head>
+<body>
+<main class="e404">
+  <div class="cod">Errore 404</div>
+  <h1>Questa pagina non esiste.</h1>
+  <p>L&#8217;indirizzo &egrave; sbagliato, oppure la pagina &egrave; stata
+     tolta. Le tariffe invece ci sono tutte, e si aggiornano ogni notte.</p>
+  <div class="vie">
+    <a class="primo" href="/flight/">Cerca un volo</a>
+    <a href="/">Torna alla home</a>
+  </div>
+</main>
+</body>
+</html>
+"""
+
+
+def alternate_links() -> str:
+    rows = [
+        f'<link rel="alternate" hreflang="{esc(meta["hreflang"])}" '
+        f'href="{SITE}/lang/{esc(meta["path"])}/">'
+        for meta in PROSE.values()
+    ]
+    rows.append(f'<link rel="alternate" hreflang="x-default" href="{SITE}/">')
+    return chr(10).join(rows)
 
 
 def main() -> int:
@@ -640,28 +891,80 @@ def main() -> int:
         print('nessun aeroporto con abbastanza rotte: non genero pagine', file=sys.stderr)
         return 1
 
-    # Retire generated airport pages that no longer pass the coverage gate.
+    # Retire stale airport pages
     for folder in ('da', 'from'):
         for stale in (DIST / folder).glob('*/index.html'):
             if stale.parent.name.upper() not in good:
                 stale.unlink()
 
+    # 1. Calcola collegamenti interni contestuali e realistici
+    c_meta = {c['k']: c for c in cat['countries']}
+    related_map = compute_related_airports(good, AP, cat, target_count=12)
+
+    # Continent buckets
+    region_airports = defaultdict(list)
+    for o in good:
+        c_code = AP[o]['k']
+        reg = c_meta.get(c_code, {}).get('g', 'Europa')
+        if reg not in CONTINENT_MAP:
+            reg = 'Europa'
+        region_airports[reg].append(AP[o])
+
     order = sorted(good, key=lambda o: -len(good[o]))
     made = []
+    origin_lastmod = {}
+
     for o in order:
-        # collegamenti interni: i dodici scali piu' ricchi, escluso se stesso.
-        # Servono a Google per scoprire tutte le pagine senza sitemap.
-        others = [AP[x] for x in order if x != o][:12]
+        others = related_map[o]
+        c_code = AP[o]['k']
+        reg_key = c_meta.get(c_code, {}).get('g', 'Europa')
+        if reg_key not in CONTINENT_MAP:
+            reg_key = 'Europa'
+
+        # Real lastmod for origin
+        origin_lastmod[o] = max(r.get('obs', obs) for r in good[o])
+
         for lang in ('it', 'en'):
             d = DIST / L[lang]['dir'] / o.lower()
             d.mkdir(parents=True, exist_ok=True)
-            (d / 'index.html').write_text(page(lang, AP[o], good[o], places, obs, others), encoding='utf-8')
+            (d / 'index.html').write_text(
+                page(lang, AP[o], good[o], places, obs, others, reg_key=reg_key),
+                encoding='utf-8'
+            )
             made.append(f"/{L[lang]['dir']}/{o.lower()}/")
 
-    # Una landing statica per ciascuna lingua dell'app. Non moltiplico ogni
-    # pagina aeroporto per 36 (creerebbe migliaia di duplicati): queste pagine
-    # danno a ogni lingua un URL canonico, contenuto reale, hreflang e una
-    # porta d'ingresso indicizzabile verso il motore interattivo.
+    # 2. Directory Hub e Pagine di Continente
+    directory_made = []
+    continent_lastmod = {}
+    total_countries = len({AP[o]['k'] for o in good})
+
+    for reg_key, aps in region_airports.items():
+        continent_lastmod[reg_key] = max(origin_lastmod[a['i']] for a in aps)
+
+    for lang in ('it', 'en'):
+        dir_root = 'aeroporti' if lang == 'it' else 'airports'
+        dir_dir = DIST / dir_root
+        dir_dir.mkdir(parents=True, exist_ok=True)
+        (dir_dir / 'index.html').write_text(
+            directory_index_page(lang, region_airports, len(good), total_countries, obs),
+            encoding='utf-8'
+        )
+        directory_made.append(f"/{dir_root}/")
+
+        for reg_key in CONTINENT_ORDER:
+            if reg_key not in region_airports:
+                continue
+            meta = CONTINENT_MAP[reg_key]
+            slug = meta['slug_' + lang]
+            sub_dir = dir_dir / slug
+            sub_dir.mkdir(parents=True, exist_ok=True)
+            (sub_dir / 'index.html').write_text(
+                continent_directory_page(lang, reg_key, region_airports[reg_key], AP, good, cat, obs),
+                encoding='utf-8'
+            )
+            directory_made.append(f"/{dir_root}/{slug}/")
+
+    # 3. Landing per lingua
     ranked = sorted(idx['deals'], key=lambda r: -(r['km'] * 2 / r['p']))
     showcase, seen_origins = [], set()
     for r in ranked:
@@ -682,57 +985,93 @@ def main() -> int:
             len({r['d'] for r in idx['deals']})), encoding='utf-8')
         locale_made.append(f"/lang/{meta['path']}/")
 
-    # sitemap: la radice piu' tutte le pagine appena scritte
-    today = datetime.date.today().isoformat()
-    # Dal 9 settembre sono due pagine distinte: la radice presenta la
-    # piattaforma, /flight/ e' il motore. Vanno dichiarate entrambe, o Google
-    # scopre la seconda solo seguendo i collegamenti, con settimane di ritardo.
-    urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>',
-            f'  <url><loc>{SITE}/flight/</loc><lastmod>{today}</lastmod>'
-            f'<changefreq>daily</changefreq><priority>0.9</priority></url>']
-    urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.7</priority></url>'
-             for u in made]
-    urls += [f'  <url><loc>{SITE}{u}</loc><lastmod>{today}</lastmod><priority>0.8</priority></url>'
-             for u in locale_made]
-    (DIST / 'sitemap.xml').write_text(
-        '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        + '\n'.join(urls) + '\n</urlset>\n', encoding='utf-8')
+    # 4. Sitemap con lastmod reale dinamico
+    # Legge sitemap precedente se esiste per evitare churn ingiustificato
+    old_sitemap_path = DIST / 'sitemap.xml'
+    old_lastmods = {}
+    if old_sitemap_path.is_file():
+        old_content = old_sitemap_path.read_text(encoding='utf-8')
+        import re
+        for b in re.findall(r'<url>(.*?)</url>', old_content, re.DOTALL):
+            loc_m = re.search(r'<loc>(.*?)</loc>', b)
+            lm_m = re.search(r'<lastmod>(.*?)</lastmod>', b)
+            if loc_m and lm_m:
+                old_lastmods[loc_m.group(1).strip()] = lm_m.group(1).strip()
 
-    # ── l'indice degli aeroporti dentro la home ────────────────────────
-    # Senza un collegamento dalla radice queste pagine sono orfane: la
-    # sitemap dice a Google che esistono, ma un indirizzo che nessuna pagina
-    # collega vale poco e viene scansionato tardi o mai. Qui il piede della
-    # home elenca tutti gli scali, nella lingua del percorso.
+    urls = [
+        f'  <url><loc>{SITE}/</loc><lastmod>{obs}</lastmod><priority>1.0</priority></url>',
+        f'  <url><loc>{SITE}/flight/</loc><lastmod>{obs}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>'
+    ]
+
+    # Directory hubs in sitemap
+    for u in directory_made:
+        prio = '0.8'
+        # Check if continent
+        is_cont = False
+        lmod = obs
+        for reg_key, meta in CONTINENT_MAP.items():
+            if meta['slug_it'] in u or meta['slug_en'] in u:
+                lmod = continent_lastmod.get(reg_key, obs)
+                is_cont = True
+                break
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{lmod}</lastmod><priority>{prio}</priority></url>')
+
+    # Airport pages in sitemap with real origin lastmod
+    for u in made:
+        iata = u.strip('/').split('/')[-1].upper()
+        lmod = origin_lastmod.get(iata, obs)
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{lmod}</lastmod><priority>0.7</priority></url>')
+
+    # Language pages in sitemap
+    for u in locale_made:
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{obs}</lastmod><priority>0.8</priority></url>')
+
+    sxml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'] + urls + ['</urlset>', '']
+    (DIST / 'sitemap.xml').write_text(chr(10).join(sxml), encoding='utf-8')
+
+    # 5. Indice degli aeroporti dentro la home (dist/index.html)
     home = DIST / 'index.html'
     if home.is_file():
         h = home.read_text(encoding='utf-8')
         if '<!--HUB-->' in h:
             voci = []
             for lang in ('it', 'en'):
-                link = ''.join(
-                    f'<a href="/{L[lang]["dir"]}/{o.lower()}/">{o}</a> '
-                    for o in order)
+                dir_root = 'aeroporti' if lang == 'it' else 'airports'
+                dir_lbl = 'Directory completa aeroporti' if lang == 'it' else 'Complete Airport Directory'
+                hub_lbl = f'Tutti i {len(order)} aeroporti per continente e paese' if lang == 'it' else f'All {len(order)} airports by continent and country'
+                top_hubs = [AP[x] for x in order[:10]]
+                top_links = ' '.join(
+                    f'<a href="/{L[lang]["dir"]}/{a["i"].lower()}/">{a["i"]} · {esc(cityname(a["c"], lang))}</a>'
+                    for a in top_hubs
+                )
+                continents_links = ' '.join(
+                    f'<a class="hub-pill" href="/{dir_root}/{CONTINENT_MAP[reg]["slug_" + lang]}/">'
+                    f'{esc(CONTINENT_MAP[reg]["name_" + lang])} ({len(region_airports[reg])})</a>'
+                    for reg in CONTINENT_ORDER if reg in region_airports
+                )
                 voci.append(
-                    f'<nav class="hub" lang="{lang}" aria-label="'
-                    f'{"Voli diretti da" if lang == "it" else "Direct flights from"}">'
-                    f'<span class="lbl">'
-                    f'{"Voli diretti da" if lang == "it" else "Direct flights from"} '
-                    f'{len(order)} {"aeroporti" if lang == "it" else "airports"}</span>'
-                    f'{link}</nav>')
+                    f'<nav class="hub" lang="{lang}" aria-label="{dir_lbl}">'
+                    f'<div class="hub-head">'
+                    f'<span class="lbl">{"Navigazione aeroporti" if lang == "it" else "Airport navigation"}</span>'
+                    f'<a class="hub-cta" href="/{dir_root}/"><strong>{dir_lbl} &rarr;</strong> {hub_lbl}</a>'
+                    f'</div>'
+                    f'<div class="hub-continents"><span class="lbl-s">{"Continenti" if lang == "it" else "Continents"}:</span> {continents_links}</div>'
+                    f'<div class="hub-top"><span class="lbl-s">{"Principali scali" if lang == "it" else "Major hubs"}:</span> {top_links}</div>'
+                    f'</nav>'
+                )
             lingue = ''.join(
                 f'<a lang="{esc(meta["hreflang"])}" hreflang="{esc(meta["hreflang"])}" '
                 f'href="/lang/{esc(meta["path"])}/">{esc(meta["name"])}</a> '
                 for meta in PROSE.values())
             voci.append(f'<nav class="locale-index" aria-label="Language">{lingue}</nav>')
             home.write_text(h.replace('<!--HUB-->', ''.join(voci)), encoding='utf-8')
-            print(f'indice nella home: {len(order) * 2} aeroporti + {len(PROSE)} lingue')
+            print(f'indice nella home: directory + 7 continenti + 10 hub + {len(PROSE)} lingue')
 
     (DIST / '404.html').write_text(pagina_404(), encoding='utf-8')
 
     size = sum(f.stat().st_size for f in DIST.rglob('index.html') if f.parent != DIST)
-    print(f'{len(made) + len(locale_made)} pagine ({len(order)} aeroporti × 2 + '
-          f'{len(locale_made)} landing lingua) · {size/1024/1024:.1f} MB '
+    print(f'{len(made) + len(directory_made) + len(locale_made)} pagine ({len(order)} aeroporti × 2 + '
+          f'{len(directory_made)} directory + {len(locale_made)} landing lingua) · {size/1024/1024:.1f} MB '
           f'· sitemap con {len(urls)} indirizzi')
     if TP_MARKER:
         print('link di prenotazione: affiliati')

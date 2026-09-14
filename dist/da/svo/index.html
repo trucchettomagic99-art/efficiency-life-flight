@@ -23,7 +23,7 @@
 <meta property="og:image" content="https://efficiency-life.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Efficiency Life Flight: il conteggio di aeroporti, destinazioni e tariffe verificate, con una tariffa d&#39;esempio in chilometri per euro.">
+<meta property="og:image:alt" content="Efficiency Life Flight: tariffe verificate in km per euro.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://efficiency-life.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,8 +55,8 @@ letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--i
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;
 text-transform:uppercase;color:var(--ink-3);margin:0}
 .lbl.sig{color:var(--signal)}
-h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(28px,5vw,52px);
-line-height:1;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
+h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(26px,4.5vw,48px);
+line-height:1.08;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
 h2{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(18px,2.4vw,26px);
 text-transform:uppercase;letter-spacing:-.02em;margin:44px 0 14px}
 header{padding:clamp(28px,5vw,56px) 0 26px;border-bottom:1px solid var(--rule);
@@ -102,6 +102,32 @@ border:1px solid var(--rule-hi);padding:6px 11px;border-radius:2px;color:var(--i
 line-height:1.7;max-width:80ch}
 footer{border-top:1px solid var(--rule);margin-top:48px;padding:26px 0 40px;color:var(--ink-3);font-size:12.5px}
 footer a{color:var(--ink-2)}
+
+/* Breadcrumbs & Hub Directory styles */
+.crumb{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crumb a{color:var(--ink-2);text-decoration:none}
+.crumb a:hover{color:var(--signal)}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:24px 0}
+.dir-card{border:1px solid var(--rule-hi);border-radius:4px;padding:20px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.dir-card:hover{border-color:var(--signal)}
+.dir-card h3{font-family:Archivo,sans-serif;font-size:18px;margin:0 0 6px;color:var(--ink);text-transform:uppercase}
+.dir-card p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.dir-card .num{font-family:ui-monospace,monospace;font-size:11px;color:var(--signal);display:block;margin-top:10px}
+.country-sec{margin:36px 0}
+.country-sec h3{font-family:Archivo,sans-serif;font-size:18px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:14px;color:var(--ink)}
+.ap-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ap-item{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.ap-item:hover{border-color:var(--signal)}
+.ap-item strong{font-family:ui-monospace,monospace;font-size:13px;color:var(--signal);letter-spacing:.05em}
+.ap-item span{font-size:13px;font-weight:600;color:var(--ink);margin:2px 0}
+.ap-item em{font-style:normal;font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3)}
+.hub-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.hub-cta{font-size:13px;color:var(--signal);text-decoration:none;font-weight:600}
+.hub-cta strong{color:var(--signal-2)}
+.hub-continents,.hub-top{margin:8px 0;font-size:12.5px;line-height:1.8}
+.lbl-s{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);margin-inline-end:8px}
+.hub-pill{display:inline-block;padding:3px 9px;border:1px solid var(--rule-hi);border-radius:2px;font-family:ui-monospace,monospace;font-size:11px;margin:2px 4px 2px 0;text-decoration:none;color:var(--ink-2)}
+.hub-pill:hover{border-color:var(--signal);color:var(--signal)}
 </style>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"ItemList","name":"Voli economici da Mosca (SVO) — le destinazioni col miglior rapporto km/€",
@@ -116,10 +142,11 @@ footer a{color:var(--ink-2)}
 </div></div>
 
 <header><div class="wrap">
+  <div class="crumb"><a href="https://efficiency-life.com/">Home</a> &rsaquo; <a href="https://efficiency-life.com/aeroporti/">Directory</a> &rsaquo; <a href="https://efficiency-life.com/aeroporti/europa/">Europa</a> &rsaquo; <span>SVO</span></div>
   <p class="lbl sig">SVO · Sheremetyevo Intl, Mosca</p>
   <h1>Voli economici da Mosca</h1>
-  <p class="intro">Da <b>Sheremetyevo Intl, Mosca</b> l'indice contiene <b>78 destinazioni</b> raggiungibili con un volo diretto andata e ritorno, in <b>10 paesi</b>. Qui sotto non sono ordinate per prezzo, ma per <b>chilometri per euro</b>: quanta distanza ti porti a casa per ogni euro speso. È un modo diverso di scegliere — non parti dalla meta, parti da quanto lontano vuoi andare.</p>
-  <p class="best">La più conveniente è <b>Irkutsk International Airport</b> (IKT, Russia): 8.418 km andata e ritorno a 175.0 €, cioè <b>48.1 km per euro</b>, con partenza il 18/09 e rientro il 16/10.</p>
+  <p class="intro">Da <b>Sheremetyevo Intl, Mosca</b> l'indice contiene <b>78 destinazioni</b> raggiungibili con un volo diretto andata e ritorno, in <b>10 paesi</b>. Qui sotto non sono ordinate per prezzo, ma per <b>chilometri per euro</b>: quanta distanza ti porti a casa per ogni euro speso. È un modo diverso di scegliere: non parti dalla meta, parti da quanto lontano vuoi arrivare.</p>
+  <p class="best">La meta col valore più alto è <b>Irkutsk International Airport</b> (IKT, Russia): 8.418 km andata e ritorno a 175.0 €, cioè <b>48.1 km per ogni euro</b> speso, partendo il 18/09 e rientrando il 16/10.</p>
 </div></header>
 
 <main class="wrap">
@@ -132,14 +159,14 @@ footer a{color:var(--ink-2)}
   <a class="go" href="https://efficiency-life.com/flight/#o=SVO&l=it">
     <b>Apri il motore con SVO già impostato</b><span>Filtri, mappamondo, 36 lingue, 59 valute</span></a>
 
-  <h2>Altri aeroporti di partenza</h2>
-  <div class="near"><a href="https://efficiency-life.com/da/ist/">IST · Istanbul</a><a href="https://efficiency-life.com/da/fra/">FRA · Frankfurt am Main</a><a href="https://efficiency-life.com/da/ams/">AMS · Amsterdam</a><a href="https://efficiency-life.com/da/cdg/">CDG · Parigi</a><a href="https://efficiency-life.com/da/dxb/">DXB · Dubai</a><a href="https://efficiency-life.com/da/lhr/">LHR · Londra</a><a href="https://efficiency-life.com/da/mad/">MAD · Madrid</a><a href="https://efficiency-life.com/da/bcn/">BCN · Barcellona</a><a href="https://efficiency-life.com/da/fco/">FCO · Roma</a><a href="https://efficiency-life.com/da/lgw/">LGW · Londra</a><a href="https://efficiency-life.com/da/muc/">MUC · Monaco di Baviera</a><a href="https://efficiency-life.com/da/bru/">BRU · Bruxelles</a></div>
+  <h2>Aeroporti vicini e correlati</h2>
+  <div class="near"><a href="https://efficiency-life.com/da/dme/">DME · Mosca</a><a href="https://efficiency-life.com/da/vko/">VKO · Mosca</a><a href="https://efficiency-life.com/da/zia/">ZIA · Mosca</a><a href="https://efficiency-life.com/da/cee/">CEE · Cherepovets Airport</a><a href="https://efficiency-life.com/da/goj/">GOJ · Nizhny Novgorod International Airport</a><a href="https://efficiency-life.com/da/skx/">SKX · Saransk Airport</a><a href="https://efficiency-life.com/da/led/">LED · St. Petersburg</a><a href="https://efficiency-life.com/da/csy/">CSY · Cheboksary Airport</a><a href="https://efficiency-life.com/da/pes/">PES · Petrozavodsk Airport</a><a href="https://efficiency-life.com/da/kzn/">KZN · Kazan</a><a href="https://efficiency-life.com/da/gsv/">GSV · Saratov</a><a href="https://efficiency-life.com/da/kvx/">KVX · Kirov Airport</a></div>
 
   <p class="note">Tariffe rilevate il 2026-09-14 · voli diretti andata e ritorno · prezzi indicativi, da verificare sul sito dell&#x27;operatore prima di prenotare.</p>
 </main>
 
 <footer><div class="wrap">
-  <a href="https://efficiency-life.com/flight/">Torna al motore di ricerca</a> · Travelpayouts / Aviasales · OurAirports
+  <a href="https://efficiency-life.com/flight/">Torna al motore di ricerca</a> · <a href="https://efficiency-life.com/aeroporti/">Tutti gli aeroporti</a> · Travelpayouts / Aviasales · OurAirports
   · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
 </div></footer>
 </body>

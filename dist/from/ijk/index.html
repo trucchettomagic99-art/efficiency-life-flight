@@ -23,7 +23,7 @@
 <meta property="og:image" content="https://efficiency-life.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Efficiency Life Flight: il conteggio di aeroporti, destinazioni e tariffe verificate, con una tariffa d&#39;esempio in chilometri per euro.">
+<meta property="og:image:alt" content="Efficiency Life Flight: tariffe verificate in km per euro.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://efficiency-life.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,8 +55,8 @@ letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--i
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;
 text-transform:uppercase;color:var(--ink-3);margin:0}
 .lbl.sig{color:var(--signal)}
-h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(28px,5vw,52px);
-line-height:1;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
+h1{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(26px,4.5vw,48px);
+line-height:1.08;letter-spacing:-.03em;text-transform:uppercase;margin:12px 0 0;font-weight:800}
 h2{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-size:clamp(18px,2.4vw,26px);
 text-transform:uppercase;letter-spacing:-.02em;margin:44px 0 14px}
 header{padding:clamp(28px,5vw,56px) 0 26px;border-bottom:1px solid var(--rule);
@@ -102,6 +102,32 @@ border:1px solid var(--rule-hi);padding:6px 11px;border-radius:2px;color:var(--i
 line-height:1.7;max-width:80ch}
 footer{border-top:1px solid var(--rule);margin-top:48px;padding:26px 0 40px;color:var(--ink-3);font-size:12.5px}
 footer a{color:var(--ink-2)}
+
+/* Breadcrumbs & Hub Directory styles */
+.crumb{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crumb a{color:var(--ink-2);text-decoration:none}
+.crumb a:hover{color:var(--signal)}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:24px 0}
+.dir-card{border:1px solid var(--rule-hi);border-radius:4px;padding:20px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.dir-card:hover{border-color:var(--signal)}
+.dir-card h3{font-family:Archivo,sans-serif;font-size:18px;margin:0 0 6px;color:var(--ink);text-transform:uppercase}
+.dir-card p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.dir-card .num{font-family:ui-monospace,monospace;font-size:11px;color:var(--signal);display:block;margin-top:10px}
+.country-sec{margin:36px 0}
+.country-sec h3{font-family:Archivo,sans-serif;font-size:18px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:14px;color:var(--ink)}
+.ap-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ap-item{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;background:var(--deck);text-decoration:none;color:inherit;transition:border-color .15s}
+.ap-item:hover{border-color:var(--signal)}
+.ap-item strong{font-family:ui-monospace,monospace;font-size:13px;color:var(--signal);letter-spacing:.05em}
+.ap-item span{font-size:13px;font-weight:600;color:var(--ink);margin:2px 0}
+.ap-item em{font-style:normal;font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3)}
+.hub-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.hub-cta{font-size:13px;color:var(--signal);text-decoration:none;font-weight:600}
+.hub-cta strong{color:var(--signal-2)}
+.hub-continents,.hub-top{margin:8px 0;font-size:12.5px;line-height:1.8}
+.lbl-s{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);margin-inline-end:8px}
+.hub-pill{display:inline-block;padding:3px 9px;border:1px solid var(--rule-hi);border-radius:2px;font-family:ui-monospace,monospace;font-size:11px;margin:2px 4px 2px 0;text-decoration:none;color:var(--ink-2)}
+.hub-pill:hover{border-color:var(--signal);color:var(--signal)}
 </style>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"ItemList","name":"Cheap flights from Izhevsk Airport (IJK) — best destinations by km per euro",
@@ -116,6 +142,7 @@ footer a{color:var(--ink-2)}
 </div></div>
 
 <header><div class="wrap">
+  <div class="crumb"><a href="https://efficiency-life.com/">Home</a> &rsaquo; <a href="https://efficiency-life.com/airports/">Airports</a> &rsaquo; <a href="https://efficiency-life.com/airports/europe/">Europe</a> &rsaquo; <span>IJK</span></div>
   <p class="lbl sig">IJK · Izhevsk Airport, Izhevsk Airport</p>
   <h1>Cheap flights from Izhevsk Airport</h1>
   <p class="intro">From <b>Izhevsk Airport, Izhevsk Airport</b> the index holds <b>7 destinations</b> reachable on a non-stop return flight, across <b>1 countries</b>. Below they are not ranked by price but by <b>kilometres per euro</b>: how much distance you take home for every euro spent. It is a different way to choose — you do not start from the destination, you start from how far you want to go.</p>
@@ -132,14 +159,14 @@ footer a{color:var(--ink-2)}
   <a class="go" href="https://efficiency-life.com/flight/#o=IJK&l=en">
     <b>Open the engine with IJK preset</b><span>Filters, globe, 36 languages, 59 currencies</span></a>
 
-  <h2>Other departure airports</h2>
-  <div class="near"><a href="https://efficiency-life.com/from/ist/">IST · Istanbul</a><a href="https://efficiency-life.com/from/fra/">FRA · Frankfurt am Main</a><a href="https://efficiency-life.com/from/ams/">AMS · Amsterdam</a><a href="https://efficiency-life.com/from/cdg/">CDG · Parigi</a><a href="https://efficiency-life.com/from/dxb/">DXB · Dubai</a><a href="https://efficiency-life.com/from/lhr/">LHR · Londra</a><a href="https://efficiency-life.com/from/mad/">MAD · Madrid</a><a href="https://efficiency-life.com/from/bcn/">BCN · Barcelona</a><a href="https://efficiency-life.com/from/fco/">FCO · Roma</a><a href="https://efficiency-life.com/from/lgw/">LGW · Londra</a><a href="https://efficiency-life.com/from/muc/">MUC · Munich</a><a href="https://efficiency-life.com/from/bru/">BRU · Brussels</a></div>
+  <h2>Nearby and related departure airports</h2>
+  <div class="near"><a href="https://efficiency-life.com/from/nbc/">NBC · Begishevo Airport</a><a href="https://efficiency-life.com/from/pee/">PEE · Perm International Airport</a><a href="https://efficiency-life.com/from/uua/">UUA · Bugulma Airport</a><a href="https://efficiency-life.com/from/kzn/">KZN · Kazan</a><a href="https://efficiency-life.com/from/ufa/">UFA · Ufa</a><a href="https://efficiency-life.com/from/kvx/">KVX · Kirov Airport</a><a href="https://efficiency-life.com/from/csy/">CSY · Cheboksary Airport</a><a href="https://efficiency-life.com/from/kuf/">KUF · Samara</a><a href="https://efficiency-life.com/from/svx/">SVX · Yekaterinburg</a><a href="https://efficiency-life.com/from/mqf/">MQF · Magnitogorsk Airport</a><a href="https://efficiency-life.com/from/cek/">CEK · Chelyabinsk International Airport</a><a href="https://efficiency-life.com/from/scw/">SCW · Syktyvkar Airport</a></div>
 
   <p class="note">Fares observed on 2026-09-14 · non-stop return · indicative prices, confirm on the operator&#x27;s site before booking.</p>
 </main>
 
 <footer><div class="wrap">
-  <a href="https://efficiency-life.com/flight/">Back to the search engine</a> · Travelpayouts / Aviasales · OurAirports
+  <a href="https://efficiency-life.com/flight/">Back to the search engine</a> · <a href="https://efficiency-life.com/airports/">All airports</a> · Travelpayouts / Aviasales · OurAirports
   · <a href="mailto:support@efficiency-life.com">support@efficiency-life.com</a>
 </div></footer>
 </body>
