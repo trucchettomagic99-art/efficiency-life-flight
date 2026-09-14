@@ -8,18 +8,16 @@ name: Aggiornamento indice
 # crediti di build di Netlify. Su Cloudflare Pages il piano gratuito prevede
 # 500 build al mese contro le 30 che servono qui, quindi torna quotidiana:
 # un indice di tariffe aeree vecchio di due giorni e' un indice sbagliato.
+#
+# Dal 14 settembre 2026 questo flusso NON parte piu' sui push. Partiva su
+# ogni modifica a scripts/, src/, tests/ e public/, e faceva la raccolta
+# completa: quel giorno cinque push di codice l'hanno fatto girare cinque
+# volte, cinque giornate di peso del repository per correggere dei titoli.
+# Il collaudo del codice sta in ci.yml, che non tocca la rete ne' i dati.
+# Qui restano solo i due modi in cui ha senso raccogliere davvero: l'orario
+# notturno e il pulsante. Senza `push` non esiste nemmeno il rischio che il
+# commit "Indice tariffe" del bot faccia ripartire una nuova raccolta.
 on:
-  push:
-    branches: [main, codex/expand-flight-data]
-    paths:
-      - '.github/workflows/nightly.yml'
-      - 'scripts/**'
-      - 'src/**'
-      - 'public/**'
-      - 'functions/**'
-      - 'data/origins.json'
-      - 'data/catalog.json'
-      - 'tests/**'
   schedule:
     - cron: '20 3 * * *'
   workflow_dispatch:        # per lanciarlo a mano dal tab Actions
