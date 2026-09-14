@@ -93,6 +93,7 @@ footer{border-top:1px solid var(--rule);margin-top:48px;padding:26px 0 40px;colo
 footer a{color:var(--ink-2)}
 
 /* Breadcrumbs & Hub Directory styles */
+.metodo{color:var(--ink-2);font-size:14px;line-height:1.75;max-width:80ch;margin:30px 0 0}
 .crumb{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .crumb a{color:var(--ink-2);text-decoration:none}
 .crumb a:hover{color:var(--signal)}
@@ -118,6 +119,9 @@ footer a{color:var(--ink-2)}
 .hub-pill{display:inline-block;padding:3px 9px;border:1px solid var(--rule-hi);border-radius:2px;font-family:ui-monospace,monospace;font-size:11px;margin:2px 4px 2px 0;text-decoration:none;color:var(--ink-2)}
 .hub-pill:hover{border-color:var(--signal);color:var(--signal)}
 </style>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://efficiency-life.com/"}, {"@type": "ListItem", "position": 2, "name": "Aeroporti", "item": "https://efficiency-life.com/aeroporti/"}, {"@type": "ListItem", "position": 3, "name": "America Latina e Caraibi", "item": "https://efficiency-life.com/aeroporti/america-latina/"}]}
+</script>
 </head>
 <body>
 <div class="rail"><div class="wrap">
@@ -126,7 +130,7 @@ footer a{color:var(--ink-2)}
 </div></div>
 
 <header><div class="wrap">
-  <div class="crumb"><a href="https://efficiency-life.com/">Home</a> &rsaquo; <a href="https://efficiency-life.com/aeroporti/">Directory</a> &rsaquo; <span>America Latina e Caraibi</span></div>
+  <nav class="crumb" aria-label="Percorso"><a href="https://efficiency-life.com/">Home</a> &rsaquo; <a href="https://efficiency-life.com/aeroporti/">Aeroporti</a> &rsaquo; <span aria-current="page">America Latina e Caraibi</span></nav>
   <p class="lbl sig">EFFICIENCY LIFE · AMERICA LATINA E CARAIBI</p>
   <h1>Aeroporti in America Latina e Caraibi — Voli diretti e migliori destinazioni</h1>
   <p class="intro">Elenco dei 51 aeroporti in America Latina e Caraibi con rotte dirette andata e ritorno ordinate per chilometri per euro.</p>
