@@ -74,7 +74,15 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
   <div class="wrap hero-in">
     <div>
       <div class="lbl lbl-sig" id="heroEyebrow">EFFICIENCY LIFE · FLIGHT</div>
-      <h1 class="h1">Trova i voli con il miglior rapporto qualità-prezzo</h1>
+      <!-- Il testo italiano resta scritto qui dentro, non generato dal
+           JavaScript: la radice e' la versione italiana e l'x-default del
+           sito, e il suo titolo principale deve esistere anche per chi legge
+           la pagina senza eseguire niente. Quando la lingua cambia — perche'
+           la sceglie chi arriva o perche' boot() legge quella del browser —
+           applyLang() lo riscrive dalla stessa fonte delle 36 landing,
+           src/prose.json, cosi' non esistono due traduzioni della stessa
+           frase che possono divergere. -->
+      <h1 class="h1" id="homeH1">Trova i voli con il miglior rapporto qualità-prezzo</h1>
       <p class="tagline"><span data-k="plat_h1a">Quanto ottieni,</span> <span data-k="plat_h1b">diviso quanto spendi.</span></p>
       <p class="lede" id="lede">Efficiency Life confronta migliaia di voli diretti andata e ritorno e li ordina per valore, non soltanto per prezzo. Scopri dove il tuo budget ti porta più lontano confrontando prezzo, distanza, storico e Efficiency Score.</p>
       <a class="cta-home" href="/flight/">Flight<s>&#9654;</s></a>
@@ -246,6 +254,10 @@ function applyLang(){
   $('#heroEyebrow').textContent = 'EFFICIENCY LIFE · FLIGHT';
 
   const p = P();
+  /* Il titolo principale segue la lingua come tutto il resto. Prima era
+     scritto una volta sola in italiano e restava italiano anche per chi
+     leggeva la pagina in tedesco: sottotitolo e occhiello tradotti, titolo no. */
+  if(p.seo && p.seo.h1) $('#homeH1').textContent = p.seo.h1;
   const vars = { fxDate:FX_DATE, observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
                  destCount:'__ST_DEST__', languageCount:String(LANG_META.length), currencyCount:String(CUR.length) };
   const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));

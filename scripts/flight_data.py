@@ -11,8 +11,6 @@ try:
     from location_authority import (
         is_commercial_airport,
         is_city_or_metro,
-        canonical_city_code,
-        resolve_commercial_airport,
         get_clean_city_name,
         get_clean_airport_name,
     )
@@ -20,8 +18,6 @@ except ImportError:
     from scripts.location_authority import (
         is_commercial_airport,
         is_city_or_metro,
-        canonical_city_code,
-        resolve_commercial_airport,
         get_clean_city_name,
         get_clean_airport_name,
     )
@@ -294,28 +290,76 @@ def representatives(rows):
 # Quanto ci fidiamo che il volo sia davvero diretto, e da li' quale riga vince.
 FIDUCIA = {'both_legs': 2, 'provider_aggregate': 1}
 
+# Due scali sono della stessa area urbana se stanno nello stesso paese e a
+# meno di questa distanza. Cento chilometri copre ogni coppia vera che il
+# fornitore confonde — Bruxelles/Charleroi 46, Città del Messico MEX/NLU 33,
+# Milano MXP/BGY 80 — e non arriva a unire due citta' diverse abbastanza da
+# avere voli propri. Non e' una soglia delicata: allargarla non cancella
+# nulla di verificato, perche' due righe `both_legs` restano comunque
+# entrambe (vedi collapse_city_twins).
+GEMELLI_KM = 100
+
+def stessa_area(a, b, places):
+    """Se due aeroporti servono la stessa citta', dedotto dai dati che abbiamo.
+
+    Fino al 14 settembre 2026 questo giudizio veniva da una tabella scritta a
+    mano (`CITY_TO_COMMERCIAL_AIRPORTS`): funzionava per le citta' elencate e
+    falliva in silenzio per tutte le altre. Città del Messico non c'era, e
+    MEX/NLU — trentatre chilometri — passavano per destinazioni diverse,
+    lasciando sette doppioni nell'indice.
+
+    La distanza fra due punti e il paese li abbiamo gia' per ogni aeroporto,
+    per tutti, senza doverli elencare. Il nome della citta' resta come secondo
+    indizio: due scali con lo stesso nome sono la stessa area anche se il
+    fornitore li mette un po' piu' lontani del dovuto.
+    """
+    pa, pb = places.get(a) or {}, places.get(b) or {}
+    if not pa or not pb or pa.get('k') != pb.get('k'):
+        return False
+    if pa.get('n') and pa.get('n') == pb.get('n'):
+        return True
+    try:
+        return distance(pa, pb) <= GEMELLI_KM
+    except (TypeError, ValueError, KeyError):
+        return False
+
 def collapse_city_twins(rows, places):
     """Toglie la stessa tariffa quando il fornitore la attribuisce a due aeroporti.
 
-    Preserva rigorosamente aeroporti commerciali distinti della stessa area metropolitana
-    (es. LHR vs LGW a Londra, JFK vs LGA a New York), mentre collassa e deduplica i record
-    quando uno dei due scali e' un alias/GA non commerciale (es. ORL vs MCO, FMY vs RSW)
-    oppure un aggregatore fornitore non verificato della stessa identica corsa.
-    """
-    def citta(iata):
-        p = places.get(iata) or {}
-        resolved = resolve_commercial_airport(iata)
-        if resolved and resolved != iata:
-            city_name = get_clean_city_name(resolved)
-            return canonical_city_code(resolved), city_name, p.get('k')
-        clean_c = get_clean_city_name(iata)
-        if clean_c and (not p.get('n') or p.get('n') in (clean_c, iata)):
-            return canonical_city_code(iata), clean_c, p.get('k')
-        return canonical_city_code(iata), p.get('n') or iata, p.get('k')
+    L'11 settembre la classifica da Bologna mostrava due volte Bruxelles allo
+    stesso prezzo, con le stesse date e la stessa durata al minuto: una riga
+    verso BRU (Zaventem) e una verso CRL (Charleroi), che distano
+    quarantasei chilometri. Non erano due voli: era **lo stesso volo** visto da
+    due interrogazioni diverse. L'endpoint `latest` restituisce una tariffa per
+    citta' e la attribuisce all'aeroporto principale anche quando il volo parte
+    dal secondario; l'endpoint `dates` restituisce lo stesso volo con
+    l'aeroporto giusto, verificato tratta per tratta.
 
+    Da qui la regola, in tre righe:
+
+    1. Si guardano solo le righe che coincidono in tutto — stessa origine,
+       stesso prezzo, stessa partenza, stesso rientro, stessa durata al minuto
+       — e che vanno a due scali della stessa area urbana. Tutto il resto non
+       si tocca: la durata identica e' il filtro che distingue «lo stesso volo
+       raccontato due volte» da «due voli diversi lo stesso giorno».
+    2. Se almeno una riga e' verificata tratta per tratta (`both_legs`) si
+       tengono **tutte** le righe verificate, una per aeroporto. Heathrow e
+       Gatwick sono due aeroporti veri: se entrambi risultano verificati non
+       sta a noi decidere che uno dei due non esiste.
+    3. Se nessuna e' verificata — sono tutti aggregati del fornitore, che per
+       sua natura attribuisce la tariffa allo scalo principale — allora e' un
+       doppione e ne resta una sola, la piu' affidabile.
+    """
     gruppi = {}
     for r in rows:
-        gruppi.setdefault((r['o'], citta(r['d']), r['p'], r['dep'], r['ret'], r['dur']), []).append(r)
+        gruppi.setdefault((r['o'], (places.get(r['d']) or {}).get('k'),
+                           r['p'], r['dep'], r['ret'], r['dur']), []).append(r)
+
+    # A parita' di tutto, quale riga rappresenta l'aeroporto: prima la piu'
+    # verificata, poi l'endpoint per date, poi il codice IATA — perche' due
+    # esecuzioni sugli stessi dati devono produrre lo stesso indice.
+    preferenza = lambda r: (FIDUCIA.get(r.get('direct_check'), 0),
+                            r.get('endpoint') == 'dates', r['d'])
 
     tenute = []
     for insieme in gruppi.values():
@@ -323,35 +367,37 @@ def collapse_city_twins(rows, places):
             tenute.append(insieme[0])
             continue
 
-        commercial_by_ap = {}
+        # una riga per aeroporto, poi si raccolgono gli aeroporti vicini fra
+        # loro: il gruppo puo' contenere scali di aree urbane diverse che per
+        # caso hanno lo stesso prezzo nello stesso paese, e quelli non
+        # c'entrano niente l'uno con l'altro.
+        per_scalo = {}
         for r in insieme:
-            if is_commercial_airport(r['d']):
-                commercial_by_ap.setdefault(r['d'], []).append(r)
+            if r['d'] not in per_scalo or preferenza(r) > preferenza(per_scalo[r['d']]):
+                per_scalo[r['d']] = r
 
-        if commercial_by_ap:
-            distinct_winners = []
-            for ap, ap_rows in commercial_by_ap.items():
-                best_ap_row = max(ap_rows, key=lambda r: (
-                    FIDUCIA.get(r.get('direct_check'), 0),
-                    r.get('endpoint') == 'dates',
-                    r['d']
-                ))
-                distinct_winners.append(best_ap_row)
+        aree = []
+        for iata in sorted(per_scalo):
+            for area in aree:
+                if any(stessa_area(iata, altro, places) for altro in area):
+                    area.append(iata)
+                    break
+            else:
+                aree.append([iata])
 
-            # Se tra i vincitori commerciali c'e' una rotta verificata (both_legs),
-            # scarta gli aggregati provider non verificati per la stessa tratta
-            has_verified = any(r.get('direct_check') == 'both_legs' for r in distinct_winners)
-            if has_verified:
-                distinct_winners = [r for r in distinct_winners if r.get('direct_check') == 'both_legs']
-
-            tenute.extend(distinct_winners)
-        else:
-            best_row = max(insieme, key=lambda r: (
-                FIDUCIA.get(r.get('direct_check'), 0),
-                r.get('endpoint') == 'dates',
-                r['d']
-            ))
-            tenute.append(best_row)
+        for area in aree:
+            righe = [per_scalo[i] for i in area]
+            if len(righe) == 1:
+                tenute.append(righe[0])
+                continue
+            massima = max(FIDUCIA.get(r.get('direct_check'), 0) for r in righe)
+            if massima >= FIDUCIA['both_legs']:
+                # aeroporti distinti, tutti verificati: restano tutti
+                tenute.extend(r for r in righe
+                              if FIDUCIA.get(r.get('direct_check'), 0) == massima)
+            else:
+                # nessuno verificato a livello di aeroporto: e' un doppione
+                tenute.append(max(righe, key=preferenza))
 
     return sorted(tenute, key=key)
 

@@ -1,0 +1,122 @@
+name: Collaudo e ricompilazione del codice
+
+# Questo flusso NON tocca Travelpayouts e NON riscrive nessun dato raccolto:
+# niente fetch_prices.py, niente data/fares, niente data/history.
+#
+# Fino al 14 settembre 2026 ce n'era uno solo: ogni push su scripts/, src/,
+# tests/ o public/ faceva ripartire la raccolta notturna intera — migliaia di
+# interrogazioni all'API e ~4.100 file riscritti. Quel giorno, con cinque push
+# di codice, e' partito cinque volte: cento megabyte di storia git per
+# correggere dei titoli. Da qui la separazione:
+#
+#   ci.yml       push e pull request  ->  test, ricompilazione, pubblicazione
+#   nightly.yml  orario e a mano      ->  raccolta dati
+#
+# Perche' qui si ricompila e si committa dist/: il sito pubblicato e' la
+# cartella dist/ che sta nel repository, e Cloudflare Pages la serve com'e'.
+# Cambiare src/ o scripts/ senza rigenerare dist/ significherebbe pubblicare
+# la versione vecchia senza accorgersene, e allineare a mano millecinquecento
+# file compilati non e' un lavoro da persone. Sulle pull request invece non si
+# committa niente: si eseguono i test, si ricompila per vedere se regge, e la
+# differenza in dist/ viene solo segnalata.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'src/**'
+      - 'public/**'
+      - 'functions/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'src/**'
+      - 'public/**'
+      - 'functions/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write           # solo per ricommittare dist/ su main
+
+concurrency:
+  group: collaudo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collauda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Scarica il repository
+        uses: actions/checkout@v4
+
+      - name: Prepara Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Prima si ricompila, poi si collauda. Non e' un dettaglio d'ordine:
+      # meta' del collaudo SEO legge le pagine dentro dist/, e su un commit
+      # che cambia i sorgenti quelle pagine sono ancora le vecchie. Eseguire i
+      # test per primi significava misurare la build precedente e fallire su
+      # differenze che il passo successivo stava per sanare.
+      #
+      # Nessuna chiamata di rete, nessun TP_TOKEN, nessuna scrittura in data/.
+      - name: Ricompila il sito
+        run: |
+          python scripts/build.py
+          python scripts/build_pages.py
+
+      - name: Test
+        run: |
+          python -m unittest discover -s tests -v
+          node tests/test_browser_data.cjs
+
+      - name: Verifica build, lingue e SEO
+        run: python scripts/check_build.py
+
+      - name: I dati raccolti non devono essere stati toccati
+        run: |
+          if ! git diff --quiet -- data/; then
+            echo "::error::la ricompilazione ha modificato data/: qui non deve succedere"
+            git diff --stat -- data/
+            exit 1
+          fi
+          echo "data/ intatto."
+
+      # Sulle pull request si segnala e basta, senza diventare rossi: dist/ e'
+      # generato, e al merge su main lo rigenera il passo qui sotto. Chiedere
+      # a chi apre una pull request di committare a mano millecinquecento file
+      # compilati sarebbe un rito, non un controllo.
+      - name: Quanto cambierebbe dist/ (pull request)
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --quiet -- dist/; then
+            echo "dist/ gia' allineato ai sorgenti."
+          else
+            echo "::notice::dist/ verra' rigenerato al merge su main:"
+            git diff --stat -- dist/ | tail -20
+          fi
+
+      # Su main invece si pubblica: dist/ e le costanti della funzione live
+      # sono generate, e tenerle allineate a mano su millecinquecento file non
+      # e' un lavoro da persone. [skip ci] evita che questo stesso commit
+      # faccia ripartire il flusso.
+      - name: Pubblica il sito ricompilato
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name  "efficiency-life-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add dist/ functions/
+          if git diff --staged --quiet; then
+            echo "Nessuna variazione: dist/ era gia' allineato."
+          else
+            git commit -m "Ricompilazione del sito dai sorgenti [skip ci]"
+            git push
+            echo "dist/ aggiornato e pubblicato."
+          fi
