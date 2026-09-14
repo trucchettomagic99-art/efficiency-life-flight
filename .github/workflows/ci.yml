@@ -105,8 +105,15 @@ jobs:
 
       # Su main invece si pubblica: dist/ e le costanti della funzione live
       # sono generate, e tenerle allineate a mano su millecinquecento file non
-      # e' un lavoro da persone. [skip ci] evita che questo stesso commit
-      # faccia ripartire il flusso.
+      # e' un lavoro da persone.
+      #
+      # Nel messaggio NON va "[skip ci]". Il primo tentativo, il 14 settembre
+      # 2026, ce l'aveva per sicurezza contro i cicli infiniti: il commit e'
+      # arrivato su main e il sito non e' cambiato, perche' quel marcatore lo
+      # legge anche Cloudflare Pages, che salta la pubblicazione. Il ciclo non
+      # c'e' comunque: GitHub non fa ripartire nessun flusso per i push fatti
+      # con GITHUB_TOKEN. Qui serve l'opposto — che Cloudflare veda il commit
+      # e pubblichi.
       - name: Pubblica il sito ricompilato
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -116,7 +123,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Nessuna variazione: dist/ era gia' allineato."
           else
-            git commit -m "Ricompilazione del sito dai sorgenti [skip ci]"
+            git commit -m "Ricompilazione del sito dai sorgenti"
             git push
             echo "dist/ aggiornato e pubblicato."
           fi
