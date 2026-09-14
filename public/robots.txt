@@ -1,4 +1,19 @@
+# /data/ non e' contenuto: sono gli scomparti per aeroporto che il motore
+# scarica quando scegli una partenza. Il 14 settembre 2026 erano il 56% di
+# tutte le scansioni di Google su questo dominio — 1.384 file, 82 MB, zero
+# pagine indicizzabili — perche' una sola apertura di /flight/ ne richiede
+# fino a 143 (la pagina preseleziona il paese di chi arriva).
+#
+# Bloccarli non toglie niente a Googlebot: la classifica che vede sta gia'
+# dentro l'HTML, in <script id="dealdata">, e fetchDates() sopravvive al
+# rifiuto senza smettere di disegnarla. Provato con Chromium e lo user agent
+# di Googlebot, /data/ rifiutato: stesse 9 righe, stesso titolo, testo
+# identico al 99,8%.
+#
+# Qui NON va aggiunto niente su CSS, JavaScript, immagini o /api/: quelli
+# servono davvero a disegnare la pagina, e bloccarli la farebbe vedere rotta.
 User-agent: *
 Allow: /
+Disallow: /data/
 
 Sitemap: https://efficiency-life.com/sitemap.xml
