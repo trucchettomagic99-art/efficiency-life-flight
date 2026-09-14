@@ -10,7 +10,7 @@ import { AIRPORT_CODES } from './_airports.js';
  */
 
 /* === MODELLO GENERATO DA build.py — non modificare a mano === */
-const MODELLO = {"a":0.21877588292526173,"b":0.687901188371196,"curva":true,"pesi":{"kmpe":32,"deal":30,"price":15,"minpe":13,"itin":5,"rel":5},"scale":{"kmpe":[2.802919708029197,65.90697674418605],"minpe":[0.41973490427098675,6.764705882352941],"price":[36.0,1255.0],"deal":[0.2290052124566149,4.098439945365242]}};
+const MODELLO = {"a":0.20836864747491646,"b":0.6892067446607384,"curva":true,"pesi":{"kmpe":35,"conven":40,"itin":15,"rel":10},"bande":[500,1000,1800,3000,5000,8000,12000,1000000000],"scale":{"kmpe":[2.8074324324324325,65.90697674418605]},"conven":{"2":[0.3957478687471067,3.84192549418505],"3":[0.41095558654016584,3.5389367335802637],"0":[0.17496911803063114,2.12599794979355],"1":[0.2975260498819967,3.2708521336681544],"4":[0.4193912878809019,2.2910968884026683],"5":[0.3700966314010478,1.3261889491051473],"6":[0.11409169540737808,1.2245747608603557],"7":[0.40175795357142974,1.4330953504071762]}};
 /* === fine modello generato === */
 
 const STAY = [[800,3,4],[2000,5,7],[4000,8,10],[7000,12,14],[1e9,15,21]];
@@ -28,9 +28,16 @@ function valuta(rows){
     let s1 = 15, s2 = 21;
     for(const [lim,x,y] of STAY) if(r.km <= lim){ s1 = x; s2 = y; break; }
     const fuori = r.n < s1 ? s1 - r.n : r.n > s2 ? r.n - s2 : 0;
-    const parti = { kmpe:nz(r.km*2/p, scale.kmpe), minpe:nz(r.dur/p, scale.minpe),
-                    price:1 - nz(p, scale.price), deal:nz(atteso ? atteso/p : 1, scale.deal),
-                    itin:Math.max(0, 1 - fuori/7), rel:.8 };
+    /* Stesso modello di build.py. Qui lo storico non c'e' — queste tariffe
+       arrivano adesso dall'API e nessuno le ha ancora viste altre notti —
+       quindi la convenienza si legge tutta dalla curva e la fiducia resta
+       bassa: una riga LIVE non deve scavalcare una rotta osservata da
+       venti notti soltanto perche' e' appena arrivata. */
+    const banda = MODELLO.bande.findIndex(l => r.km <= l);
+    const scalaConven = MODELLO.conven[String(banda < 0 ? MODELLO.bande.length-1 : banda)] || [.5, 2];
+    const parti = { kmpe:nz(r.km*2/p, scale.kmpe),
+                    conven:nz(atteso ? atteso/p : 1, scalaConven),
+                    itin:Math.max(0, 1 - fuori/7), rel:.5 };
     r.sc = Math.round(100 * Object.entries(pesi).reduce((s,[k,w]) => s + w*parti[k], 0) / tot);
   }
   return rows;
