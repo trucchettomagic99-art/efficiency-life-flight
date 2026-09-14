@@ -4,4 +4,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .cache/
-
+.prev_*.html
+dist/.prev_*.html

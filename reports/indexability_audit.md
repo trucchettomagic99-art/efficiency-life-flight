@@ -1,6 +1,6 @@
 # Audit Tecnico Indexability, Crawling & Search Console
 
-Data esecuzione: `2026-09-14 14:55:04`
+Data esecuzione: `2026-09-14 15:22:27`
 Dominio: `https://efficiency-life.com`
 
 ## 1. Nuova Diagnosi Search Console (Analisi Export Reale 406 URL)
@@ -30,12 +30,12 @@ Dominio: `https://efficiency-life.com`
 | **Pagine con <= 2 Inlink** | 1,276 (98.2%) | **0 (0.0%)** | 100% degli aeroporti fortemente collegati |
 | **Click Depth Medio dalla Home** | 1.0 (tramite footer spam) | **1.98** | Navigazione editoriale pulita Home → Continente → Aeroporto |
 | **Click Depth Massimo** | 1 | **2** | Entro i limiti ideali (≤ 3-4 click) |
-| **Sitemap `<lastmod>` Logic** | Data odierna fittizia su tutti | **Dinamico per origine (obs)** | Zero churn fittizio di lastmod |
+| **Sitemap `<lastmod>` Logic** | Data odierna fittizia su tutti | **Conservativo & Dinamico per Sostanza SEO** | Zero churn fittizio di lastmod; aggiornamento reale su modifiche dati |
 
 ## 3. Sintesi Classificazione Indexability
 | Classificazione | Conteggio | % sul Totale | Descrizione / Implicazione |
 |:---|:---:|:---:|:---|
-| **INDEXABLE_OK** | 1354 | 99.9% | URL conformi, con canonical valido, hreflang e forte linking |
+| **INDEXABLE_OK** | 1354 | 99.8% | URL conformi, con canonical valido, hreflang e forte linking |
 | **WEAK_INTERNAL_LINKING** | 0 | 0.0% | Risolto: nessun aeroporto debolmente collegato |
 | **ORPHAN** | 1 | 0.1% | 1 file `googleb83b...html` (token verifica Search Console) |
 | **THIN_CONTENT** | 0 | 0.0% | Nessuna pagina sotto la soglia minima di 6 rotte |
@@ -54,52 +54,56 @@ Dominio: `https://efficiency-life.com`
 | **50+ rotte** | 153 | 306 | 23.5% | Grandi hub internazionali |
 | **Totale** | **650** | **1,300** | **100.0%** | |
 
-## 5. Audit Performance Live del Server (Edge Cloudflare / Netlify)
-- **Campioni testati live:** `34` pagine attive.
-- **HTTP Status:** `34/34 — 100.0% 200 OK`
-- **Conteggio codici HTTP:** `200 OK`: 34 | `3xx Redirect`: 0 | `404 Not Found`: 0 | `429 Rate Limit`: 0 | `5xx Server Error`: 0 | `Errori connessione`: 0
-- **Tempo medio TTFB:** `170.4 ms` (Eccellente, < 200 ms)
-- **Compressione:** `gzip` / `br` attiva su tutte le risposte
+## 5. Audit Performance Live del Server (Edge Cloudflare) — Doppio Profilo (Browser vs Googlebot)
+- **Campioni testati live:** `34` pagine attive testate su entrambi i profili.
+- **Browser probes:** `34/34 200` (100.0%)
+- **Googlebot probes:** `34/34 200` (100.0%)
+- **Browser/Googlebot mismatches:** `0`
+- **Verifica Cloaking & WAF:** Nessuna discrepanza rilevata. Cloudflare Edge tratta Googlebot e Browser in modo identico e trasparente: status code identici, catene redirect identiche, canonical tag identici, meta robots identici e content-length identici.
+- **Conteggio codici Browser:** `200 OK`: 34 | `3xx`: 0 | `404`: 0 | `429`: 0 | `5xx`: 0 | `Errori`: 0
+- **Tempo medio TTFB:** Browser `184.9 ms` · Googlebot `174.3 ms` (Eccellente, < 200 ms)
+- **Compressione:** `gzip` attiva su tutte le risposte
 - **Cloudflare Edge Cache:** `cf-cache-status: HIT` o `REVALIDATED` / `DYNAMIC`
 - **Tasso di errore 5xx / 429:** `0.0%`
 
-### Dettaglio Campioni Live:
-| URL | HTTP | TTFB (ms) | Compressione | Cache Status | Dimensione (byte) |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| `/` | **200** | 200.3 | br | DYNAMIC | 127041 |
-| `/flight/` | **200** | 274.3 | br | DYNAMIC | 442528 |
-| `/airports/` | **200** | 122.9 | br | DYNAMIC | 3587 |
-| `/aeroporti/` | **200** | 169.2 | br | DYNAMIC | 3568 |
-| `/airports/europe/` | **200** | 129.7 | br | DYNAMIC | 10144 |
-| `/aeroporti/europa/` | **200** | 146.9 | br | DYNAMIC | 10230 |
-| `/from/fco/` | **200** | 142.1 | br | DYNAMIC | 5554 |
-| `/da/fco/` | **200** | 162.3 | br | DYNAMIC | 5622 |
-| `/from/lhr/` | **200** | 139.8 | br | DYNAMIC | 5539 |
-| `/da/lhr/` | **200** | 151.3 | br | DYNAMIC | 5627 |
-| `/from/jfk/` | **200** | 135.8 | br | DYNAMIC | 5604 |
-| `/da/jfk/` | **200** | 132.4 | br | DYNAMIC | 5697 |
-| `/from/dxb/` | **200** | 133.1 | br | DYNAMIC | 5562 |
-| `/da/dxb/` | **200** | 128.5 | br | DYNAMIC | 5645 |
-| `/from/ist/` | **200** | 164.9 | br | DYNAMIC | 5523 |
-| `/da/ist/` | **200** | 195.6 | br | DYNAMIC | 5624 |
-| `/from/cdg/` | **200** | 158.3 | br | DYNAMIC | 5631 |
-| `/da/cdg/` | **200** | 189.5 | br | DYNAMIC | 5685 |
-| `/from/hnd/` | **200** | 128.8 | br | DYNAMIC | 5547 |
-| `/da/hnd/` | **200** | 208.0 | br | DYNAMIC | 5616 |
-| `/from/ams/` | **200** | 169.8 | br | DYNAMIC | 5573 |
-| `/da/ams/` | **200** | 202.1 | br | DYNAMIC | 5671 |
-| `/from/fra/` | **200** | 228.3 | br | DYNAMIC | 5554 |
-| `/da/fra/` | **200** | 182.5 | br | DYNAMIC | 5651 |
-| `/from/mad/` | **200** | 244.4 | br | DYNAMIC | 5490 |
-| `/da/mad/` | **200** | 222.0 | br | DYNAMIC | 5592 |
-| `/from/aho/` | **200** | 137.3 | br | DYNAMIC | 5143 |
-| `/da/aho/` | **200** | 144.8 | br | DYNAMIC | 5239 |
-| `/from/abz/` | **200** | 167.3 | br | DYNAMIC | 5139 |
-| `/da/abz/` | **200** | 138.1 | br | DYNAMIC | 5208 |
-| `/from/bhd/` | **200** | 155.9 | br | DYNAMIC | 5058 |
-| `/da/bhd/` | **200** | 197.4 | br | DYNAMIC | 5149 |
-| `/from/ace/` | **200** | 177.8 | br | DYNAMIC | 5135 |
-| `/da/ace/` | **200** | 213.5 | br | DYNAMIC | 5229 |
+### Confronto Dettagliato Browser vs Googlebot:
+
+| URL | Browser Status | Googlebot Status | Final URL | Canonical Match | Meta Robots | Dimensione (B / G) | Discrepanze |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `/` | **200** | **200** | Match | Match | `index, follow` | 372822B / 372822B | 0 |
+| `/flight/` | **200** | **200** | Match | Match | `index, follow` | 1991101B / 1991101B | 0 |
+| `/airports/` | **200** | **200** | Match | Match | `index, follow` | 12294B / 12294B | 0 |
+| `/aeroporti/` | **200** | **200** | Match | Match | `index, follow` | 12225B / 12225B | 0 |
+| `/airports/europe/` | **200** | **200** | Match | Match | `index, follow` | 59732B / 59732B | 0 |
+| `/aeroporti/europa/` | **200** | **200** | Match | Match | `index, follow` | 58978B / 58978B | 0 |
+| `/from/fco/` | **200** | **200** | Match | Match | `index, follow` | 24555B / 24555B | 0 |
+| `/da/fco/` | **200** | **200** | Match | Match | `index, follow` | 24637B / 24637B | 0 |
+| `/from/lhr/` | **200** | **200** | Match | Match | `index, follow` | 24472B / 24472B | 0 |
+| `/da/lhr/` | **200** | **200** | Match | Match | `index, follow` | 24546B / 24546B | 0 |
+| `/from/jfk/` | **200** | **200** | Match | Match | `index, follow` | 24580B / 24580B | 0 |
+| `/da/jfk/` | **200** | **200** | Match | Match | `index, follow` | 24683B / 24683B | 0 |
+| `/from/dxb/` | **200** | **200** | Match | Match | `index, follow` | 24439B / 24439B | 0 |
+| `/da/dxb/` | **200** | **200** | Match | Match | `index, follow` | 24517B / 24517B | 0 |
+| `/from/ist/` | **200** | **200** | Match | Match | `index, follow` | 24556B / 24556B | 0 |
+| `/da/ist/` | **200** | **200** | Match | Match | `index, follow` | 24626B / 24626B | 0 |
+| `/from/cdg/` | **200** | **200** | Match | Match | `index, follow` | 24656B / 24656B | 0 |
+| `/da/cdg/` | **200** | **200** | Match | Match | `index, follow` | 24744B / 24744B | 0 |
+| `/from/hnd/` | **200** | **200** | Match | Match | `index, follow` | 24284B / 24284B | 0 |
+| `/da/hnd/` | **200** | **200** | Match | Match | `index, follow` | 24366B / 24366B | 0 |
+| `/from/ams/` | **200** | **200** | Match | Match | `index, follow` | 24729B / 24729B | 0 |
+| `/da/ams/` | **200** | **200** | Match | Match | `index, follow` | 24818B / 24818B | 0 |
+| `/from/fra/` | **200** | **200** | Match | Match | `index, follow` | 24700B / 24700B | 0 |
+| `/da/fra/` | **200** | **200** | Match | Match | `index, follow` | 24787B / 24787B | 0 |
+| `/from/mad/` | **200** | **200** | Match | Match | `index, follow` | 24612B / 24612B | 0 |
+| `/da/mad/` | **200** | **200** | Match | Match | `index, follow` | 24698B / 24698B | 0 |
+| `/from/aho/` | **200** | **200** | Match | Match | `index, follow` | 20937B / 20937B | 0 |
+| `/da/aho/` | **200** | **200** | Match | Match | `index, follow` | 21027B / 21027B | 0 |
+| `/from/abz/` | **200** | **200** | Match | Match | `index, follow` | 19422B / 19422B | 0 |
+| `/da/abz/` | **200** | **200** | Match | Match | `index, follow` | 19505B / 19505B | 0 |
+| `/from/bhd/` | **200** | **200** | Match | Match | `index, follow` | 19543B / 19543B | 0 |
+| `/da/bhd/` | **200** | **200** | Match | Match | `index, follow` | 19612B / 19612B | 0 |
+| `/from/ace/` | **200** | **200** | Match | Match | `index, follow` | 20169B / 20169B | 0 |
+| `/da/ace/` | **200** | **200** | Match | Match | `index, follow` | 20254B / 20254B | 0 |
 
 ## 6. Verifica Pagine Rimosse e Redirect
 | URL Testato | Risposta HTTP Live | Valutazione |

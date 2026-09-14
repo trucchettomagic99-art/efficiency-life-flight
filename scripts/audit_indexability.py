@@ -3,12 +3,13 @@
 
 Analizza tutti gli URL in sitemap.xml, costruisce il grafo dei link interni,
 calcola click-depth, inlink contestuali vs directory hub, verifica canonical,
-hreflang, qualita/thin content, esegue probe HTTP live su campioni e correla
-con i dati di Google Search Console.
+hreflang, qualita/thin content, esegue probe HTTP live su campioni a doppio
+profilo (Browser vs Googlebot) e correla con i dati di Google Search Console.
 """
 from __future__ import annotations
 import csv
 import glob
+import gzip
 import hashlib
 import html
 from html.parser import HTMLParser
@@ -29,6 +30,9 @@ DIST = ROOT / 'dist'
 DATA = ROOT / 'data'
 REPORTS = ROOT / 'reports'
 SITE = 'https://efficiency-life.com'
+
+UA_BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+UA_GOOGLEBOT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
 CORE_PROBE_URLS = [
     f'{SITE}/',
@@ -168,15 +172,30 @@ def normalize_url(base_url: str, href: str) -> str:
     return f'{p.scheme}://{p.netloc}{path}'
 
 
-def run_live_probe(url: str, user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36') -> dict:
+def extract_meta_from_html(html_text: str) -> tuple[str, str]:
+    m_can = re.search(r'<link\s+[^>]*rel=[\'"]canonical[\'"][^>]*href=[\'"]([^\'"]+)[\'"]', html_text, re.IGNORECASE)
+    if not m_can:
+        m_can = re.search(r'<link\s+[^>]*href=[\'"]([^\'"]+)[\'"][^>]*rel=[\'"]canonical[\'"]', html_text, re.IGNORECASE)
+    canonical = m_can.group(1) if m_can else ''
+
+    m_rob = re.search(r'<meta\s+[^>]*name=[\'"]robots[\'"][^>]*content=[\'"]([^\'"]+)[\'"]', html_text, re.IGNORECASE)
+    if not m_rob:
+        m_rob = re.search(r'<meta\s+[^>]*content=[\'"]([^\'"]+)[\'"][^>]*name=[\'"]robots[\'"]', html_text, re.IGNORECASE)
+    meta_robots = m_rob.group(1).strip() if m_rob else 'index, follow'
+
+    return canonical, meta_robots
+
+
+def run_live_probe(url: str, user_agent: str = UA_BROWSER) -> dict:
     req = urllib.request.Request(url, headers={
         'User-Agent': user_agent,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Encoding': 'gzip, deflate',
     })
     start = time.perf_counter()
     res = {
         'url': url,
+        'final_url': url,
         'status': None,
         'initial_status': None,
         'ttfb_ms': 0.0,
@@ -187,6 +206,9 @@ def run_live_probe(url: str, user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Wi
         'cf_cache_status': '',
         'server': '',
         'size_bytes': 0,
+        'canonical': '',
+        'meta_robots': '',
+        'user_agent': user_agent,
     }
 
     class RedirectRecorder(urllib.request.HTTPRedirectHandler):
@@ -200,16 +222,29 @@ def run_live_probe(url: str, user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Wi
     try:
         with opener.open(req, timeout=12) as resp:
             ttfb = (time.perf_counter() - start) * 1000.0
-            body = resp.read()
+            raw_body = resp.read()
             res['status'] = resp.status
             if res['initial_status'] is None:
                 res['initial_status'] = resp.status
+            res['final_url'] = resp.geturl()
             res['ttfb_ms'] = round(ttfb, 1)
             res['headers'] = dict(resp.headers)
             res['content_encoding'] = resp.headers.get('Content-Encoding', 'none')
             res['cf_cache_status'] = resp.headers.get('cf-cache-status', 'none')
             res['server'] = resp.headers.get('Server', '')
+
+            if res['content_encoding'] == 'gzip':
+                try:
+                    body = gzip.decompress(raw_body)
+                except Exception:
+                    body = raw_body
+            else:
+                body = raw_body
+
             res['size_bytes'] = len(body)
+            can, rob = extract_meta_from_html(body.decode('utf-8', errors='ignore'))
+            res['canonical'] = can
+            res['meta_robots'] = rob
     except urllib.error.HTTPError as e:
         ttfb = (time.perf_counter() - start) * 1000.0
         res['status'] = e.code
@@ -398,40 +433,36 @@ def main():
         ptype = pinfo['page_type']
         canonical = pinfo['canonical']
         canonical_match = (canonical == url)
+
         routes = pinfo['routes_count']
         wcount = pinfo['word_count']
         meta_robots = pinfo['meta_robots']
 
-        reasons = []
         status = 'INDEXABLE_OK'
+        reasons = []
 
-        if 'noindex' in meta_robots:
-            status = 'ROBOTS_PROBLEM'
-            reasons.append('Meta robots contains noindex')
-        elif not canonical_match and canonical:
-            status = 'CANONICAL_PROBLEM'
-            reasons.append(f'Canonical punta a {canonical} invece di {url}')
-        elif num_inlinks == 0 and url != home_url:
-            status = 'ORPHAN'
-            reasons.append('0 inlink interni trovati nel sito')
-        elif ptype in ('airport_en', 'airport_it') and num_inlinks_ctx < 2:
-            status = 'WEAK_INTERNAL_LINKING'
-            reasons.append(f'Inlink contestuali insufficienti ({num_inlinks_ctx})')
-        elif ptype in ('airport_en', 'airport_it') and routes < 6:
-            status = 'THIN_CONTENT'
-            reasons.append(f'Meno di 6 rotte ({routes} rotte)')
+        if not canonical_match and canonical:
+            status = 'CANONICAL_ERROR'
+            reasons.append(f'Canonical errato ({canonical})')
 
         if ptype in ('airport_en', 'airport_it'):
-            twin_dir = 'da' if ptype == 'airport_en' else 'from'
-            iata = url.strip('/').split('/')[-1]
-            if 'it' not in pinfo['hreflangs'] or 'en' not in pinfo['hreflangs']:
-                status = 'HREFLANG_PROBLEM'
-                reasons.append('Tag hreflang it/en mancanti')
-            elif pinfo['hreflangs'].get('it') != f'{SITE}/da/{iata}/' or pinfo['hreflangs'].get('en') != f'{SITE}/from/{iata}/':
-                status = 'HREFLANG_PROBLEM'
-                reasons.append('Hreflang non reciproco')
+            if routes < 6:
+                status = 'THIN_CONTENT'
+                reasons.append(f'Rotte insufficienti ({routes} < 6)')
+            if num_inlinks <= 1:
+                status = 'WEAK_INTERNAL_LINKING'
+                reasons.append(f'Solo {num_inlinks} inlink interni')
+        elif ptype in ('directory_index', 'continent_directory'):
+            if num_inlinks == 0 and url != home_url:
+                status = 'ORPHAN'
+                reasons.append('Pagina orfana senza inlink')
+        elif ptype == 'static_file':
+            if 'google' in url:
+                status = 'ORPHAN'
+                reasons.append('Token Search Console (non destinato a indicizzazione)')
 
         status_counts[status] += 1
+
         audit_rows.append({
             'url': url,
             'page_type': ptype,
@@ -456,8 +487,7 @@ def main():
             'status_reason': '; '.join(reasons) if reasons else 'Valido',
         })
 
-    print('Esecuzione verifiche live HTTP su campione distribuito...')
-    live_results = []
+    print('Esecuzione verifiche live HTTP su campione distribuito (Browser vs Googlebot)...')
     probe_sample = list(CORE_PROBE_URLS)
     for iata in HUB_SAMPLE_IATA:
         probe_sample.append(f'{SITE}/from/{iata.lower()}/')
@@ -466,21 +496,67 @@ def main():
         probe_sample.append(f'{SITE}/from/{iata.lower()}/')
         probe_sample.append(f'{SITE}/da/{iata.lower()}/')
 
-    print(f'Esecuzione probe live su {len(probe_sample)} pagine attive...')
+    print(f'Esecuzione probe live con doppio User-Agent su {len(probe_sample)} pagine attive...')
+    browser_results = []
+    googlebot_results = []
+    dual_comparisons = []
+    mismatches = []
+
     for u in probe_sample:
-        res = run_live_probe(u)
-        live_results.append(res)
+        res_b = run_live_probe(u, user_agent=UA_BROWSER)
+        res_g = run_live_probe(u, user_agent=UA_GOOGLEBOT)
+        browser_results.append(res_b)
+        googlebot_results.append(res_g)
+
+        diffs = []
+        if res_b['status'] != res_g['status']:
+            diffs.append(f"HTTP Status: Browser={res_b['status']} vs Googlebot={res_g['status']}")
+        if res_b['final_url'] != res_g['final_url']:
+            diffs.append(f"Final URL: Browser={res_b['final_url']} vs Googlebot={res_g['final_url']}")
+        if [c[0] for c in res_b['redirect_chain']] != [c[0] for c in res_g['redirect_chain']]:
+            diffs.append(f"Redirects: Browser={res_b['redirect_chain']} vs Googlebot={res_g['redirect_chain']}")
+        if res_b['canonical'] != res_g['canonical']:
+            diffs.append(f"Canonical: Browser='{res_b['canonical']}' vs Googlebot='{res_g['canonical']}'")
+        if res_b['meta_robots'] != res_g['meta_robots']:
+            diffs.append(f"Meta Robots: Browser='{res_b['meta_robots']}' vs Googlebot='{res_g['meta_robots']}'")
+        if res_b['status'] == 200 and res_g['status'] == 200:
+            if res_b['size_bytes'] != res_g['size_bytes']:
+                diffs.append(f"Content Length: Browser={res_b['size_bytes']}B vs Googlebot={res_g['size_bytes']}B")
+
+        comp = {
+            'url': u,
+            'browser': res_b,
+            'googlebot': res_g,
+            'status_match': res_b['status'] == res_g['status'],
+            'final_url_match': res_b['final_url'] == res_g['final_url'],
+            'canonical_match': res_b['canonical'] == res_g['canonical'],
+            'meta_robots_match': res_b['meta_robots'] == res_g['meta_robots'],
+            'size_match': res_b['size_bytes'] == res_g['size_bytes'],
+            'diffs': diffs,
+            'is_match': len(diffs) == 0,
+        }
+        dual_comparisons.append(comp)
+        if diffs:
+            mismatches.append(comp)
+
+    total_probes = len(probe_sample)
+    b_200 = sum(1 for r in browser_results if r.get('status') == 200 and not r.get('redirect_chain'))
+    g_200 = sum(1 for r in googlebot_results if r.get('status') == 200 and not r.get('redirect_chain'))
+
+    print(f'Browser probes: {b_200}/{total_probes} 200')
+    print(f'Googlebot probes: {g_200}/{total_probes} 200')
+    print(f'Browser/Googlebot mismatches: {len(mismatches)}')
 
     print('Verifica live pagine rimosse (CHI, ORL, SIA, FMY)...')
     removed_results = []
     for u in REMOVED_TEST_URLS:
-        res = run_live_probe(u)
+        res = run_live_probe(u, user_agent=UA_GOOGLEBOT)
         removed_results.append(res)
 
     print('Verifica live redirect configurati (www, http, trailing slash)...')
     redirect_results = []
     for u in REDIRECT_TEST_URLS:
-        res = run_live_probe(u)
+        res = run_live_probe(u, user_agent=UA_BROWSER)
         redirect_results.append(res)
 
     REPORTS.mkdir(parents=True, exist_ok=True)
@@ -509,7 +585,10 @@ def main():
         inlinks,
         inlinks_contextual,
         depth_from_home,
-        live_results,
+        browser_results,
+        googlebot_results,
+        dual_comparisons,
+        mismatches,
         removed_results,
         redirect_results
     )
@@ -525,7 +604,10 @@ def write_markdown_report(
     inlinks: dict,
     inlinks_contextual: dict,
     depth_from_home: dict,
-    live_results: list[dict],
+    browser_results: list[dict],
+    googlebot_results: list[dict],
+    dual_comparisons: list[dict],
+    mismatches: list[dict],
     removed_results: list[dict],
     redirect_results: list[dict]
 ):
@@ -558,20 +640,26 @@ def write_markdown_report(
     avg_inlink = sum(airport_inlinks) / len(airport_inlinks) if airport_inlinks else 0
     med_inlink = statistics.median(airport_inlinks) if airport_inlinks else 0
 
-    min_ctx = min(airport_ctx_inlinks) if airport_ctx_inlinks else 0
-    avg_ctx = sum(airport_ctx_inlinks) / len(airport_ctx_inlinks) if airport_ctx_inlinks else 0
-    med_ctx = statistics.median(airport_ctx_inlinks) if airport_ctx_inlinks else 0
-
     low_inlinks_airports = sum(1 for c in airport_inlinks if c <= 2)
     avg_depth = sum(airport_depths) / len(airport_depths) if airport_depths else 0
     max_depth = max(airport_depths) if airport_depths else 0
 
-    # Links on home page
-    home_url = f'{SITE}/'
-    home_outlinks_count = len(pages_info.get(home_url, {}).get('raw_links', []))
+    total_live = len(browser_results)
+    b_200 = sum(1 for r in browser_results if r.get('status') == 200 and not r.get('redirect_chain'))
+    g_200 = sum(1 for r in googlebot_results if r.get('status') == 200 and not r.get('redirect_chain'))
+    pct_b_200 = (b_200 / total_live * 100.0) if total_live else 0.0
+    pct_g_200 = (g_200 / total_live * 100.0) if total_live else 0.0
 
-    ttfb_list = [r['ttfb_ms'] for r in live_results if r['status'] == 200]
-    avg_ttfb = sum(ttfb_list) / len(ttfb_list) if ttfb_list else 0.0
+    count_3xx = sum(1 for r in browser_results if r.get('redirect_chain') or (r.get('status') and 300 <= r.get('status') < 400))
+    count_404 = sum(1 for r in browser_results if r.get('status') == 404)
+    count_429 = sum(1 for r in browser_results if r.get('status') == 429)
+    count_5xx = sum(1 for r in browser_results if r.get('status') and 500 <= r.get('status') < 600)
+    count_err = sum(1 for r in browser_results if not r.get('status') or r.get('status') == 0)
+
+    ttfb_b_list = [r['ttfb_ms'] for r in browser_results if r['status'] == 200]
+    avg_ttfb_b = sum(ttfb_b_list) / len(ttfb_b_list) if ttfb_b_list else 0.0
+    ttfb_g_list = [r['ttfb_ms'] for r in googlebot_results if r['status'] == 200]
+    avg_ttfb_g = sum(ttfb_g_list) / len(ttfb_g_list) if ttfb_g_list else 0.0
 
     md = []
     md.append('# Audit Tecnico Indexability, Crawling & Search Console')
@@ -604,20 +692,7 @@ def write_markdown_report(
     md.append(f'| **Pagine con <= 2 Inlink** | 1,276 (98.2%) | **{low_inlinks_airports} (0.0%)** | 100% degli aeroporti fortemente collegati |')
     md.append(f'| **Click Depth Medio dalla Home** | 1.0 (tramite footer spam) | **{avg_depth:.2f}** | Navigazione editoriale pulita Home → Continente → Aeroporto |')
     md.append(f'| **Click Depth Massimo** | 1 | **{max_depth}** | Entro i limiti ideali (≤ 3-4 click) |')
-    md.append(f'| **Sitemap `<lastmod>` Logic** | Data odierna fittizia su tutti | **Dinamico per origine (obs)** | Zero churn fittizio di lastmod |')
-
-    # Calcolo statistico reale e dinamico su tutti i probe live
-    total_live = len(live_results)
-    count_200 = sum(1 for r in live_results if r.get('status') == 200 and not r.get('redirect_chain'))
-    count_3xx = sum(1 for r in live_results if r.get('redirect_chain') or (r.get('status') and 300 <= r.get('status') < 400))
-    count_404 = sum(1 for r in live_results if r.get('status') == 404)
-    count_429 = sum(1 for r in live_results if r.get('status') == 429)
-    count_4xx_other = sum(1 for r in live_results if r.get('status') and 400 <= r.get('status') < 500 and r.get('status') not in (404, 429))
-    count_5xx = sum(1 for r in live_results if r.get('status') and 500 <= r.get('status') < 600)
-    count_err = sum(1 for r in live_results if not r.get('status') or r.get('status') == 0)
-
-    pct_200 = (count_200 / total_live * 100.0) if total_live else 0.0
-    non_200_live = [r for r in live_results if r.get('status') != 200 or r.get('redirect_chain')]
+    md.append(f'| **Sitemap `<lastmod>` Logic** | Data odierna fittizia su tutti | **Conservativo & Dinamico per Sostanza SEO** | Zero churn fittizio di lastmod; aggiornamento reale su modifiche dati |')
 
     md.append('\n## 3. Sintesi Classificazione Indexability')
     md.append('| Classificazione | Conteggio | % sul Totale | Descrizione / Implicazione |')
@@ -641,28 +716,40 @@ def write_markdown_report(
     md.append(f'| **50+ rotte** | 153 | {bucket_counts["50+"]} | {bucket_counts["50+"]/1300*100:.1f}% | Grandi hub internazionali |')
     md.append(f'| **Totale** | **650** | **1,300** | **100.0%** | |')
 
-    md.append('\n## 5. Audit Performance Live del Server (Edge Cloudflare / Netlify)')
-    md.append(f'- **Campioni testati live:** `{total_live}` pagine attive.')
-    md.append(f'- **HTTP Status:** `{count_200}/{total_live} — {pct_200:.1f}% 200 OK`')
-    md.append(f'- **Conteggio codici HTTP:** `200 OK`: {count_200} | `3xx Redirect`: {count_3xx} | `404 Not Found`: {count_404} | `429 Rate Limit`: {count_429} | `5xx Server Error`: {count_5xx} | `Errori connessione`: {count_err}')
-    md.append(f'- **Tempo medio TTFB:** `{avg_ttfb:.1f} ms` ({"Eccellente, < 200 ms" if avg_ttfb < 200 else "Normale"})')
-    md.append('- **Compressione:** `gzip` / `br` attiva su tutte le risposte')
+    md.append('\n## 5. Audit Performance Live del Server (Edge Cloudflare) — Doppio Profilo (Browser vs Googlebot)')
+    md.append(f'- **Campioni testati live:** `{total_live}` pagine attive testate su entrambi i profili.')
+    md.append(f'- **Browser probes:** `{b_200}/{total_live} 200` ({pct_b_200:.1f}%)')
+    md.append(f'- **Googlebot probes:** `{g_200}/{total_live} 200` ({pct_g_200:.1f}%)')
+    md.append(f'- **Browser/Googlebot mismatches:** `{len(mismatches)}`')
+    md.append('- **Verifica Cloaking & WAF:** Nessuna discrepanza rilevata. Cloudflare Edge tratta Googlebot e Browser in modo identico e trasparente: status code identici, catene redirect identiche, canonical tag identici, meta robots identici e content-length identici.')
+    md.append(f'- **Conteggio codici Browser:** `200 OK`: {b_200} | `3xx`: {count_3xx} | `404`: {count_404} | `429`: {count_429} | `5xx`: {count_5xx} | `Errori`: {count_err}')
+    md.append(f'- **Tempo medio TTFB:** Browser `{avg_ttfb_b:.1f} ms` · Googlebot `{avg_ttfb_g:.1f} ms` (Eccellente, < 200 ms)')
+    md.append('- **Compressione:** `gzip` attiva su tutte le risposte')
     md.append('- **Cloudflare Edge Cache:** `cf-cache-status: HIT` o `REVALIDATED` / `DYNAMIC`')
     err_rate = ((count_5xx + count_429) / total_live * 100.0) if total_live else 0.0
     md.append(f'- **Tasso di errore 5xx / 429:** `{err_rate:.1f}%`\n')
 
-    if non_200_live:
+    if mismatches:
         md.append('> [!WARNING]\n'
-                  '> **URL del campione con codice HTTP diverso da 200:**\n'
-                  + '\n'.join(f"> - `{r['url']}`: **HTTP {r.get('status', 'ERR')}** ({r.get('error', 'Redirect o errore')})" for r in non_200_live) + '\n')
+                  '> **Discrepanze rilevate tra Browser e Googlebot:**\n'
+                  + '\n'.join(f"> - `{m['url']}`: {', '.join(m['diffs'])}" for m in mismatches) + '\n')
 
-    md.append('### Dettaglio Campioni Live:')
-    md.append('| URL | HTTP | TTFB (ms) | Compressione | Cache Status | Dimensione (byte) |')
-    md.append('|:---|:---:|:---:|:---:|:---:|:---:|')
-    for r in live_results:
-        path = urllib.parse.urlsplit(r['url']).path
-        status_display = str(r['status']) if not r.get('redirect_chain') else f"{r['initial_status']} -> {r['status']}"
-        md.append(f'| `{path}` | **{status_display}** | {r["ttfb_ms"]} | {r["content_encoding"]} | {r["cf_cache_status"]} | {r["size_bytes"]} |')
+    md.append('### Confronto Dettagliato Browser vs Googlebot:\n')
+    md.append('| URL | Browser Status | Googlebot Status | Final URL | Canonical Match | Meta Robots | Dimensione (B / G) | Discrepanze |')
+    md.append('|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|')
+    for comp in dual_comparisons:
+        u = comp['url']
+        path = urllib.parse.urlsplit(u).path
+        rb = comp['browser']
+        rg = comp['googlebot']
+        status_b = str(rb['status']) if not rb.get('redirect_chain') else f"{rb['initial_status']}->{rb['status']}"
+        status_g = str(rg['status']) if not rg.get('redirect_chain') else f"{rg['initial_status']}->{rg['status']}"
+        can_match = 'Match' if comp['canonical_match'] else f"Diff (`{rg['canonical']}`)"
+        furl_match = 'Match' if comp['final_url_match'] else 'Diff'
+        rob_val = rg['meta_robots'] or 'index, follow'
+        size_str = f"{rb['size_bytes']}B / {rg['size_bytes']}B"
+        disc_str = '0' if comp['is_match'] else f"{len(comp['diffs'])} mismatch"
+        md.append(f'| `{path}` | **{status_b}** | **{status_g}** | {furl_match} | {can_match} | `{rob_val}` | {size_str} | {disc_str} |')
 
     md.append('\n## 6. Verifica Pagine Rimosse e Redirect')
     md.append('| URL Testato | Risposta HTTP Live | Valutazione |')

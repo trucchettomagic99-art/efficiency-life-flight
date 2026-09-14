@@ -602,7 +602,10 @@ def main() -> int:
                  f'"isPartOf":{{"@type":"WebSite","name":"Efficiency Life","url":"{SITE}/"}}}}')
     motore = pagina(testa('Efficiency Life Flight — Voli Diretti al Miglior Rapporto Km/€', DESC, '/flight/', alternates, ld_flight), body)
     (DIST / 'flight').mkdir(exist_ok=True)
-    (DIST / 'flight' / 'index.html').write_text(motore, encoding='utf-8')
+    flight_target = DIST / 'flight' / 'index.html'
+    if flight_target.is_file():
+        (DIST / '.prev_flight.html').write_text(flight_target.read_text(encoding='utf-8'), encoding='utf-8')
+    flight_target.write_text(motore, encoding='utf-8')
 
     # ── la home di marca, sulla radice ────────────────────────────────
     # Riceve il foglio di stile del motore invece di averne uno suo: una
@@ -633,7 +636,10 @@ def main() -> int:
     ld_home = (f'{{"@context":"https://schema.org","@type":"WebSite",'
                f'"name":"Efficiency Life","url":"{SITE}/","description":"{DESC_HOME}"}}')
     home = pagina(testa('Efficiency Life — Voli Economici Diretti e Migliori Offerte Volo', DESC_HOME, '/', alternates, ld_home), hm)
-    (DIST / 'index.html').write_text(home, encoding='utf-8')
+    home_target = DIST / 'index.html'
+    if home_target.is_file():
+        (DIST / '.prev_home.html').write_text(home_target.read_text(encoding='utf-8'), encoding='utf-8')
+    home_target.write_text(home, encoding='utf-8')
 
     for f in PUBLIC.iterdir():
         if f.is_file():
