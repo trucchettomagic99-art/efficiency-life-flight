@@ -244,4 +244,83 @@ class FlightDataTests(unittest.TestCase):
         self.assertEqual(one[0]['sc'],two[0]['sc'])
         self.assertEqual(one[0]['x'],two[0]['x'])
 
+    def test_location_authority_typing(self):
+        from location_authority import is_commercial_airport, is_city_or_metro, is_ga_or_non_commercial
+        # Pure city / metropolitan codes are NOT commercial airports
+        for code in ('CHI', 'LON', 'NYC', 'PAR', 'ROM', 'MIL', 'TYO'):
+            self.assertTrue(is_city_or_metro(code), f'{code} should be recognized as city/metro')
+            self.assertFalse(is_commercial_airport(code), f'{code} must not be a commercial airport')
+        # General aviation / closed airports with commercial alternative
+        for code in ('ORL', 'FMY', 'SIA', 'ANK', 'DKR', 'NHA', 'RTW', 'MES'):
+            self.assertTrue(is_ga_or_non_commercial(code), f'{code} should be recognized as GA/closed alias')
+            self.assertFalse(is_commercial_airport(code), f'{code} must not be a commercial airport')
+        # Real commercial airports
+        for code in ('ORD', 'MDW', 'LHR', 'LGW', 'JFK', 'EWR', 'CDG', 'ORY', 'MCO', 'RSW', 'XIY', 'ESB', 'DSS', 'PBI', 'FRU'):
+            self.assertTrue(is_commercial_airport(code), f'{code} must be recognized as commercial airport')
+
+    def test_location_authority_resolution(self):
+        from location_authority import resolve_commercial_airport
+        self.assertEqual(resolve_commercial_airport('ORL'), 'MCO')
+        self.assertEqual(resolve_commercial_airport('FMY'), 'RSW')
+        self.assertEqual(resolve_commercial_airport('SIA'), 'XIY')
+        self.assertEqual(resolve_commercial_airport('ANK'), 'ESB')
+        self.assertEqual(resolve_commercial_airport('DKR'), 'DSS')
+        self.assertIsNone(resolve_commercial_airport('CHI'))  # Ambiguous: ORD or MDW
+        self.assertEqual(resolve_commercial_airport('ORD'), 'ORD')
+
+    def test_validate_rejects_city_and_ga_codes(self):
+        places = dict(PLACES)
+        places.update({
+            'CHI': {'n': 'Chicago', 'k': 'US', 'la': 41.88, 'lo': -87.63, 't': 'city'},
+            'ORL': {'n': 'Orlando', 'k': 'US', 'la': 28.54, 'lo': -81.33, 't': 'city'},
+            'SIA': {'n': "Xi'an", 'k': 'CN', 'la': 34.27, 'lo': 108.95, 't': 'city'},
+            'FMY': {'n': 'Fort Myers', 'k': 'US', 'la': 26.58, 'lo': -81.86, 't': 'city'},
+        })
+        for code in ('CHI', 'ORL', 'SIA', 'FMY'):
+            with self.assertRaises(ValueError):
+                validate(fare(d=code), places, TODAY)
+            with self.assertRaises(ValueError):
+                validate(fare(o=code), places, TODAY)
+
+    def test_collapse_city_twins_deduplicates_ga_alias(self):
+        orl_places = {'ATL': {'n': 'Atlanta', 'k': 'US', 'la': 33.64, 'lo': -84.42},
+                      'MCO': {'n': 'Orlando', 'k': 'US', 'la': 28.43, 'lo': -81.31},
+                      'ORL': {'n': 'Orlando Executive', 'k': 'US', 'la': 28.54, 'lo': -81.33}}
+        base = dict(o='ATL', p=28, dep='2026-10-17', ret='2026-10-20', dur=208, km=651, obs='2026-09-14')
+        r_orl = dict(base, d='ORL', direct_check='provider_aggregate', endpoint='latest')
+        r_mco = dict(base, d='MCO', direct_check='both_legs', endpoint='dates')
+        tenute = collapse_city_twins([r_orl, r_mco], orl_places)
+        self.assertEqual(len(tenute), 1)
+        self.assertEqual(tenute[0]['d'], 'MCO')
+
+    def test_collapse_city_twins_preserves_multi_airport_commercial(self):
+        lon_places = {'FCO': {'n': 'Rome', 'k': 'IT', 'la': 41.8, 'lo': 12.2},
+                      'LHR': {'n': 'London', 'k': 'GB', 'la': 51.47, 'lo': -0.45},
+                      'LGW': {'n': 'London', 'k': 'GB', 'la': 51.15, 'lo': -0.18}}
+        base = dict(o='FCO', p=50, dep='2026-10-01', ret='2026-10-04', dur=150, obs='2026-09-14')
+        r_lhr = dict(base, d='LHR', km=1440, direct_check='both_legs', endpoint='dates')
+        r_lgw = dict(base, d='LGW', km=1410, direct_check='both_legs', endpoint='dates')
+        tenute = collapse_city_twins([r_lhr, r_lgw], lon_places)
+        self.assertEqual(len(tenute), 2)
+        self.assertEqual({r['d'] for r in tenute}, {'LHR', 'LGW'})
+
+    def test_clean_catalog_removes_non_commercial(self):
+        fake_catalog = {
+            'countries': [{'k': 'US', 'it': 'Stati Uniti', 'en': 'United States', 'g': 'Nord America', 'r': 1, 'a': ['ORD', 'CHI', 'ORL', 'MCO']}],
+            'airports': [
+                {'i': 'ORD', 'n': "O'Hare", 'c': 'Chicago', 'k': 'US', 'la': 41.97, 'lo': -87.90, 'tz': 'America/Chicago', 'r': 1},
+                {'i': 'CHI', 'n': 'Chicago FSS', 'c': 'Chicago', 'k': 'US', 'la': 41.88, 'lo': -87.63, 'tz': 'America/Chicago', 'r': 999},
+                {'i': 'ORL', 'n': 'Orlando Executive', 'c': 'Orlando', 'k': 'US', 'la': 28.54, 'lo': -81.33, 'tz': 'America/New_York', 'r': 999},
+                {'i': 'MCO', 'n': 'Orlando International', 'c': 'Orlando', 'k': 'US', 'la': 28.43, 'lo': -81.31, 'tz': 'America/New_York', 'r': 2},
+            ]
+        }
+        cleaned, issues = clean_catalog(fake_catalog)
+        codes = [a['i'] for a in cleaned['airports']]
+        self.assertIn('ORD', codes)
+        self.assertIn('MCO', codes)
+        self.assertNotIn('CHI', codes)
+        self.assertNotIn('ORL', codes)
+        us_country = next(c for c in cleaned['countries'] if c['k'] == 'US')
+        self.assertEqual(us_country['a'], ['ORD', 'MCO'])
+
 if __name__=='__main__': unittest.main()

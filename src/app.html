@@ -854,7 +854,7 @@ footer a{color:var(--ink-2)}
 
       <div class="step full">
         <h3><span data-k="f_when">Quando</span> <em data-k="f_window">Periodo di partenza</em></h3>
-        <p class="hint" data-k="f_window_h">Quando intendi partire, contato da oggi. Puoi scegliere piu' intervalli.</p>
+        <p class="hint" data-k="f_window_h">Quando intendi partire, contato da oggi. Puoi scegliere più intervalli.</p>
         <div class="segbar" id="winChips"></div>
         <div class="lbl" style="margin-top:16px" data-k="f_shape">Forma del viaggio</div>
         <div class="segbar" id="shapeChips"></div>
@@ -1037,7 +1037,12 @@ function money(eur, opt){
 }
 const toCur = eur => eur * fx()[3];
 const fmtN  = n => n.toLocaleString(S.lang);
-const fmtDate = s => new Date(s+'T00:00:00Z').toLocaleDateString(S.lang,{day:'2-digit',month:'short',timeZone:'UTC'});
+const fmtDate = s => {
+  const d = new Date(s + 'T00:00:00Z');
+  const opt = { day: '2-digit', month: 'short', timeZone: 'UTC' };
+  if (d.getUTCFullYear() !== new Date().getUTCFullYear()) opt.year = 'numeric';
+  return d.toLocaleDateString(S.lang, opt);
+};
 const dur = m => `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`;
 const ratio = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
 /* Scarto dal prezzo atteso, in percento: -48% = costa quasi la meta' di

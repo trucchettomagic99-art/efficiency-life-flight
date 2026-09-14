@@ -7,6 +7,24 @@ import os
 import pathlib
 import re
 from collections import Counter
+try:
+    from location_authority import (
+        is_commercial_airport,
+        is_city_or_metro,
+        canonical_city_code,
+        resolve_commercial_airport,
+        get_clean_city_name,
+        get_clean_airport_name,
+    )
+except ImportError:
+    from scripts.location_authority import (
+        is_commercial_airport,
+        is_city_or_metro,
+        canonical_city_code,
+        resolve_commercial_airport,
+        get_clean_city_name,
+        get_clean_airport_name,
+    )
 
 SCHEMA = 2
 MAX_AGE = 7
@@ -66,10 +84,18 @@ def clean_catalog(catalog):
     for original in catalog['airports']:
         a = dict(original)
         a['i'] = str(a.get('i', '')).strip().upper()
+        # Solo veri aeroporti commerciali di linea possono restare nel catalogo pubblico.
+        if not is_commercial_airport(a['i']):
+            issues['non_commercial_airport'] += 1
+            continue
         a['k'] = country(a['i'], a.get('k'))
         if not valid_place(a['i'], a, countries):
             issues['invalid_airport'] += 1
             continue
+        clean_c = get_clean_city_name(a['i'], a.get('c'))
+        clean_n = get_clean_airport_name(a['i'], a.get('n'))
+        if clean_c: a['c'] = clean_c
+        if clean_n: a['n'] = clean_n
         # Preserve the existing UI's BSL choice (Swiss airport identity).
         old = best.get(a['i'])
         if old:
@@ -90,6 +116,12 @@ def places_from(catalog, previous, airports=(), cities=()):
     for code, original in previous.items():
         p = dict(original); p['k'] = country(code, p.get('k'))
         if valid_place(code, p, countries):
+            t = p.get('t', 'airport')
+            if is_city_or_metro(code) or not is_commercial_airport(code):
+                t = 'city'
+            p['t'] = t
+            clean_name = get_clean_city_name(code, p.get('n'))
+            if clean_name: p['n'] = clean_name
             places[code] = p
     # City metadata is useful for names, but an exact airport record must win.
     # Keep the type so city aggregates (LON/PAR/TYO...) cannot masquerade as
@@ -98,18 +130,27 @@ def places_from(catalog, previous, airports=(), cities=()):
         for item in items:
             code = item.get('code', '')
             coord = item.get('coordinates') or {}
-            p = {'n': str(item.get('name') or code).replace('|', ' '),
+            raw_name = str(item.get('name') or code).replace('|', ' ')
+            clean_name = get_clean_city_name(code, raw_name)
+            t = kind
+            if is_city_or_metro(code) or not is_commercial_airport(code):
+                t = 'city'
+            elif is_commercial_airport(code):
+                t = 'airport'
+            p = {'n': clean_name,
                  'k': country(code, item.get('country_code')),
-                 'la': coord.get('lat'), 'lo': coord.get('lon'), 't': kind}
+                 'la': coord.get('lat'), 'lo': coord.get('lon'), 't': t}
             if valid_place(code, p, countries):
                 p['la'], p['lo'] = float(p['la']), float(p['lo'])
                 places[code] = p
     for a in catalog['airports']:
-        places[a['i']] = {'n': a['c'], 'k': a['k'], 'la': a['la'], 'lo': a['lo'], 't':'airport'}
+        if is_commercial_airport(a['i']):
+            clean_name = get_clean_city_name(a['i'], a['c'])
+            places[a['i']] = {'n': clean_name, 'k': a['k'], 'la': a['la'], 'lo': a['lo'], 't':'airport'}
     return places
 
 def expand_catalog(catalog, places, airports, destinations):
-    """Only destinations proven to be airports may become new selectable origins."""
+    """Only destinations proven to be commercial airports may become new selectable origins."""
     known = {a['i'] for a in catalog['airports']}
     countries = {c['k']: c for c in catalog['countries']}
     for a in airports:
@@ -118,10 +159,14 @@ def expand_catalog(catalog, places, airports, destinations):
             continue
         if a.get('iata_type') not in (None, 'airport'):
             continue
-        p = places[code]
-        if p['k'] not in countries:
+        if a.get('flightable') is False or not is_commercial_airport(code):
             continue
-        catalog['airports'].append({'i': code, 'n': a.get('name') or code, 'c': p['n'],
+        p = places[code]
+        if p['k'] not in countries or p.get('t') != 'airport':
+            continue
+        clean_name = get_clean_airport_name(code, a.get('name') or code)
+        clean_city = get_clean_city_name(code, p['n'])
+        catalog['airports'].append({'i': code, 'n': clean_name, 'c': clean_city,
                                    'k': p['k'], 'la': p['la'], 'lo': p['lo'],
                                    'tz': a.get('time_zone') or '', 'r': 999})
         countries[p['k']]['a'].append(code)
@@ -140,7 +185,9 @@ def validate(row, places, today):
         raise ValueError('same_place')
     if r.get('o') not in places or r.get('d') not in places:
         raise ValueError('unknown_place')
-    if places[r['o']].get('t') == 'city' or places[r['d']].get('t') == 'city':
+    if places[r['o']].get('t') in ('city', 'metro') or places[r['d']].get('t') in ('city', 'metro'):
+        raise ValueError('city_aggregate')
+    if not is_commercial_airport(r['o']) or not is_commercial_airport(r['d']):
         raise ValueError('city_aggregate')
     dep, ret, obs = date(r['dep']), date(r['ret']), date(r['obs'])
     if dep < today or dep > today + dt.timedelta(days=366):
@@ -250,28 +297,21 @@ FIDUCIA = {'both_legs': 2, 'provider_aggregate': 1}
 def collapse_city_twins(rows, places):
     """Toglie la stessa tariffa quando il fornitore la attribuisce a due aeroporti.
 
-    L'11 settembre la classifica da Bologna mostrava due volte Bruxelles allo
-    stesso prezzo, con le stesse date e la stessa durata al minuto: una riga
-    verso BRU (Zaventem) e una verso CRL (Charleroi), che distano
-    quarantasei chilometri. Non erano due voli: era **lo stesso volo** visto da
-    due interrogazioni diverse. L'endpoint `latest` restituisce una tariffa per
-    citta' e la attribuisce all'aeroporto principale anche quando il volo parte
-    dal secondario; l'endpoint `dates` restituisce lo stesso volo con
-    l'aeroporto giusto, verificato tratta per tratta.
-
-    Il doppione non e' solo rumore: la riga sbagliata prometteva Zaventem per un
-    volo che atterra a Charleroi. Su 23.190 righe il fenomeno ne toccava 280, in
-    140 coppie — e in tutte e 140 esattamente una portava `both_legs`. Da qui la
-    regola: a parita' di origine, citta' di destinazione, prezzo, date e durata
-    si tiene la riga verificata meglio. Nulla va perso, perche' l'altra diceva
-    lo stesso prezzo per gli stessi giorni.
-
-    Volutamente stretta: serve che coincida *anche* la durata, cosi' due voli
-    davvero distinti per lo stesso giorno restano entrambi.
+    Preserva rigorosamente aeroporti commerciali distinti della stessa area metropolitana
+    (es. LHR vs LGW a Londra, JFK vs LGA a New York), mentre collassa e deduplica i record
+    quando uno dei due scali e' un alias/GA non commerciale (es. ORL vs MCO, FMY vs RSW)
+    oppure un aggregatore fornitore non verificato della stessa identica corsa.
     """
     def citta(iata):
         p = places.get(iata) or {}
-        return p.get('n') or iata, p.get('k')
+        resolved = resolve_commercial_airport(iata)
+        if resolved and resolved != iata:
+            city_name = get_clean_city_name(resolved)
+            return canonical_city_code(resolved), city_name, p.get('k')
+        clean_c = get_clean_city_name(iata)
+        if clean_c and (not p.get('n') or p.get('n') in (clean_c, iata)):
+            return canonical_city_code(iata), clean_c, p.get('k')
+        return canonical_city_code(iata), p.get('n') or iata, p.get('k')
 
     gruppi = {}
     for r in rows:
@@ -282,11 +322,37 @@ def collapse_city_twins(rows, places):
         if len(insieme) == 1:
             tenute.append(insieme[0])
             continue
-        # piu' verificata; a parita', l'endpoint per date; poi il codice IATA,
-        # perche' due corse sugli stessi dati devono dare lo stesso indice.
-        tenute.append(max(insieme, key=lambda r: (FIDUCIA.get(r.get('direct_check'), 0),
-                                                  r.get('endpoint') == 'dates',
-                                                  r['d'])))
+
+        commercial_by_ap = {}
+        for r in insieme:
+            if is_commercial_airport(r['d']):
+                commercial_by_ap.setdefault(r['d'], []).append(r)
+
+        if commercial_by_ap:
+            distinct_winners = []
+            for ap, ap_rows in commercial_by_ap.items():
+                best_ap_row = max(ap_rows, key=lambda r: (
+                    FIDUCIA.get(r.get('direct_check'), 0),
+                    r.get('endpoint') == 'dates',
+                    r['d']
+                ))
+                distinct_winners.append(best_ap_row)
+
+            # Se tra i vincitori commerciali c'e' una rotta verificata (both_legs),
+            # scarta gli aggregati provider non verificati per la stessa tratta
+            has_verified = any(r.get('direct_check') == 'both_legs' for r in distinct_winners)
+            if has_verified:
+                distinct_winners = [r for r in distinct_winners if r.get('direct_check') == 'both_legs']
+
+            tenute.extend(distinct_winners)
+        else:
+            best_row = max(insieme, key=lambda r: (
+                FIDUCIA.get(r.get('direct_check'), 0),
+                r.get('endpoint') == 'dates',
+                r['d']
+            ))
+            tenute.append(best_row)
+
     return sorted(tenute, key=key)
 
 def public_rows(rows):
@@ -304,6 +370,6 @@ def migrate(data, today):
     index = dict(old, places=places, deals=reps, counts=dict(Counter(r['o'] for r in reps)))
     # Cleaning never pretends that old prices have just been observed.
     dump(data / 'catalog.json', catalog)
-    dump(data / 'origins.json', list(dict.fromkeys([*read(data/'origins.json', []), *[a['i'] for a in catalog['airports']]])))
+    dump(data / 'origins.json', sorted(dict.fromkeys(a['i'] for a in catalog['airports'] if is_commercial_airport(a['i']))))
     dump(data / 'index.json', index)
     return {'kept':len(rows), 'issues':dict(issues), 'origins':len(read(data/'origins.json'))}

@@ -261,7 +261,10 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list) 
 
     def date(s):
         d = datetime.date.fromisoformat(s)
-        return d.strftime('%d/%m') if lang == 'it' else d.strftime('%d %b')
+        now_year = datetime.date.today().year
+        if lang == 'it':
+            return d.strftime('%d/%m/%Y') if d.year != now_year else d.strftime('%d/%m')
+        return d.strftime('%d %b %Y') if d.year != now_year else d.strftime('%d %b')
 
     title = t['title'].format(**fmt)
     desc  = t['desc'].format(**fmt)
