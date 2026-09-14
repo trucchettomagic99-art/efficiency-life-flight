@@ -46,10 +46,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verifica raccolta e caricamento dati
-        # Tests fail before spending API quota or changing publication inputs.
+      # Prima di spendere quota API si collauda la logica di raccolta e
+      # validazione, che non dipende da come sono fatte le pagine di ieri.
+      - name: Collaudo della logica, prima di spendere quota
         run: |
-          python -m unittest discover -s tests -v
+          python -m unittest discover -s tests -p 'test_flight_data.py' -v
           node tests/test_browser_data.cjs
 
       - name: Data UTC per checkpoint
@@ -103,6 +104,11 @@ jobs:
 
       - name: Rigenera le pagine per aeroporto
         run: python scripts/build_pages.py
+
+      # Il collaudo SEO legge le pagine dentro dist/, quindi va dopo che sono
+      # state riscritte: eseguito prima misurerebbe la build di ieri.
+      - name: Collaudo completo sulle pagine appena scritte
+        run: python -m unittest discover -s tests -v
 
       - name: Verifica build, lingue e SEO
         run: python scripts/check_build.py
