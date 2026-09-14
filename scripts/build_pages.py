@@ -122,14 +122,25 @@ a{color:var(--signal)}
 .wrap{max-width:1060px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 .rail{border-bottom:1px solid var(--rule);background:var(--deck)}
 .rail .wrap{display:flex;align-items:center;gap:14px;height:56px;flex-wrap:wrap}
-.mark{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-weight:800;font-size:15px;
-letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
-.mark s{text-decoration:none;color:var(--signal)}
-.mark .glyph{color:var(--signal);vertical-align:-5px}
-.mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
+/* Il marchio e' lo stesso disegno del motore e della home, non una versione
+   ridotta: la eta greca al posto della N di EFFICIENCY, con la gamba che
+   scende e gira a destra a fare la L di LIFE. Fino al 14 settembre 2026 qui
+   c'era ancora il marchio vecchio — una eta attraversata da una linea — su
+   milletrecento pagine aeroporto, sedici di directory e trentasei di lingua,
+   cioe' quasi tutto il sito.
+   La larghezza dei testi e' bloccata con textLength, quindi il tratto cade al
+   posto giusto anche prima che Archivo sia arrivato. */
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.wordmark{display:block;height:2.55em;width:auto;font-family:Archivo,sans-serif;font-size:15px}
+.wm-a{fill:var(--ink)}
+.wm-b{fill:var(--ink-3)}
+.wm-eta{stroke:var(--signal)}
+a.mark:hover .wm-eta{stroke:var(--signal-2)}
+a.mark:hover .wm-b{fill:var(--ink-2)}
+a.mark:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .mark em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;
 letter-spacing:.18em;color:var(--signal-2);border:1px solid var(--rule-hi);padding:2px 6px;
-margin-inline-start:8px;background:var(--signal-soft)}
+background:var(--signal-soft);align-self:center}
 .rail .alt{margin-inline-start:auto;font-family:ui-monospace,monospace;font-size:10.5px;
 letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--ink-2)}
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;
@@ -213,6 +224,23 @@ footer a{color:var(--ink-2)}
 
 def esc(x) -> str:
     return html.escape(str(x), quote=True)
+
+
+# Il marchio, scritto una volta sola: qui stava copiato in quattro punti, e
+# quattro copie di un disegno sono quattro versioni che prima o poi divergono.
+MARCHIO = (
+    '<svg class="wordmark" viewBox="0 0 296 96" role="img" '
+    'aria-label="Efficiency Life" focusable="false">'
+    '<text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1" '
+    'textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text>'
+    '<path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18" '
+    'fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/>'
+    '<text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1" '
+    'textLength="60" lengthAdjust="spacingAndGlyphs">CY</text>'
+    '<text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1" '
+    'textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text>'
+    '</svg>'
+)
 
 
 def ld_briciole(passi) -> str:
@@ -631,7 +659,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
 <meta name="twitter:image" content="{SITE}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>{CSS}</style>
 <script type="application/ld+json">
 {{"@context":"https://schema.org","@type":"ItemList","name":"{esc(title)}",
@@ -644,7 +672,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="{SITE}/">{MARCHIO}<em>Flight</em></a>
   <a class="alt" href="{alt}">{t['lang_other']}</a>
 </div></div>
 
@@ -732,12 +760,12 @@ def directory_index_page(lang: str, region_airports: dict, total_airports: int, 
 <meta name="color-scheme" content="dark light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>{CSS}</style>
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="{SITE}/">{MARCHIO}<em>Flight</em></a>
   <a class="alt" href="{alt}">{'English' if lang == 'it' else 'Italiano'}</a>
 </div></div>
 
@@ -849,7 +877,7 @@ def continent_directory_page(lang: str, reg_key: str, airports_in_reg: list[dict
 <meta name="color-scheme" content="dark light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>{CSS}</style>
 <script type="application/ld+json">
 {ld_breadcrumb}
@@ -857,7 +885,7 @@ def continent_directory_page(lang: str, reg_key: str, airports_in_reg: list[dict
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="{SITE}/">{MARCHIO}<em>Flight</em></a>
   <a class="alt" href="{alt}">{'English' if lang == 'it' else 'Italiano'}</a>
 </div></div>
 
@@ -952,13 +980,13 @@ def locale_page(code: str, rows: list, places: dict, airports: dict, obs: str,
 <meta name="twitter:image" content="{SITE}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>{CSS}</style>
 <script type="application/ld+json">{schema}</script>
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="{SITE}/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="{SITE}/">{MARCHIO}<em>Flight</em></a>
 </div></div>
 <header><div class="wrap">
   <p class="lbl sig">EFFICIENCY LIFE · FLIGHT</p>
