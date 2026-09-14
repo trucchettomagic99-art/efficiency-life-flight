@@ -14,10 +14,11 @@ name: Collaudo e ricompilazione del codice
 #
 # Perche' qui si ricompila e si committa dist/: il sito pubblicato e' la
 # cartella dist/ che sta nel repository, e Cloudflare Pages la serve com'e'.
-# Cambiare src/ o scripts/ senza rigenerare dist/ significa pubblicare la
-# versione vecchia senza accorgersene. Sulle pull request non si committa
-# niente: si verifica soltanto, e il collaudo diventa rosso se dist/ non
-# corrisponde ai sorgenti.
+# Cambiare src/ o scripts/ senza rigenerare dist/ significherebbe pubblicare
+# la versione vecchia senza accorgersene, e allineare a mano millecinquecento
+# file compilati non e' un lavoro da persone. Sulle pull request invece non si
+# committa niente: si eseguono i test, si ricompila per vedere se regge, e la
+# differenza in dist/ viene solo segnalata.
 on:
   push:
     branches: [main]
