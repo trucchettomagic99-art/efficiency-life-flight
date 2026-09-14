@@ -47,15 +47,20 @@ L = {
  'it': {
   'dir': 'da',
   'dir_root': 'aeroporti',
-  'title': 'Migliori voli da {airport} per rapporto qualità-prezzo | {iata}',
-  'desc': 'Le {n} migliori destinazioni da {airport}: voli diretti ordinati per rapporto qualità-prezzo e '
-          'chilometri per euro, non solo per prezzo. Tariffe reali rilevate il {obs}.',
-  'h1': 'I voli da {airport} con il miglior rapporto qualità-prezzo',
+  'title': 'Voli economici da {airport_iata} | Miglior rapporto qualità-prezzo',
+  'desc': 'Confronta le {n} migliori destinazioni in volo diretto da {airport}: prezzo, chilometri '
+          'per euro e rapporto qualità-prezzo, per scoprire dove il tuo budget ti porta più lontano. '
+          'Tariffe reali rilevate il {obs}.',
+  'h1': 'Voli economici da {airport} con il miglior rapporto qualità-prezzo',
   'kicker': '{iata} · {airport}',
   'intro': "Da <b>{airport}</b> l'indice contiene <b>{n} destinazioni</b> raggiungibili con un volo "
            "diretto andata e ritorno, in <b>{k} paesi</b>. Qui sotto non sono ordinate per prezzo, ma per "
            "<b>chilometri per euro</b>: quanta distanza ti porti a casa per ogni euro speso. "
            "È un modo diverso di scegliere: non parti dalla meta, parti da quanto lontano vuoi arrivare.",
+  'metodo': 'Il rapporto qualità-prezzo qui non giudica la compagnia aerea né il comfort a bordo: '
+            'è quanto vale il viaggio rispetto a quanto costa. L’Efficiency Score mette insieme '
+            'chilometri per euro, prezzo, distanza, durata del soggiorno e lo storico della rotta, '
+            'cioè quanto quella tratta costa di solito nello stesso periodo.',
   'best': 'La meta col valore più alto è <b>{dest}</b> ({dc}, {country}): {km} km andata e ritorno a '
           '{price} €, cioè <b>{ratio} km per ogni euro</b> speso, partendo il {dep} e rientrando il {ret}.',
   'th': ['#', 'Destinazione', 'Paese', 'Date', 'Prezzo A/R', 'Km A/R', 'Km/€', 'Notti', ''],
@@ -74,15 +79,19 @@ L = {
  'en': {
   'dir': 'from',
   'dir_root': 'airports',
-  'title': 'Best-value flights from {airport} | {iata}',
-  'desc': 'The {n} best destinations from {airport}: non-stop return flights ranked by real value '
-          'and kilometres per euro, not just lowest price. Real fares observed on {obs}.',
-  'h1': 'Best-value flights from {airport}',
+  'title': 'Cheap flights from {airport_iata} | Best value',
+  'desc': 'Compare the {n} best non-stop return flights from {airport}, ranked by price, kilometres '
+          'per euro and real value — not just the lowest fare. Real fares observed on {obs}.',
+  'h1': 'Cheap flights from {airport} with the best value',
   'kicker': '{iata} · {airport}',
   'intro': 'From <b>{airport}</b> the index holds <b>{n} destinations</b> reachable on a non-stop '
            'return flight, across <b>{k} countries</b>. Below they are not ranked by price but by '
            '<b>kilometres per euro</b>: how much distance you take home for every euro spent. It is a '
            'different way to choose — you do not start from the destination, you start from how far you want to go.',
+  'metodo': 'Value here is not a judgement on the airline or the comfort on board: it is how much '
+            'the trip is worth against what it costs. The Efficiency Score combines kilometres per '
+            'euro, price, distance, length of stay and the route history — what that route usually '
+            'costs at the same time of year.',
   'best': 'The best value is <b>{dest}</b> ({dc}, {country}): {km} km return for '
           '€{price}, that is <b>{ratio} km per euro</b>, leaving {dep} and coming back {ret}.',
   'th': ['#', 'Destination', 'Country', 'Dates', 'Return fare', 'Km return', 'Km/€', 'Nights', ''],
@@ -175,6 +184,7 @@ footer{border-top:1px solid var(--rule);margin-top:48px;padding:26px 0 40px;colo
 footer a{color:var(--ink-2)}
 
 /* Breadcrumbs & Hub Directory styles */
+.metodo{color:var(--ink-2);font-size:14px;line-height:1.75;max-width:80ch;margin:30px 0 0}
 .crumb{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .crumb a{color:var(--ink-2);text-decoration:none}
 .crumb a:hover{color:var(--signal)}
@@ -203,6 +213,24 @@ footer a{color:var(--ink-2)}
 
 def esc(x) -> str:
     return html.escape(str(x), quote=True)
+
+
+def ld_briciole(passi) -> str:
+    """BreadcrumbList di schema.org dagli stessi passi disegnati in pagina.
+
+    Si costruisce con json.dumps e non con una f-string: i nomi degli scali
+    arrivano dal catalogo del fornitore e contengono apostrofi, virgolette e
+    accenti che a mano prima o poi rompono il JSON — e un JSON-LD rotto Google
+    lo scarta in silenzio, senza dire niente.
+    """
+    return json.dumps({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': [
+            {'@type': 'ListItem', 'position': i, 'name': nome, 'item': href}
+            for i, (nome, href) in enumerate(passi, 1)
+        ],
+    }, ensure_ascii=False)
 
 def book_url(o: str, d: str, dep: str, ret: str, cur: str = 'eur') -> str:
     from urllib.parse import quote
@@ -295,10 +323,128 @@ IT_CITY = {
  'Miami':'Miami','Boston':'Boston','Washington':'Washington','Toronto':'Toronto','Montreal':'Montréal',
  'Mexico City':'Città del Messico','Buenos Aires':'Buenos Aires','Rio de Janeiro':'Rio de Janeiro',
  'Sao Paulo':'San Paolo','Sydney':'Sydney','Melbourne':'Melbourne','Auckland':'Auckland',
+ # Le citta' che location_authority riscrive in italiano dentro il catalogo:
+ # senza il ritorno in inglese la pagina /from/ direbbe "from Mosca".
+ 'Moscow':'Mosca','Alexandria':'Alessandria','Beijing':'Pechino','Rome':'Roma',
 }
 
+# Le stesse coppie lette al contrario. Serve perche' dal 14 settembre
+# location_authority riscrive il campo citta' del catalogo con il nome
+# italiano ("Roma", "Londra", "Citta' del Messico"): senza questa tabella la
+# pagina inglese si ritrovava "Cheap flights from Roma Fiumicino".
+EN_CITY = {}
+for _en, _it in IT_CITY.items():
+    if _en != _it:
+        EN_CITY.setdefault(_it, _en)
+
 def cityname(name, lang):
-    return IT_CITY.get(name, name) if lang == 'it' else name
+    if lang == 'it':
+        return IT_CITY.get(name, name)
+    return EN_CITY.get(name, name)
+
+
+# ── come si chiama uno scalo in un titolo ──────────────────────────────────
+# Il catalogo del fornitore ha due campi, citta' e aeroporto, e nella meta' dei
+# casi contengono la stessa identica stringa: su 1.834 scali, 919 hanno
+# c == n, spesso nella forma "Abakan Airport". Incollarli come
+# "{aeroporto}, {citta}" produceva "Abakan Airport, Abakan Airport", e per Roma
+# produceva "Fiumicino, Roma" — che nessuno scrive e nessuno cerca.
+#
+# Le query che portano visite a questo sito, misurate in Search Console, sono
+# fatte di nomi di citta': "voli dar es salaam", "voli cape town",
+# "voli low cost parigi orly". Quindi la citta' viene prima, e il nome dello
+# scalo si aggiunge solo quando serve a distinguerlo da un altro della stessa
+# citta'. Per Roma servono due etichette, per Edimburgo ne basta una.
+GENERICHE = re.compile(
+    r'\b(international|intl\.?|airport|airfield|aerodrome|air\s?base|apt|'
+    r'aeroporto|aeroport|aéroport)\b', re.I)
+
+def _senza_generiche(nome: str) -> str:
+    s = GENERICHE.sub(' ', str(nome or ''))
+    # Il fornitore scrive "Yogyakarta, Java Island" e "Kirkenes Airport,
+    # Hoeybuktmoen": dopo la virgola c'e' sempre la specifica geografica, mai
+    # il nome che la gente cerca. Si taglia li'.
+    s = s.split(',')[0]
+    s = re.sub(r'\s{2,}', ' ', s)
+    return s.strip(' -–—/,.')
+
+def etichette_scali(catalog: dict) -> dict[str, str]:
+    """iata -> nome naturale da mettere nei titoli, per tutto il catalogo.
+
+    Tre regole, in quest'ordine:
+    1. citta' e aeroporto perdono le parole generiche ("Airport", "Intl", ...);
+    2. se la citta' ha un solo scalo, il nome della citta' basta e vince,
+       perche' e' quello che la gente scrive nella casella di ricerca;
+    3. se ne ha piu' d'uno si aggiunge la parte di nome che li distingue
+       ("Roma Fiumicino", "Roma Ciampino"), a patto che sia corta: un nome
+       lungo come "Mwalimu Julius K. Nyerere" non aiuta nessuno a riconoscere
+       Dar es Salaam.
+    Se due scali finiscono comunque con la stessa etichetta si aggiunge il
+    codice IATA, cosi' due pagine non hanno mai lo stesso titolo.
+    """
+    per_citta: dict[tuple, list[str]] = defaultdict(list)
+    base: dict[str, tuple[str, str]] = {}
+    for a in catalog['airports']:
+        citta = _senza_generiche(a.get('c'))
+        scalo = _senza_generiche(a.get('n'))
+        # certe righe hanno come "citta'" il codice IATA e basta
+        if not citta or re.fullmatch(r'[A-Z]{2,3}', str(a.get('c', '')).strip()):
+            citta = scalo or a['i']
+        base[a['i']] = (citta, scalo)
+        per_citta[(citta.casefold(), a.get('k'))].append(a['i'])
+
+    fatte: dict[str, str] = {}
+    for a in catalog['airports']:
+        citta, scalo = base[a['i']]
+        etichetta = citta
+        if len(per_citta[(citta.casefold(), a.get('k'))]) > 1:
+            resto = scalo
+            # Si toglie il nome della citta' dalla testa del nome dello scalo,
+            # in tutte le lingue in cui lo conosciamo: il catalogo scrive
+            # "Pechino" nel campo citta' e "Beijing Capital" in quello
+            # aeroporto, e senza questo si leggeva "Beijing Beijing Capital".
+            for alias in sorted({citta, cityname(citta, 'it'), cityname(citta, 'en')},
+                                key=len, reverse=True):
+                if alias and resto.casefold().startswith(alias.casefold()):
+                    resto = resto[len(alias):].strip(' -–—/,')
+                    break
+            # "New York John F. Kennedy" si legge; "Citta' del Messico
+            # Licenciado Benito Juarez" no. Cinque parole in tutto e' il punto
+            # in cui un titolo smette di essere un nome e diventa una targa.
+            if (resto and resto.casefold() != citta.casefold()
+                    and len(resto.split()) <= 3
+                    and len(citta.split()) + len(resto.split()) <= 5):
+                etichetta = f'{citta} {resto}'
+        fatte[a['i']] = etichetta
+
+    # ultimo controllo: nessuna etichetta ripetuta dentro lo stesso paese
+    visti: dict[tuple, list[str]] = defaultdict(list)
+    for i, e in fatte.items():
+        visti[(e.casefold(), AP_PAESE.get(i))].append(i)
+    for gruppo in visti.values():
+        if len(gruppo) > 1:
+            for i in gruppo:
+                fatte[i] = f'{fatte[i]} ({i})'
+    return fatte
+
+AP_PAESE: dict[str, str] = {}
+ETICHETTA: dict[str, str] = {}
+
+def scalo_label(ap: dict, lang: str) -> str:
+    """Il nome naturale dello scalo, con la citta' nella lingua della pagina.
+
+    Si traduce solo la prima parte, che e' la citta': "Roma Fiumicino" diventa
+    "Rome Fiumicino", non "Rome Seaside". Il nome dello scalo e' un nome
+    proprio e resta quello vero in tutte le lingue.
+    """
+    e = ETICHETTA.get(ap['i'])
+    if not e:
+        e = _senza_generiche(ap.get('c')) or ap['i']
+    citta = _senza_generiche(ap.get('c'))
+    tradotta = cityname(citta, lang)
+    if citta and tradotta != citta and e.startswith(citta):
+        return tradotta + e[len(citta):]
+    return e
 
 COUNTRY: dict[str, str] = {}
 COUNTRY_EN: dict[str, str] = {}
@@ -378,7 +524,12 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
     ncountry = len({places[r['d']]['k'] for r in rows})
     best = rows[0]
     CN = COUNTRY if lang == 'it' else COUNTRY_EN
-    raw_fmt = dict(city=city, iata=iata, airport=f"{ap['n']}, {city}",
+    # {airport} e' il nome naturale; {airport_iata} lo stesso con il codice,
+    # ma senza ripeterlo se l'etichetta se lo porta gia' dietro perche' due
+    # scali della stessa citta' finivano con lo stesso nome.
+    nome_scalo = scalo_label(ap, lang)
+    nome_con_codice = nome_scalo if nome_scalo.endswith(f'({iata})') else f'{nome_scalo} ({iata})'
+    raw_fmt = dict(city=city, iata=iata, airport=nome_scalo, airport_iata=nome_con_codice,
                    n=len(rows), k=ncountry, obs=obs)
     fmt = {k: esc(v) if isinstance(v, str) else v for k, v in raw_fmt.items()}
 
@@ -432,14 +583,23 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
     cont_slug = cont_meta['slug_' + lang]
     cont_name = cont_meta['name_' + lang]
 
-    breadcrumb = (
-        f'<div class="crumb">'
-        f'<a href="{SITE}/">Home</a> &rsaquo; '
-        f'<a href="{SITE}/{dir_root}/">{"Directory" if lang == "it" else "Airports"}</a> &rsaquo; '
-        f'<a href="{SITE}/{dir_root}/{cont_slug}/">{esc(cont_name)}</a> &rsaquo; '
-        f'<span>{iata}</span>'
-        f'</div>'
-    )
+    briciole = [
+        ('Home', f'{SITE}/'),
+        ('Aeroporti' if lang == 'it' else 'Airports', f'{SITE}/{dir_root}/'),
+        (cont_name, f'{SITE}/{dir_root}/{cont_slug}/'),
+        (f"{raw_fmt['airport']} ({iata})", url),
+    ]
+    breadcrumb = ('<nav class="crumb" aria-label="'
+                  + ('Percorso' if lang == 'it' else 'Breadcrumb') + '">'
+                  + ' &rsaquo; '.join(
+                      f'<span aria-current="page">{esc(nome)}</span>' if i == len(briciole) - 1
+                      else f'<a href="{href}">{esc(nome)}</a>'
+                      for i, (nome, href) in enumerate(briciole))
+                  + '</nav>')
+    # Le briciole disegnate servono al lettore; questo le rende leggibili anche
+    # a Google, che senza dati strutturati non puo' mostrare il percorso al
+    # posto dell'indirizzo nudo nei risultati.
+    ld_breadcrumb = ld_briciole(briciole)
 
     return f"""<!doctype html>
 <html lang="{lang}">
@@ -478,6 +638,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
 "description":"{esc(desc)}","url":"{url}","numberOfItems":{len(rows[:TOP])},
 "itemListElement":[{items}]}}
 </script>
+<script type="application/ld+json">
+{ld_breadcrumb}
+</script>
 </head>
 <body>
 <div class="rail"><div class="wrap">
@@ -506,6 +669,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
   <h2>{esc(t['near'])}</h2>
   <div class="near">{near}</div>
 
+  <p class="metodo">{esc(t['metodo'])}</p>
   <p class="note">{esc(t['obs'].format(obs=obs))}</p>
 </main>
 
@@ -652,13 +816,19 @@ def continent_directory_page(lang: str, reg_key: str, airports_in_reg: list[dict
             f'</div>'
         )
 
-    breadcrumb = (
-        f'<div class="crumb">'
-        f'<a href="{SITE}/">Home</a> &rsaquo; '
-        f'<a href="{SITE}/{dir_root}/">{"Directory" if lang == "it" else "Airports"}</a> &rsaquo; '
-        f'<span>{esc(name)}</span>'
-        f'</div>'
-    )
+    briciole = [
+        ('Home', f'{SITE}/'),
+        ('Aeroporti' if lang == 'it' else 'Airports', f'{SITE}/{dir_root}/'),
+        (name, url),
+    ]
+    breadcrumb = ('<nav class="crumb" aria-label="'
+                  + ('Percorso' if lang == 'it' else 'Breadcrumb') + '">'
+                  + ' &rsaquo; '.join(
+                      f'<span aria-current="page">{esc(n)}</span>' if i == len(briciole) - 1
+                      else f'<a href="{href}">{esc(n)}</a>'
+                      for i, (n, href) in enumerate(briciole))
+                  + '</nav>')
+    ld_breadcrumb = ld_briciole(briciole)
 
     return f"""<!doctype html>
 <html lang="{lang}">
@@ -681,6 +851,9 @@ def continent_directory_page(lang: str, reg_key: str, airports_in_reg: list[dict
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>{CSS}</style>
+<script type="application/ld+json">
+{ld_breadcrumb}
+</script>
 </head>
 <body>
 <div class="rail"><div class="wrap">
@@ -902,6 +1075,12 @@ def main() -> int:
     cat = json.loads((DATA / 'catalog.json').read_text(encoding='utf-8'))
     AP = {a['i']: a for a in cat['airports']}
     places, obs = idx['places'], idx['observed']
+
+    # le etichette naturali degli scali si calcolano una volta per tutte,
+    # perche' per decidere "Roma Fiumicino" o solo "Edimburgo" serve sapere
+    # quanti aeroporti ha quella citta' in tutto il catalogo
+    AP_PAESE.update({a['i']: a.get('k') for a in cat['airports']})
+    ETICHETTA.update(etichette_scali(cat))
 
     # Legge sitemap precedente se esiste per evitare churn ingiustificato di lastmod
     old_sitemap_path = DIST / 'sitemap.xml'
