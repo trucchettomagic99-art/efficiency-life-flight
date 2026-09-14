@@ -24,14 +24,25 @@ a{color:var(--signal)}
 .wrap{max-width:1060px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 .rail{border-bottom:1px solid var(--rule);background:var(--deck)}
 .rail .wrap{display:flex;align-items:center;gap:14px;height:56px;flex-wrap:wrap}
-.mark{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-weight:800;font-size:15px;
-letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
-.mark s{text-decoration:none;color:var(--signal)}
-.mark .glyph{color:var(--signal);vertical-align:-5px}
-.mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
+/* Il marchio e' lo stesso disegno del motore e della home, non una versione
+   ridotta: la eta greca al posto della N di EFFICIENCY, con la gamba che
+   scende e gira a destra a fare la L di LIFE. Fino al 14 settembre 2026 qui
+   c'era ancora il marchio vecchio — una eta attraversata da una linea — su
+   milletrecento pagine aeroporto, sedici di directory e trentasei di lingua,
+   cioe' quasi tutto il sito.
+   La larghezza dei testi e' bloccata con textLength, quindi il tratto cade al
+   posto giusto anche prima che Archivo sia arrivato. */
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.wordmark{display:block;height:2.55em;width:auto;font-family:Archivo,sans-serif;font-size:15px}
+.wm-a{fill:var(--ink)}
+.wm-b{fill:var(--ink-3)}
+.wm-eta{stroke:var(--signal)}
+a.mark:hover .wm-eta{stroke:var(--signal-2)}
+a.mark:hover .wm-b{fill:var(--ink-2)}
+a.mark:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .mark em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;
 letter-spacing:.18em;color:var(--signal-2);border:1px solid var(--rule-hi);padding:2px 6px;
-margin-inline-start:8px;background:var(--signal-soft)}
+background:var(--signal-soft);align-self:center}
 .rail .alt{margin-inline-start:auto;font-family:ui-monospace,monospace;font-size:10.5px;
 letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--ink-2)}
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;

@@ -28,7 +28,7 @@
 <meta name="twitter:image" content="https://efficiency-life.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>*,*::before,*::after{box-sizing:border-box}
 :root{--void:#03070E;--deck:#071120;--deck2:#0C1B2E;--rule:rgba(120,170,235,.16);
 --rule-hi:rgba(120,170,235,.36);--ink:#EAF2FB;--ink-2:#9EB3CC;--ink-3:#66809D;
@@ -42,14 +42,25 @@ a{color:var(--signal)}
 .wrap{max-width:1060px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 .rail{border-bottom:1px solid var(--rule);background:var(--deck)}
 .rail .wrap{display:flex;align-items:center;gap:14px;height:56px;flex-wrap:wrap}
-.mark{font-family:Archivo,"Arial Narrow",system-ui,sans-serif;font-weight:800;font-size:15px;
-letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink);white-space:nowrap}
-.mark s{text-decoration:none;color:var(--signal)}
-.mark .glyph{color:var(--signal);vertical-align:-5px}
-.mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
+/* Il marchio e' lo stesso disegno del motore e della home, non una versione
+   ridotta: la eta greca al posto della N di EFFICIENCY, con la gamba che
+   scende e gira a destra a fare la L di LIFE. Fino al 14 settembre 2026 qui
+   c'era ancora il marchio vecchio — una eta attraversata da una linea — su
+   milletrecento pagine aeroporto, sedici di directory e trentasei di lingua,
+   cioe' quasi tutto il sito.
+   La larghezza dei testi e' bloccata con textLength, quindi il tratto cade al
+   posto giusto anche prima che Archivo sia arrivato. */
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.wordmark{display:block;height:2.55em;width:auto;font-family:Archivo,sans-serif;font-size:15px}
+.wm-a{fill:var(--ink)}
+.wm-b{fill:var(--ink-3)}
+.wm-eta{stroke:var(--signal)}
+a.mark:hover .wm-eta{stroke:var(--signal-2)}
+a.mark:hover .wm-b{fill:var(--ink-2)}
+a.mark:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .mark em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;
 letter-spacing:.18em;color:var(--signal-2);border:1px solid var(--rule-hi);padding:2px 6px;
-margin-inline-start:8px;background:var(--signal-soft)}
+background:var(--signal-soft);align-self:center}
 .rail .alt{margin-inline-start:auto;font-family:ui-monospace,monospace;font-size:10.5px;
 letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--ink-2)}
 .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;
@@ -141,7 +152,7 @@ footer a{color:var(--ink-2)}
 </head>
 <body>
 <div class="rail"><div class="wrap">
-  <a class="mark" href="https://efficiency-life.com/"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg> Efficiency <u>Life</u><em>Flight</em></a>
+  <a class="mark" href="https://efficiency-life.com/"><svg class="wordmark" viewBox="0 0 296 96" role="img" aria-label="Efficiency Life" focusable="false"><text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1" textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text><path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18" fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/><text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1" textLength="60" lengthAdjust="spacingAndGlyphs">CY</text><text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1" textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text></svg><em>Flight</em></a>
   <a class="alt" href="https://efficiency-life.com/da/vno/">Italiano</a>
 </div></div>
 
