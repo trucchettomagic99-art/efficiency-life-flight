@@ -30,9 +30,21 @@ DATA = ROOT / 'data'
 REPORTS = ROOT / 'reports'
 SITE = 'https://efficiency-life.com'
 
-SAMPLE_IATA = [
-    'IST', 'FRA', 'AMS', 'CDG', 'DXB', 'LHR', 'MAD', 'BCN', 'FCO', 'MXP',
-    'JFK', 'ORD', 'MCO', 'HND', 'SIN', 'BKK', 'DOH', 'LIS', 'VIE', 'WAW'
+CORE_PROBE_URLS = [
+    f'{SITE}/',
+    f'{SITE}/flight/',
+    f'{SITE}/airports/',
+    f'{SITE}/aeroporti/',
+    f'{SITE}/airports/europe/',
+    f'{SITE}/aeroporti/europa/',
+]
+
+HUB_SAMPLE_IATA = [
+    'FCO', 'LHR', 'JFK', 'DXB', 'IST', 'CDG', 'HND', 'AMS', 'FRA', 'MAD'
+]
+
+ROUTES_6_9_SAMPLE_IATA = [
+    'AHO', 'ABZ', 'BHD', 'ACE'
 ]
 
 REMOVED_TEST_URLS = [
@@ -156,7 +168,7 @@ def normalize_url(base_url: str, href: str) -> str:
     return f'{p.scheme}://{p.netloc}{path}'
 
 
-def run_live_probe(url: str, user_agent: str = 'Googlebot/2.1 (+http://www.google.com/bot.html)') -> dict:
+def run_live_probe(url: str, user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36') -> dict:
     req = urllib.request.Request(url, headers={
         'User-Agent': user_agent,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -166,6 +178,7 @@ def run_live_probe(url: str, user_agent: str = 'Googlebot/2.1 (+http://www.googl
     res = {
         'url': url,
         'status': None,
+        'initial_status': None,
         'ttfb_ms': 0.0,
         'headers': {},
         'redirect_chain': [],
@@ -178,15 +191,19 @@ def run_live_probe(url: str, user_agent: str = 'Googlebot/2.1 (+http://www.googl
 
     class RedirectRecorder(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
+            if res['initial_status'] is None:
+                res['initial_status'] = code
             res['redirect_chain'].append((code, newurl))
             return super().redirect_request(req, fp, code, msg, headers, newurl)
 
     opener = urllib.request.build_opener(RedirectRecorder)
     try:
-        with opener.open(req, timeout=10) as resp:
+        with opener.open(req, timeout=12) as resp:
             ttfb = (time.perf_counter() - start) * 1000.0
             body = resp.read()
             res['status'] = resp.status
+            if res['initial_status'] is None:
+                res['initial_status'] = resp.status
             res['ttfb_ms'] = round(ttfb, 1)
             res['headers'] = dict(resp.headers)
             res['content_encoding'] = resp.headers.get('Content-Encoding', 'none')
@@ -194,11 +211,18 @@ def run_live_probe(url: str, user_agent: str = 'Googlebot/2.1 (+http://www.googl
             res['server'] = resp.headers.get('Server', '')
             res['size_bytes'] = len(body)
     except urllib.error.HTTPError as e:
+        ttfb = (time.perf_counter() - start) * 1000.0
         res['status'] = e.code
+        if res['initial_status'] is None:
+            res['initial_status'] = e.code
+        res['ttfb_ms'] = round(ttfb, 1)
         res['headers'] = dict(e.headers)
         res['error'] = str(e)
     except Exception as e:
+        ttfb = (time.perf_counter() - start) * 1000.0
         res['status'] = 0
+        res['initial_status'] = 0
+        res['ttfb_ms'] = round(ttfb, 1)
         res['error'] = str(e)
     return res
 
@@ -434,15 +458,11 @@ def main():
 
     print('Esecuzione verifiche live HTTP su campione distribuito...')
     live_results = []
-    probe_sample = [
-        f'{SITE}/',
-        f'{SITE}/flight/',
-        f'{SITE}/airports/',
-        f'{SITE}/aeroporti/',
-        f'{SITE}/airports/europe/',
-        f'{SITE}/aeroporti/europa/',
-    ]
-    for iata in SAMPLE_IATA[:10]:
+    probe_sample = list(CORE_PROBE_URLS)
+    for iata in HUB_SAMPLE_IATA:
+        probe_sample.append(f'{SITE}/from/{iata.lower()}/')
+        probe_sample.append(f'{SITE}/da/{iata.lower()}/')
+    for iata in ROUTES_6_9_SAMPLE_IATA:
         probe_sample.append(f'{SITE}/from/{iata.lower()}/')
         probe_sample.append(f'{SITE}/da/{iata.lower()}/')
 
@@ -586,6 +606,19 @@ def write_markdown_report(
     md.append(f'| **Click Depth Massimo** | 1 | **{max_depth}** | Entro i limiti ideali (≤ 3-4 click) |')
     md.append(f'| **Sitemap `<lastmod>` Logic** | Data odierna fittizia su tutti | **Dinamico per origine (obs)** | Zero churn fittizio di lastmod |')
 
+    # Calcolo statistico reale e dinamico su tutti i probe live
+    total_live = len(live_results)
+    count_200 = sum(1 for r in live_results if r.get('status') == 200 and not r.get('redirect_chain'))
+    count_3xx = sum(1 for r in live_results if r.get('redirect_chain') or (r.get('status') and 300 <= r.get('status') < 400))
+    count_404 = sum(1 for r in live_results if r.get('status') == 404)
+    count_429 = sum(1 for r in live_results if r.get('status') == 429)
+    count_4xx_other = sum(1 for r in live_results if r.get('status') and 400 <= r.get('status') < 500 and r.get('status') not in (404, 429))
+    count_5xx = sum(1 for r in live_results if r.get('status') and 500 <= r.get('status') < 600)
+    count_err = sum(1 for r in live_results if not r.get('status') or r.get('status') == 0)
+
+    pct_200 = (count_200 / total_live * 100.0) if total_live else 0.0
+    non_200_live = [r for r in live_results if r.get('status') != 200 or r.get('redirect_chain')]
+
     md.append('\n## 3. Sintesi Classificazione Indexability')
     md.append('| Classificazione | Conteggio | % sul Totale | Descrizione / Implicazione |')
     md.append('|:---|:---:|:---:|:---|')
@@ -595,9 +628,9 @@ def write_markdown_report(
     md.append(f'| **THIN_CONTENT** | 0 | 0.0% | Nessuna pagina sotto la soglia minima di 6 rotte |')
     md.append(f'| **CANONICAL_ERRORS** | 0 | 0.0% | 100% self-canonical conformi |')
     md.append(f'| **HREFLANG_ERRORS** | 0 | 0.0% | 100% reciprocità it/en e fallback x-default |')
-    md.append(f'| **REDIRECTS (nella sitemap)** | 0 | 0.0% | Zero redirect in sitemap |')
-    md.append(f'| **HTTP 404 / 410 (nella sitemap)** | 0 | 0.0% | Zero errori 404 in sitemap |')
-    md.append(f'| **SERVER ERRORS (5xx / 429)** | 0 | 0.0% | Zero errori di server rilevati |')
+    md.append(f'| **REDIRECTS (nel campione live)** | {count_3xx} | {count_3xx/total_live*100:.1f}% | {"Zero redirect rilevati nel campione sitemap" if count_3xx == 0 else f"{count_3xx} redirect rilevati nel campione"} |')
+    md.append(f'| **HTTP 404 / 410 (nel campione live)** | {count_404} | {count_404/total_live*100:.1f}% | {"Zero errori 404 rilevati nel campione sitemap" if count_404 == 0 else f"{count_404} URL restituiscono 404"} |')
+    md.append(f'| **SERVER ERRORS (5xx / 429)** | {count_5xx + count_429} | {(count_5xx + count_429)/total_live*100:.1f}% | {"Zero errori server rilevati" if (count_5xx + count_429) == 0 else f"{count_5xx + count_429} errori server rilevati"} |')
 
     md.append('\n## 4. Distribuzione Pagine per Volume Rotte Reali')
     md.append('| Fascia Rotte | N. Aeroporti | N. Pagine (/from/ + /da/) | % sul Totale | Stato Qualitativo |')
@@ -609,19 +642,27 @@ def write_markdown_report(
     md.append(f'| **Totale** | **650** | **1,300** | **100.0%** | |')
 
     md.append('\n## 5. Audit Performance Live del Server (Edge Cloudflare / Netlify)')
-    md.append(f'- **Campioni testati live:** `{len(live_results)}` pagine attive.')
-    md.append('- **HTTP Status:** `100% 200 OK`')
-    md.append(f'- **Tempo medio TTFB:** `{avg_ttfb:.1f} ms` (Eccellente, < 200 ms)')
+    md.append(f'- **Campioni testati live:** `{total_live}` pagine attive.')
+    md.append(f'- **HTTP Status:** `{count_200}/{total_live} — {pct_200:.1f}% 200 OK`')
+    md.append(f'- **Conteggio codici HTTP:** `200 OK`: {count_200} | `3xx Redirect`: {count_3xx} | `404 Not Found`: {count_404} | `429 Rate Limit`: {count_429} | `5xx Server Error`: {count_5xx} | `Errori connessione`: {count_err}')
+    md.append(f'- **Tempo medio TTFB:** `{avg_ttfb:.1f} ms` ({"Eccellente, < 200 ms" if avg_ttfb < 200 else "Normale"})')
     md.append('- **Compressione:** `gzip` / `br` attiva su tutte le risposte')
-    md.append('- **Cloudflare Edge Cache:** `cf-cache-status: HIT` o `REVALIDATED`')
-    md.append('- **Tasso di errore 5xx / 429:** `0.0%`\n')
+    md.append('- **Cloudflare Edge Cache:** `cf-cache-status: HIT` o `REVALIDATED` / `DYNAMIC`')
+    err_rate = ((count_5xx + count_429) / total_live * 100.0) if total_live else 0.0
+    md.append(f'- **Tasso di errore 5xx / 429:** `{err_rate:.1f}%`\n')
+
+    if non_200_live:
+        md.append('> [!WARNING]\n'
+                  '> **URL del campione con codice HTTP diverso da 200:**\n'
+                  + '\n'.join(f"> - `{r['url']}`: **HTTP {r.get('status', 'ERR')}** ({r.get('error', 'Redirect o errore')})" for r in non_200_live) + '\n')
 
     md.append('### Dettaglio Campioni Live:')
     md.append('| URL | HTTP | TTFB (ms) | Compressione | Cache Status | Dimensione (byte) |')
     md.append('|:---|:---:|:---:|:---:|:---:|:---:|')
-    for r in live_results[:12]:
+    for r in live_results:
         path = urllib.parse.urlsplit(r['url']).path
-        md.append(f'| `{path}` | {r["status"]} | {r["ttfb_ms"]} | {r["content_encoding"]} | {r["cf_cache_status"]} | {r["size_bytes"]} |')
+        status_display = str(r['status']) if not r.get('redirect_chain') else f"{r['initial_status']} -> {r['status']}"
+        md.append(f'| `{path}` | **{status_display}** | {r["ttfb_ms"]} | {r["content_encoding"]} | {r["cf_cache_status"]} | {r["size_bytes"]} |')
 
     md.append('\n## 6. Verifica Pagine Rimosse e Redirect')
     md.append('| URL Testato | Risposta HTTP Live | Valutazione |')

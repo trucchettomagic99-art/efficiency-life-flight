@@ -11,7 +11,7 @@ Genera:
 Gira dopo build.py, dallo stesso indice. Non tocca la rete.
 """
 from __future__ import annotations
-import json, pathlib, sys, datetime, html, importlib.util, shutil, math
+import json, pathlib, sys, datetime, html, importlib.util, shutil, math, re
 from collections import defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -855,6 +855,16 @@ def pagina_404() -> str:
 """
 
 
+def extract_seo_substance(html_content: str) -> str:
+    """Estrae l'impronta del contenuto SEO significativo escludendo le date di osservazione."""
+    # Rimuove paragrafo note a pié pagina con data osservazione
+    s = re.sub(r'<p class="note">.*?</p>', '', html_content, flags=re.DOTALL)
+    # Rimuove data di osservazione all'interno dei meta description / og:description
+    s = re.sub(r'(?:Real fares observed on|Tariffe reali osservate il)\s*[\d\-]+[^\.]*\.', '', s)
+    # Collassa spaziature multiple per confronto deterministico
+    return re.sub(r'\s+', ' ', s).strip()
+
+
 def alternate_links() -> str:
     rows = [
         f'<link rel="alternate" hreflang="{esc(meta["hreflang"])}" '
@@ -870,6 +880,17 @@ def main() -> int:
     cat = json.loads((DATA / 'catalog.json').read_text(encoding='utf-8'))
     AP = {a['i']: a for a in cat['airports']}
     places, obs = idx['places'], idx['observed']
+
+    # Legge sitemap precedente se esiste per evitare churn ingiustificato di lastmod
+    old_sitemap_path = DIST / 'sitemap.xml'
+    old_lastmods = {}
+    if old_sitemap_path.is_file():
+        old_content = old_sitemap_path.read_text(encoding='utf-8')
+        for b in re.findall(r'<url>(.*?)</url>', old_content, re.DOTALL):
+            loc_m = re.search(r'<loc>(.*?)</loc>', b)
+            lm_m = re.search(r'<lastmod>(.*?)</lastmod>', b)
+            if loc_m and lm_m:
+                old_lastmods[loc_m.group(1).strip()] = lm_m.group(1).strip()
 
     for c in cat['countries']:
         COUNTRY[c['k']] = c.get('it') or c.get('en') or c['k']
@@ -911,8 +932,19 @@ def main() -> int:
         region_airports[reg].append(AP[o])
 
     order = sorted(good, key=lambda o: -len(good[o]))
-    made = []
     origin_lastmod = {}
+    for o in good:
+        origin_lastmod[o] = max(r.get('obs', obs) for r in good[o])
+
+    continent_lastmod = {}
+    for reg_key, aps in region_airports.items():
+        continent_lastmod[reg_key] = max(origin_lastmod[a['i']] for a in aps)
+
+    total_countries = len({AP[o]['k'] for o in good})
+
+    # 1. Pagine aeroporto (/from/{IATA}/ e /da/{IATA}/) con lastmod conservativo
+    made = []
+    airport_resolved_lastmod = {}
 
     for o in order:
         others = related_map[o]
@@ -921,50 +953,80 @@ def main() -> int:
         if reg_key not in CONTINENT_MAP:
             reg_key = 'Europa'
 
-        # Real lastmod for origin
-        origin_lastmod[o] = max(r.get('obs', obs) for r in good[o])
+        obs_origin = origin_lastmod[o]
 
         for lang in ('it', 'en'):
-            d = DIST / L[lang]['dir'] / o.lower()
+            t = L[lang]
+            url = f"{SITE}/{t['dir']}/{o.lower()}/"
+            d = DIST / t['dir'] / o.lower()
             d.mkdir(parents=True, exist_ok=True)
-            (d / 'index.html').write_text(
-                page(lang, AP[o], good[o], places, obs, others, reg_key=reg_key),
-                encoding='utf-8'
-            )
-            made.append(f"/{L[lang]['dir']}/{o.lower()}/")
+            target_file = d / 'index.html'
+            new_html = page(lang, AP[o], good[o], places, obs_origin, others, reg_key=reg_key)
 
-    # 2. Directory Hub e Pagine di Continente
+            # Confronto conservativo del contenuto sostanziale (ignora la sola data stamp di osservazione)
+            if target_file.is_file() and url in old_lastmods:
+                old_html = target_file.read_text(encoding='utf-8')
+                if extract_seo_substance(old_html) == extract_seo_substance(new_html):
+                    resolved_lm = old_lastmods[url]
+                else:
+                    resolved_lm = obs_origin
+            else:
+                resolved_lm = obs_origin
+
+            target_file.write_text(new_html, encoding='utf-8')
+            made.append(f"/{t['dir']}/{o.lower()}/")
+            airport_resolved_lastmod[f"/{t['dir']}/{o.lower()}/"] = resolved_lm
+
+    # 2. Directory Hub e Pagine di Continente con lastmod conservativo
     directory_made = []
-    continent_lastmod = {}
-    total_countries = len({AP[o]['k'] for o in good})
-
-    for reg_key, aps in region_airports.items():
-        continent_lastmod[reg_key] = max(origin_lastmod[a['i']] for a in aps)
+    directory_resolved_lastmod = {}
 
     for lang in ('it', 'en'):
         dir_root = 'aeroporti' if lang == 'it' else 'airports'
+        dir_url = f"{SITE}/{dir_root}/"
         dir_dir = DIST / dir_root
         dir_dir.mkdir(parents=True, exist_ok=True)
-        (dir_dir / 'index.html').write_text(
-            directory_index_page(lang, region_airports, len(good), total_countries, obs),
-            encoding='utf-8'
-        )
+        dir_file = dir_dir / 'index.html'
+        new_dir_html = directory_index_page(lang, region_airports, len(good), total_countries, obs)
+
+        if dir_file.is_file() and dir_url in old_lastmods:
+            old_html = dir_file.read_text(encoding='utf-8')
+            if extract_seo_substance(old_html) == extract_seo_substance(new_dir_html):
+                resolved_dir_lm = old_lastmods[dir_url]
+            else:
+                resolved_dir_lm = max(continent_lastmod.values()) if continent_lastmod else obs
+        else:
+            resolved_dir_lm = max(continent_lastmod.values()) if continent_lastmod else obs
+
+        dir_file.write_text(new_dir_html, encoding='utf-8')
         directory_made.append(f"/{dir_root}/")
+        directory_resolved_lastmod[f"/{dir_root}/"] = resolved_dir_lm
 
         for reg_key in CONTINENT_ORDER:
             if reg_key not in region_airports:
                 continue
             meta = CONTINENT_MAP[reg_key]
             slug = meta['slug_' + lang]
+            cont_url = f"{SITE}/{dir_root}/{slug}/"
             sub_dir = dir_dir / slug
             sub_dir.mkdir(parents=True, exist_ok=True)
-            (sub_dir / 'index.html').write_text(
-                continent_directory_page(lang, reg_key, region_airports[reg_key], AP, good, cat, obs),
-                encoding='utf-8'
-            )
-            directory_made.append(f"/{dir_root}/{slug}/")
+            cont_file = sub_dir / 'index.html'
+            new_cont_html = continent_directory_page(lang, reg_key, region_airports[reg_key], AP, good, cat, obs)
 
-    # 3. Landing per lingua
+            if cont_file.is_file() and cont_url in old_lastmods:
+                old_html = cont_file.read_text(encoding='utf-8')
+                if extract_seo_substance(old_html) == extract_seo_substance(new_cont_html):
+                    resolved_cont_lm = old_lastmods[cont_url]
+                else:
+                    resolved_cont_lm = continent_lastmod.get(reg_key, obs)
+            else:
+                resolved_cont_lm = continent_lastmod.get(reg_key, obs)
+
+            cont_file.write_text(new_cont_html, encoding='utf-8')
+            directory_made.append(f"/{dir_root}/{slug}/")
+            directory_resolved_lastmod[f"/{dir_root}/{slug}/"] = resolved_cont_lm
+
+    # 3. Landing per lingua con lastmod conservativo
     ranked = sorted(idx['deals'], key=lambda r: -(r['km'] * 2 / r['p']))
     showcase, seen_origins = [], set()
     for r in ranked:
@@ -974,60 +1036,55 @@ def main() -> int:
         if len(showcase) == TOP:
             break
     locale_root = DIST / 'lang'
-    if locale_root.is_dir():
-        shutil.rmtree(locale_root)
+    locale_root.mkdir(parents=True, exist_ok=True)
     locale_made = []
+    locale_resolved_lastmod = {}
     for code, meta in PROSE.items():
+        lang_url = f"{SITE}/lang/{meta['path']}/"
         d = locale_root / meta['path']
         d.mkdir(parents=True, exist_ok=True)
-        (d / 'index.html').write_text(locale_page(
+        target_file = d / 'index.html'
+        new_locale_html = locale_page(
             code, showcase, places, AP, obs, len(idx['deals']), len(idx['counts']),
-            len({r['d'] for r in idx['deals']})), encoding='utf-8')
-        locale_made.append(f"/lang/{meta['path']}/")
+            len({r['d'] for r in idx['deals']}))
 
-    # 4. Sitemap con lastmod reale dinamico
-    # Legge sitemap precedente se esiste per evitare churn ingiustificato
-    old_sitemap_path = DIST / 'sitemap.xml'
-    old_lastmods = {}
-    if old_sitemap_path.is_file():
-        old_content = old_sitemap_path.read_text(encoding='utf-8')
-        import re
-        for b in re.findall(r'<url>(.*?)</url>', old_content, re.DOTALL):
-            loc_m = re.search(r'<loc>(.*?)</loc>', b)
-            lm_m = re.search(r'<lastmod>(.*?)</lastmod>', b)
-            if loc_m and lm_m:
-                old_lastmods[loc_m.group(1).strip()] = lm_m.group(1).strip()
+        if target_file.is_file() and lang_url in old_lastmods:
+            old_html = target_file.read_text(encoding='utf-8')
+            if extract_seo_substance(old_html) == extract_seo_substance(new_locale_html):
+                resolved_lang_lm = old_lastmods[lang_url]
+            else:
+                resolved_lang_lm = obs
+        else:
+            resolved_lang_lm = obs
+
+        target_file.write_text(new_locale_html, encoding='utf-8')
+        locale_made.append(f"/lang/{meta['path']}/")
+        locale_resolved_lastmod[f"/lang/{meta['path']}/"] = resolved_lang_lm
+
+    # 4. Sitemap con lastmod conservativo dinamico
+    home_lm = old_lastmods.get(f'{SITE}/', obs)
+    flight_lm = old_lastmods.get(f'{SITE}/flight/', obs)
 
     urls = [
-        f'  <url><loc>{SITE}/</loc><lastmod>{obs}</lastmod><priority>1.0</priority></url>',
-        f'  <url><loc>{SITE}/flight/</loc><lastmod>{obs}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>'
+        f'  <url><loc>{SITE}/</loc><lastmod>{home_lm}</lastmod><priority>1.0</priority></url>',
+        f'  <url><loc>{SITE}/flight/</loc><lastmod>{flight_lm}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>'
     ]
 
-    # Directory hubs in sitemap
     for u in directory_made:
-        prio = '0.8'
-        # Check if continent
-        is_cont = False
-        lmod = obs
-        for reg_key, meta in CONTINENT_MAP.items():
-            if meta['slug_it'] in u or meta['slug_en'] in u:
-                lmod = continent_lastmod.get(reg_key, obs)
-                is_cont = True
-                break
-        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{lmod}</lastmod><priority>{prio}</priority></url>')
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{directory_resolved_lastmod[u]}</lastmod><priority>0.8</priority></url>')
 
-    # Airport pages in sitemap with real origin lastmod
     for u in made:
-        iata = u.strip('/').split('/')[-1].upper()
-        lmod = origin_lastmod.get(iata, obs)
-        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{lmod}</lastmod><priority>0.7</priority></url>')
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{airport_resolved_lastmod[u]}</lastmod><priority>0.7</priority></url>')
 
-    # Language pages in sitemap
     for u in locale_made:
-        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{obs}</lastmod><priority>0.8</priority></url>')
+        urls.append(f'  <url><loc>{SITE}{u}</loc><lastmod>{locale_resolved_lastmod[u]}</lastmod><priority>0.8</priority></url>')
 
     sxml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'] + urls + ['</urlset>', '']
     (DIST / 'sitemap.xml').write_text(chr(10).join(sxml), encoding='utf-8')
+
+    preserved_ap = sum(1 for u in made if airport_resolved_lastmod[u] == old_lastmods.get(f'{SITE}{u}'))
+    updated_ap = len(made) - preserved_ap
+    print(f'lastmod aeroporti: {preserved_ap} conservati (contenuto invariato), {updated_ap} aggiornati')
 
     # 5. Indice degli aeroporti dentro la home (dist/index.html)
     home = DIST / 'index.html'
