@@ -113,9 +113,15 @@ body{background:#03070E;color:#EAF2FB;font-family:"IBM Plex Sans",system-ui,sans
   background:radial-gradient(circle,rgba(46,141,255,.20),rgba(46,141,255,0) 62%)}
 .dentro{position:relative;padding:44px 56px}
 .testa{display:flex;align-items:center;gap:22px}
-.marchio{display:flex;align-items:center;gap:12px;font-family:Archivo,sans-serif;font-weight:800;
-  font-size:27px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-.marchio u{text-decoration:none;color:#66809D;font-weight:500}
+/* Il marchio e' quello del sito: la eta al posto della N di EFFICIENCY, con
+   la gamba che scende e gira a destra a fare la L di LIFE. Qui i colori sono
+   scritti a mano e non presi dalle variabili, perche' l'anteprima social si
+   vede solo su fondo scuro e non ha un tema chiaro da seguire. */
+.marchio{display:flex;align-items:center}
+.wordmark{display:block;height:2.55em;width:auto;font-family:Archivo,sans-serif;font-size:27px}
+.wm-a{fill:#EAF2FB}
+.wm-b{fill:#66809D}
+.wm-eta{stroke:#2E8DFF}
 .mods{display:flex;gap:4px;margin-left:6px}
 .mod{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:#66809D;padding:5px 12px;border:1px solid transparent;border-radius:2px}
@@ -150,8 +156,16 @@ h1 s{text-decoration:none;display:block;color:#2E8DFF}
 <div class="dentro">
   <div class="testa">
     <div class="marchio">
-      <svg width="34" height="34" viewBox="0 0 32 32"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="#2E8DFF"/><path d="M3 23.9h26" stroke="#5FE3FF" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>
-      Efficiency <u>Life</u>
+      <svg class="wordmark" viewBox="0 0 296 96" role="img" aria-label="Efficiency Life">
+        <text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text>
+        <path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18"
+              fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="60" lengthAdjust="spacingAndGlyphs">CY</text>
+        <text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1"
+              textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text>
+      </svg>
     </div>
     <div class="mods">
       <span class="mod on">Flight</span><span class="mod">Stay</span><span class="mod">Rail</span>
