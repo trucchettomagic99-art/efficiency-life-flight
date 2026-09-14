@@ -31,25 +31,23 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
 <span id="top"></span>
 
-<div class="modules">
-  <div class="wrap mod-in">
-    <span class="lbl" data-k="platform">Piattaforma</span>
-    <nav class="mods" aria-label="Moduli">
-      <a class="mod" href="/flight/">Flight</a>
-      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
-      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
-    </nav>
-  </div>
-</div>
 
 <div class="rail">
   <div class="wrap rail-in">
-    <a class="mark" href="/" id="brand">
-      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></a>
+    <a class="mark" href="/" id="brand" aria-label="Efficiency Life">
+      <svg class="wordmark" viewBox="0 0 296 96" role="img" aria-hidden="true" focusable="false">
+        <text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text>
+        <path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18"
+              fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="60" lengthAdjust="spacingAndGlyphs">CY</text>
+        <text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1"
+              textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text>
+      </svg></a>
     <button class="pill" id="navBtn" aria-label="Menu" aria-expanded="false" aria-controls="mainnav">&#9776;</button>
     <nav id="mainnav" aria-label="Efficiency Life">
       <a href="/" class="on" data-k="nav_home">Home</a>
-      <a href="/flight/">Flight</a>
       <span class="drop" id="drop">
         <button class="navbtn" id="expBtn" aria-expanded="false" aria-haspopup="true" aria-controls="expMenu"><span data-k="nav_explore">Esplora</span><i aria-hidden="true">&#9662;</i></button>
         <span class="navlbl" data-k="nav_explore" aria-hidden="true">Esplora</span>
@@ -64,7 +62,9 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
     </nav>
     <div class="rail-right">
       <select class="pill" id="selLang" aria-label="Language"></select>
-      <button class="pill" id="dayBtn" data-k="day">Giorno</button>
+      <button class="pill pill-ico" id="dayBtn" title="" aria-label="">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><g class="ico-sole" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></g><path class="ico-luna" d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z" fill="currentColor"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -73,16 +73,11 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
   <div class="wrap hero-in">
     <div>
       <div class="lbl lbl-sig" id="heroEyebrow"></div>
-      <h1 class="h1"><span data-k="h1a">Non scegliere dove.</span><span data-k="h1b">Scegli quanto lontano.</span></h1>
+      <h1 class="h1"><span data-k="plat_h1a">Quanto ottieni,</span><span data-k="plat_h1b">diviso quanto spendi.</span></h1>
       <p class="lede" id="lede"></p>
       <a class="cta-home" href="/flight/">Flight<s>&#9654;</s></a>
     </div>
-    <div class="hero-stats">
-      <div class="hstat"><b>__ST_AIR__</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
-      <div class="hstat"><b>__ST_DEST__</b><span class="lbl" data-k="st_dest">Destinazioni</span></div>
-      <div class="hstat"><b>__ST_FARE__</b><span class="lbl" data-k="st_fare">Tariffe osservate</span></div>
-      <div class="hstat"><b>__ST_BEST__</b><span class="lbl" data-k="st_best">Miglior rapporto</span></div>
-    </div>
+</div>
   </div>
 </header>
 
@@ -105,6 +100,16 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
       </div>
     </div>
     <div class="svc" id="svcGrid"></div>
+    <!-- I numeri restano, ma qui: sono la prova che il metodo funziona su
+         Flight, non la carta d'identita' della piattaforma. In cima
+         dicevano "questo e' un sito di voli" prima ancora del titolo. -->
+    <div class="hero-stats" id="flightStats" style="margin-top:22px">
+      <div class="hstat"><b>__ST_AIR__</b><span class="lbl" data-k="st_air">Aeroporti di partenza</span></div>
+      <div class="hstat"><b>__ST_DEST__</b><span class="lbl" data-k="st_dest">Destinazioni</span></div>
+      <div class="hstat"><b>__ST_FARE__</b><span class="lbl" data-k="st_fare">Tariffe osservate</span></div>
+      <div class="hstat"><b>__ST_BEST__</b><span class="lbl" data-k="st_best">Miglior rapporto</span></div>
+    </div>
+    <p class="note" id="statsNote" style="margin-top:10px"></p>
   </section>
 
   <section id="method">
@@ -129,7 +134,16 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 <footer>
   <div class="wrap cols">
     <div>
-      <div class="mark" style="font-size:15px"><svg class="glyph" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u></div>
+      <div class="mark"><svg class="wordmark" style="font-size:15px" viewBox="0 0 296 96" role="img" aria-hidden="true" focusable="false">
+        <text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text>
+        <path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18"
+              fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="60" lengthAdjust="spacingAndGlyphs">CY</text>
+        <text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1"
+              textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text>
+      </svg></div>
       <div style="margin-top:8px;max-width:44ch" id="footTag"></div>
       <div style="margin-top:10px" class="mono"><a href="mailto:support@efficiency-life.com"
         style="color:var(--signal)">support@efficiency-life.com</a></div>
@@ -210,20 +224,33 @@ function renderServices(){
          <span class="tagline">${esc(T('soon'))}</span></span>`).join('');
 }
 
+function etichettaTema(){
+  const chiaro = document.documentElement.hasAttribute('data-day');
+  const testo = chiaro ? T('night') : T('day');
+  const b = $('#dayBtn');
+  b.setAttribute('aria-label', testo); b.title = testo;
+  b.classList.toggle('e-chiaro', chiaro);
+}
 function applyLang(){
   document.documentElement.lang = S.lang;
   RTL = (LANG_META.find(l => l[0] === S.lang) || [])[2] === 1;
   document.documentElement.dir = RTL ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-k]').forEach(el => { el.textContent = T(el.dataset.k); });
-  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
-  $('#heroEyebrow').textContent = `${T('obs')} ${OBSERVED} · ${T('direct')} · __ST_AIR__ ${T('st_air')}`;
+  etichettaTema();
+  /* L'occhiello in cima diceva "rilevate il ... · diretto · 1.396 aeroporti":
+     numeri di Flight, sopra il titolo della piattaforma. Chi arriva qui deve
+     capire in una riga di cosa si occupa il gruppo, non quanti scali ha il
+     primo modulo. I numeri sono scesi accanto ai servizi, dove significano
+     qualcosa. */
+  $('#heroEyebrow').textContent = T('about_t');
 
   const p = P();
   const vars = { fxDate:FX_DATE, observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',
                  destCount:'__ST_DEST__', languageCount:String(LANG_META.length), currencyCount:String(CUR.length) };
   const fill = s => String(s).replace(/\{([a-zA-Z]+)\}/g, (_,k) => esc(vars[k] ?? ''));
   const cell = ([h,b]) => `<div class="mcell"><h3>${esc(h)}</h3><p>${fill(b)}</p></div>`;
-  $('#lede').textContent       = T('lede');
+  $('#lede').textContent       = T('plat_lede');
+  $('#statsNote').textContent = T('plat_note');
   $('#aboutLede').textContent  = T('about_b');
   $('#aboutPlat').textContent  = T('plat_note');
   $('#svcLede').textContent    = T('svc_b');
@@ -254,7 +281,7 @@ $('#selLang').addEventListener('change', e => {
 $('#dayBtn').addEventListener('click', () => {
   document.documentElement.toggleAttribute('data-day');
   try{ localStorage.setItem('elf-day', document.documentElement.hasAttribute('data-day')?'1':'0'); }catch(_){}
-  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  etichettaTema();
 });
 
 /* ── consenso ─────────────────────────────────────────────

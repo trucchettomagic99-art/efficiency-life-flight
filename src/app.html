@@ -53,48 +53,37 @@ button,select,input{font:inherit;color:inherit}
 .lbl-sig{color:var(--signal)}
 
 /* ── barra moduli ─────────────────────────────────────────── */
-/* Dice in quale dei cinque moduli ti trovi. Sul motore "Flight" e' acceso;
-   sulla home nessuno lo e', perche' la home non e' un modulo ma la porta. */
-.modules{border-bottom:1px solid var(--rule);background:var(--deck)}
-.mod-in{display:flex;align-items:center;gap:18px;height:34px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-.mod-in::-webkit-scrollbar{display:none}
-.mod-in > .lbl{flex:none;letter-spacing:.26em}
-.mods{display:flex;gap:2px;flex:1;min-width:0}
-.mod{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink-3);padding:4px 11px;border:1px solid transparent;white-space:nowrap;border-radius:2px}
-.mod.on{color:var(--ink);border-color:var(--rule-hi);background:var(--signal-soft);box-shadow:inset 0 -2px 0 var(--signal)}
-.mod.on s{text-decoration:none;color:var(--signal)}
-.mod-note{margin-left:auto;flex:none;color:var(--ink-3)}
-.mod i{font-style:normal;display:inline-block;margin-inline-start:6px;font-size:7.5px;letter-spacing:.14em;
-  color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;vertical-align:1px;
-  white-space:nowrap}
-.mod.on i{display:none}
-
-/* ── barra strumenti ──────────────────────────────────────── */
 .rail{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 90%,transparent);
   backdrop-filter:blur(14px);border-bottom:1px solid var(--rule)}
 .rail-in{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap}
-.mark{display:flex;align-items:center;gap:10px;font-family:Archivo,sans-serif;font-weight:800;
-  font-size:19px;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap}
-/* Il marchio e' il collegamento alla cima della pagina: lo dice il cambio di
-   fondo al passaggio del mouse, non un sottolineato, perche' un sottolineato
-   su un logo in maiuscolo spaziato si legge come un errore. */
+/* IL MARCHIO
+   La eta greca al posto della N di EFFICIENCY, e la sua gamba che scende e
+   gira a destra a fare la L di LIFE: un tratto solo tiene insieme il simbolo
+   e le due parole. La eta e' il simbolo del rendimento in fisica — quanto
+   ottieni diviso quanto spendi — cioe' la cosa che il sito misura.
+   E' un disegno, non un carattere: la larghezza dei testi e' bloccata con
+   textLength, quindi il tratto cade al posto giusto anche prima che Archivo
+   sia arrivato, e il marchio e' identico su qualunque dispositivo. */
+.mark{display:flex;align-items:center;gap:11px}
+.wordmark{display:block;height:2.55em;width:auto;font-family:Archivo,sans-serif;font-size:19px}
+.wm-a{fill:var(--ink)}
+.wm-b{fill:var(--ink-3)}
+.wm-eta{stroke:var(--signal)}
 a.mark{text-decoration:none;color:inherit;padding:4px 7px;margin-inline-start:-7px;border-radius:3px;
-  transition:background-color .13s,color .13s}
+  transition:background-color .13s}
 a.mark:hover{background:var(--signal-soft)}
-a.mark:hover .glyph{color:var(--signal-2)}
-a.mark:hover u{color:var(--ink-2)}
+a.mark:hover .wm-eta{stroke:var(--signal-2)}
+a.mark:hover .wm-b{fill:var(--ink-2)}
 a.mark:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
-.mark s{text-decoration:none;color:var(--signal);font-size:14px}
-/* Il marchio e' la lettera eta: in fisica e' il simbolo del rendimento, quanto
-   ottieni diviso quanto spendi — che e' esattamente cio' che ordina questo
-   sito. La barra sotto l'arco e' la linea del rapporto. E' disegnata, non e'
-   un carattere di sistema: resta identica su qualunque dispositivo. */
-.mark .glyph{color:var(--signal);flex:none;margin-inline-end:3px}
-.mark u{text-decoration:none;color:var(--ink-3);font-weight:500}
 .mark em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;
   color:var(--signal-2);font-weight:700;border:1px solid var(--rule-hi);padding:2px 7px;border-radius:2px;
-  background:var(--signal-soft)}
+  background:var(--signal-soft);align-self:center}
+/* Il tema si cambia con un'icona, non con una parola: sole al buio, luna alla
+   luce. Una sola icona nel markup, se ne mostra una per volta. */
+.pill-ico{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;line-height:0}
+.pill-ico .ico-luna{display:none}
+.pill-ico.e-chiaro .ico-sole{display:none}
+.pill-ico.e-chiaro .ico-luna{display:block}
 .rail nav{display:flex;gap:18px;margin-left:10px;align-items:center;flex-wrap:wrap}
 .rail nav a,.navbtn{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:4px 0;border:0;
@@ -172,7 +161,7 @@ select.pill option{background:var(--deck);color:var(--ink);text-transform:none;l
 .hstat{padding:13px 14px 11px 0;border-inline-end:1px solid var(--rule);min-width:0}
 .hstat:last-child{border-inline-end:0}
 .hstat b{display:block;font-family:"JetBrains Mono",monospace;font-size:clamp(18px,2vw,27px);
-  font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
+  font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.1;white-space:nowrap}
 .hstat span{display:block;margin-top:4px;line-height:1.3}
 
 /* ── pannello ricerca ─────────────────────────────────────── */
@@ -549,7 +538,10 @@ footer a{color:var(--ink-2)}
   .legend{gap:12px}
   .rail{position:static;backdrop-filter:none}
   .rail-in{gap:7px;padding:8px 0}
-  .mark{font-size:16px;gap:8px;letter-spacing:.1em}
+  /* senza il rientro negativo il marchio disegnato tocca il bordo */
+  .mark{gap:8px}
+  a.mark{margin-inline-start:0}
+  .wordmark{font-size:16px}
   .mark em{font-size:9px;padding:1px 5px}
   .pill{padding:5px 8px;font-size:9.5px;letter-spacing:.1em}
   select.pill{max-width:112px}
@@ -738,24 +730,31 @@ footer a{color:var(--ink-2)}
 
 <span id="top"></span>
 
-<div class="modules">
-  <div class="wrap mod-in">
-    <span class="lbl" data-k="platform">Piattaforma</span>
-    <nav class="mods" aria-label="Moduli">
-      <span class="mod on">Flight</span>
-      <span class="mod">Stay<i data-k="soon">In arrivo</i></span><span class="mod">Rail<i data-k="soon">In arrivo</i></span>
-      <span class="mod">Drive<i data-k="soon">In arrivo</i></span><span class="mod">Energy<i data-k="soon">In arrivo</i></span>
-    </nav>
-  </div>
-</div>
 
 <div class="rail">
   <div class="wrap rail-in">
-    <a class="mark" href="/" id="brand">
-      <svg class="glyph" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6.4 8.6h4.1v2.6c1.6-2 3.9-3.1 6.5-3.1 4.3 0 7.2 2.8 7.2 7.6V30h-4.1V16.4c0-2.9-1.7-4.6-4.4-4.6-2.8 0-5.2 2-5.2 5.4V23H6.4Z" fill="currentColor"/><path d="M3 23.9h26" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/></svg>Efficiency <u>Life</u><em>Flight</em></a>
+    <a class="mark" href="/" id="brand" aria-label="Efficiency Life">
+      <!-- Il marchio: la eta greca prende il posto della N di EFFICIENCY — in
+           fisica e' il simbolo del rendimento, quanto ottieni diviso quanto
+           spendi, che e' esattamente cio' che questo sito ordina. La sua gamba
+           destra non si ferma alla riga: scende sotto e gira a destra
+           diventando la L di LIFE. Un tratto solo, dall'alto della n al piede
+           della L, che lega le due parole e il simbolo in una cosa sola.
+           I testi sono <text> con textLength fisso: anche se Archivo non e'
+           ancora arrivato, la larghezza resta quella e il tratto disegnato
+           continua a cadere al posto giusto. -->
+      <svg class="wordmark" viewBox="0 0 296 96" role="img" aria-hidden="true" focusable="false">
+        <text class="wm-a" x="0" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="150" lengthAdjust="spacingAndGlyphs">EFFICIE</text>
+        <path class="wm-eta" d="M158 42V16.5c0-2.6 2.1-4.5 4.7-4.5h11.6c6.6 0 11.7 5.2 11.7 11.8V78h18"
+              fill="none" stroke-width="8.4" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <text class="wm-a" x="194" y="42" font-size="42" font-weight="800" letter-spacing="1"
+              textLength="60" lengthAdjust="spacingAndGlyphs">CY</text>
+        <text class="wm-b" x="212" y="78" font-size="42" font-weight="500" letter-spacing="1"
+              textLength="70" lengthAdjust="spacingAndGlyphs">IFE</text>
+      </svg><em>Flight</em></a>
     <nav id="mainnav" aria-label="Efficiency Life">
       <a href="/" data-k="nav_home">Home</a>
-      <a href="#search" data-goto="search" class="on">Flight</a>
       <span class="drop" id="drop">
         <button class="navbtn" id="expBtn" aria-expanded="false" aria-haspopup="true" aria-controls="expMenu"><span data-k="nav_explore">Esplora</span><i aria-hidden="true">&#9662;</i></button>
         <span class="navlbl" data-k="nav_explore" aria-hidden="true">Esplora</span>
@@ -774,7 +773,9 @@ footer a{color:var(--ink-2)}
       <select class="pill" id="selLang" aria-label="Language"></select>
       <select class="pill" id="selCur" aria-label="Currency"></select>
       <button class="pill" id="shareBtn" data-k="share">Condividi</button>
-      <button class="pill" id="dayBtn" data-k="day">Giorno</button>
+      <button class="pill pill-ico" id="dayBtn" title="" aria-label="">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><g class="ico-sole" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></g><path class="ico-luna" d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z" fill="currentColor"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -960,7 +961,6 @@ const NDEST = IDX.ndest || new Set(IDX.deals.map(d => d.d)).size;
    ultimi 90 giorni. Lo riempie build.py leggendo data/history/, che cresce di
    una riga per rotta ogni notte. Finche' e' corto resta vuoto e il sito non
    mostra niente: una statistica su tre osservazioni e' peggio del silenzio. */
-const HIST = __HIST__;
 const CURBY = Object.fromEntries(CUR.map(c => [c[0], c]));
 const TXT   = Object.fromEntries(KEYS.map((k,i) => [k, i]));
 
@@ -1159,9 +1159,23 @@ const yymmdd = s => s.slice(2,4)+s.slice(5,7)+s.slice(8,10);
 const sky = (o,d,dep,ret) =>
   `https://www.skyscanner.net/transport/flights/${o.toLowerCase()}/${d.toLowerCase()}/${yymmdd(dep)}/${yymmdd(ret)}/?adultsv2=1&cabinclass=economy&preferdirects=true&rtn=1`;
 
+/* Le rotte interne — partenza e arrivo nello stesso Paese — qui venivano
+   scartate, senza che nessuna riga dicesse perche'. Era una semplificazione
+   dei primi giorni, quando il sito rispondeva solo a "dove posso andare
+   all'estero", e costava un terzo di tutto: 8.100 rotte su 24.778 raccolte,
+   pagate in chiamate all'API, valutate, spedite al browser e poi buttate
+   nell'ultimo metro. L'effetto peggiore non era lo spreco ma la bugia:
+   l'elenco degli aeroporti prometteva Albuquerque con 5 destinazioni e
+   Phoenix con 66, e chi le sceglieva trovava rispettivamente 0 e 9. Su 1.396
+   aeroporti di partenza, 531 non mostravano assolutamente nulla.
+   Dal 14 settembre entrano anche loro: Phoenix-Chicago e Delhi-Goa sono
+   risposte legittime a "dove posso volare col mio budget". La classifica non
+   ne soffre, perche' il punteggio guarda i chilometri per euro e lo scarto
+   dal prezzo atteso: una tratta corta sale solo se costa davvero poco per
+   quella distanza, che e' esattamente quando merita di salire. */
 function enrich(raw){
   const o = PL[raw.o], d = PL[raw.d];
-  if(!o || !d || d.k === o.k) return null;
+  if(!o || !d) return null;
   if(!CTRY[d.k] || !CTRY[o.k]) return null;
   const price = raw.p + S.bagFee;
   const exp = raw.x || 0;
@@ -1200,11 +1214,14 @@ function enrich(raw){
 /* Lo storico, quando c'e': dice se questo prezzo e' basso per questa rotta,
    non solo per questa distanza. Due domande diverse, due risposte diverse. */
 function histTag(r){
-  const h = HIST[r.oc + '-' + r.dc];
-  if(!h || h[0] < 5) return '';
-  if(r.base <= h[1]) return `<span class="tagline hot-tag">${esc(T('hist_low'))} · ${h[0]}g</span>`;
-  if(r.base <  h[2]) return `<span class="tagline">${esc(T('hist_med'))} · ${h[0]}g</span>`;
-  return '';
+  /* r.hb = [livello, giorni], deciso da build.py con lo storico alla mano.
+     Le righe LIVE non ce l'hanno — arrivano adesso dall'API e nessuno le ha
+     ancora viste altre notti — quindi restano senza targhetta, che e' la cosa
+     onesta da mostrare per un prezzo appena nato. */
+  const h = r.hb;
+  if(!h) return '';
+  const k = h[0] === 2 ? 'hist_low' : 'hist_med';
+  return `<span class="tagline${h[0] === 2 ? ' hot-tag' : ''}">${esc(T(k))} · ${h[1]}g</span>`;
 }
 
 /* Le tariffe raggruppate per scalo di partenza una volta sola, all'avvio.
@@ -1215,8 +1232,13 @@ const IDX_BY_O = {};
 for(const r of IDX.deals) (IDX_BY_O[r.o] ||= []).push(r);
 
 const DATE_BY_O = {}, DATE_PENDING = {};
+/* Gli scomparti gia' tentati, riusciti o no. DATE_BY_O non basta per saperlo:
+   un aeroporto il cui scomparto non porta righe utili non ci finisce mai, e
+   bastava uno su quaranta perche' i numeri sui pulsanti restassero nascosti
+   per sempre. */
+const DATE_DONE = new Set();
 async function fetchDates(){
-  const queue = [...S.origins].filter(o => IDX.shards && IDX.shards[o] && !DATE_BY_O[o]);
+  const queue = [...S.origins].filter(o => IDX.shards && IDX.shards[o] && !DATE_DONE.has(o));
   // Bound simultaneous requests when a whole country is selected.
   async function worker(){
     while(queue.length){
@@ -1224,20 +1246,25 @@ async function fetchDates(){
       if(!DATE_PENDING[o]) DATE_PENDING[o] = (async () => {
         try{
           const res = await fetch(IDX.shards[o], {signal:AbortSignal.timeout(12000)});
-          if(!res.ok) return;
-          const j = await res.json();
-          if(j.schema !== 2 || j.origin !== o || !Array.isArray(j.deals)) return;
-          const rows = j.deals.filter(r => r.o === o && PL[r.d] &&
-            Number.isFinite(r.p) && r.p > 0 && Number.isFinite(r.sc) &&
-            /^\d{4}-\d{2}-\d{2}$/.test(r.dep) && /^\d{4}-\d{2}-\d{2}$/.test(r.ret));
-          if(rows.length) DATE_BY_O[o] = rows;
-        }catch(_){} // Embedded fares remain usable on timeout, 404 or offline.
-        finally{ delete DATE_PENDING[o]; }
+          if(res.ok){
+            const j = await res.json();
+            if(j.schema === 2 && j.origin === o && Array.isArray(j.deals)){
+              const rows = j.deals.filter(r => r.o === o && PL[r.d] &&
+                Number.isFinite(r.p) && r.p > 0 && Number.isFinite(r.sc) &&
+                /^\d{4}-\d{2}-\d{2}$/.test(r.dep) && /^\d{4}-\d{2}-\d{2}$/.test(r.ret));
+              if(rows.length) DATE_BY_O[o] = rows;
+            }
+          }
+        }catch(_){} // le tariffe incorporate restano usabili su timeout, 404 o offline
+        finally{ DATE_DONE.add(o); delete DATE_PENDING[o]; }
       })();
       await DATE_PENDING[o];
     }
   }
   await Promise.all(Array.from({length:Math.min(4,queue.length)}, worker));
+  // adesso il serbatoio e' completo: i numeri sui pulsanti diventano esatti.
+  // La guardia serve al collaudo, che esegue questa funzione da sola.
+  if(typeof renderShapes === 'function') renderShapes();
 }
 
 function rawPool(){
@@ -1336,33 +1363,66 @@ function renderSegs(){
    Quindi una finestra non e' una ricerca, e' una fetta. Il numero sul pulsante
    dice quante rotte cadono davvero li' dentro, cosi' non si cerca al buio. */
 let _stats = null, _statsKey = '';
-/* Finestre e forme del viaggio si contano insieme, in un giro solo, e il
-   risultato resta valido finche' non cambiano gli aeroporti o la sorgente. */
+/* Il numero sul pulsante deve promettere quello che la classifica mantiene.
+   Prima non lo faceva, per due motivi insieme. Contava le RIGHE del serbatoio,
+   mentre la classifica ne tiene una per destinazione — la piu' economica. E
+   ignorava gli altri filtri attivi: paese, distanza, budget, periodo.
+   Da Manchester il pulsante "weekend" diceva 19 e la ricerca ne trovava 14.
+   Adesso ogni numero e' il conteggio delle DESTINAZIONI che resterebbero
+   scegliendo quel pulsante, con tutto il resto gia' applicato: la stessa cosa
+   che dira' "rotte trovate". Costa dodici passate su un serbatoio di qualche
+   migliaio di righe, cioe' nulla, e in cambio il numero non mente. */
 function poolStats(){
-  const key = [...S.origins].join('.') + '|' + (S.liveRows ? 'live' : 'idx');
+  const key = [...S.origins].join('.') + '|' + (S.liveRows ? 'live' : 'idx')
+    + '|' + (S.dMode === 'pick' ? [...S.dCountries].join(',') : '*')
+    + '|' + [...S.windows].join('.') + '|' + [...S.shapes].join('.')
+    + '|' + S.minDist + '-' + S.maxDist + '|' + S.maxBudget + '|' + S.bagFee
+    + '|' + DATE_DONE.size;   // cambia quando arrivano gli scomparti: senza, la
+                              // cache restituiva il conteggio dell'anteprima
+                              // anche dopo che i dati veri erano in pagina
   if(_statsKey === key && _stats) return _stats;
-  const w = {}, s = {any:0, fsm:0, fss:0, ss:0};
-  for(const r of rawPool()){
-    const k = windowOf(daysOut(r.dep)); w[k] = (w[k]||0)+1;
-    s.any++;
-    for(const t in SHAPES) if(isShape(r, t)) s[t]++;
-  }
-  _statsKey = key; _stats = {w, s};
+
+  // il serbatoio con tutti i filtri che NON sono periodo o forma del viaggio
+  const pool = rawPool().map(enrich).filter(Boolean).filter(r =>
+    (!(S.dMode === 'pick' && S.dCountries.size) || S.dCountries.has(r.ck))
+    && r.km*2 >= S.minDist && r.km*2 <= S.maxDist && r.price <= S.maxBudget);
+
+  const destinazioni = righe => {
+    const set = new Set();
+    for(const r of righe) set.add(r.dc);
+    return set.size;
+  };
+  const w = {}, s = {};
+  // per il periodo: quante destinazioni ci sono in quella fetta, a parita' di forma
+  w.any = destinazioni(pool.filter(r => shapeOk(r, S.shapes)));
+  for(const win of WINDOWS)
+    w[win] = destinazioni(pool.filter(r => r.win === win && shapeOk(r, S.shapes)));
+  // per la forma: quante ne restano con quella forma, a parita' di periodo
+  const nelPeriodo = r => S.windows.has(r.win);
+  s.any = destinazioni(pool.filter(nelPeriodo));
+  for(const t in SHAPES)
+    s[t] = destinazioni(pool.filter(r => nelPeriodo(r) && isShape(r, t)));
+
+  /* Il numero si mostra solo quando il serbatoio e' quello vero. Prima della
+     prima ricerca la pagina ha in pancia solo l'anteprima incorporata — venti
+     righe per aeroporto — mentre la ricerca scarica lo scomparto completo:
+     contare l'anteprima e promettere il totale era il secondo modo in cui
+     questi numeri mentivano. Finche' gli scomparti non ci sono, meglio
+     nessun numero che uno sbagliato. */
+  const completo = [...S.origins].every(o => DATE_DONE.has(o) || !(IDX.shards && IDX.shards[o]));
+  _statsKey = key; _stats = {w, s, completo};
   return _stats;
 }
 function windowCounts(){ return poolStats().w; }
-/* Come per le finestre, il numero sul pulsante e' quante rotte hanno davvero
-   quella forma fra gli aeroporti scelti. La fonte da' una sola data per
-   destinazione: chiedere "solo venerdi-lunedi" e' una fetta stretta, e vederlo
-   prima di premere Cerca evita la classifica vuota. */
 function shapeCounts(){ return poolStats().s; }
 function renderShapes(){
-  const c = S.origins.size ? shapeCounts() : {};
+  const st = S.origins.size ? poolStats() : null;
+  const c = st && st.completo ? st.s : {};
   const items = [['any','sh_any'],['fsm','sh_long'],['fss','sh_mid'],['ss','sh_short']];
   $('#shapeChips').innerHTML = items.map(([v,k]) => {
     const on = v === 'any' ? !S.shapes.size : S.shapes.has(v);
     return `<button class="seg${on?' on':''}" data-act="shape" data-v="${v}">${esc(T(k))}${
-      S.origins.size ? `<em>· ${c[v]||0}</em>` : ''}</button>`;
+      c[v] === undefined ? '' : `<em>· ${c[v]}</em>`}</button>`;
   }).join('');
 }
 /* I riquadri non sono soglie ma intervalli: 30 significava "fra 1 e 30 giorni"
@@ -1454,6 +1514,7 @@ function renderTabs(){
     ? [...S.origins].slice(0,4).join(' ') + (nAir>4 ? ` +${nAir-4}` : '') : '—';
   $('#legTo').textContent = dest;
   renderWindows();
+  renderShapes();   // i paesi scelti cambiano quante destinazioni ha ogni forma
   updateReady();
 }
 
@@ -1949,6 +2010,19 @@ function renderTicker(){
 /* Le dieci schede del Metodo, le quattro di Trasparenza e l'indice degli
    aeroporti sono passati sulla home: qui restano le righe che accompagnano
    la classifica. */
+/* Il pulsante del tema adesso e' un'icona: sole quando sei al buio e stai
+   per accendere, luna quando sei alla luce. La parola sparisce dallo schermo
+   ma non dall'accessibilita' — chi usa un lettore di schermo sente comunque
+   "Giorno" o "Notte", ed e' la stessa chiave tradotta in 36 lingue. */
+function etichettaTema(){
+  const chiaro = document.documentElement.hasAttribute('data-day');
+  const testo = chiaro ? T('night') : T('day');
+  const b = $('#dayBtn');
+  b.setAttribute('aria-label', testo);
+  b.title = testo;
+  b.classList.toggle('e-chiaro', chiaro);
+}
+
 function renderProse(){
   $('#heroH1').textContent   = String(P().seo.title).split('|')[0].trim();
   $('#lede').textContent     = T('lede');
@@ -1965,7 +2039,7 @@ function applyLang(){
   RTL = (LANG_META.find(l => l[0] === S.lang) || [])[2] === 1;
   document.documentElement.dir = RTL ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-k]').forEach(el => { el.textContent = T(el.dataset.k); });
-  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  etichettaTema();
   $('#globeCap').textContent = T('f_globe');
   $('#heroEyebrow').textContent = `${T('obs')} ${IDX.observed} · ${T('direct')} · ${Object.keys(IDX.counts).length} ${T('st_air')}`;
   $('#panelHint').textContent = T('f_globe');
@@ -2243,6 +2317,12 @@ $('#rngDistMax').addEventListener('input', e => {
 });
 $('#rngBudget').addEventListener('input', e => { S.maxBudget = +e.target.value; renderLimits(); markDirty(); });
 $('#rngBag').addEventListener('input', e => { S.bagFee = +e.target.value; renderLimits(); markDirty(); });
+/* I numeri sui pulsanti della forma dipendono anche da budget e distanza, ma
+   si aggiornano quando lasci il cursore, non a ogni pixel: durante il
+   trascinamento ricontare dodici volte un serbatoio da migliaia di righe si
+   sentirebbe, e il numero serve quando hai finito di scegliere. */
+for(const id of ['#rngDistMin','#rngDistMax','#rngBudget','#rngBag'])
+  $(id).addEventListener('change', renderShapes);
 
 $('#btnSearch').addEventListener('click', async () => {
   if(!S.origins.size){ markDirty(); return; }
@@ -2355,7 +2435,7 @@ $('#shareBtn').addEventListener('click', async () => {
 $('#dayBtn').addEventListener('click', () => {
   document.documentElement.toggleAttribute('data-day');
   try{ localStorage.setItem('elf-day', document.documentElement.hasAttribute('data-day')?'1':'0'); }catch(_){}
-  $('#dayBtn').textContent = document.documentElement.hasAttribute('data-day') ? T('night') : T('day');
+  etichettaTema();
   frame();
 });
 addEventListener('resize', () => frame());
