@@ -135,9 +135,19 @@ class FlightDataTests(unittest.TestCase):
         righe[1]['dur'] = 240
         self.assertEqual(len(collapse_city_twins(righe, self.DUE_BRUXELLES)), 2)
 
-    def test_different_cities_are_never_collapsed(self):
+    def test_far_apart_airports_are_never_collapsed(self):
+        # Due destinazioni lontane nello stesso paese restano due destinazioni,
+        # anche se per caso costano uguale negli stessi giorni. Dal 14 settembre
+        # il giudizio viene dalla distanza, non dal nome della citta'.
         righe = self.gemelle()
-        luoghi = dict(self.DUE_BRUXELLES, CRL={'n':'Charleroi','k':'BE','la':50.3,'lo':4.3})
+        luoghi = dict(self.DUE_BRUXELLES, CRL={'n':'Ostenda','k':'BE','la':51.2,'lo':2.86})
+        self.assertEqual(len(collapse_city_twins(righe, luoghi)), 2)
+
+    def test_airports_in_different_countries_are_never_collapsed(self):
+        # Basilea e Mulhouse sono a pochi chilometri ma in due stati diversi:
+        # il paese resta una barriera, altrimenti si fondono frontiere vere.
+        righe = self.gemelle()
+        luoghi = dict(self.DUE_BRUXELLES, CRL={'n':'Brussels','k':'FR','la':50.3,'lo':4.3})
         self.assertEqual(len(collapse_city_twins(righe, luoghi)), 2)
 
     def test_lone_aggregate_row_is_kept(self):
@@ -145,6 +155,72 @@ class FlightDataTests(unittest.TestCase):
         # per molte destinazioni e' l'unico dato che abbiamo.
         sola = [self.gemelle()[0]]
         self.assertEqual([r['d'] for r in collapse_city_twins(sola, self.DUE_BRUXELLES)], ['BRU'])
+
+    # ── i gemelli si riconoscono dai dati, non da un elenco scritto a mano ──
+    # Citta' del Messico non era nella tabella di location_authority, e i sette
+    # doppioni MEX/NLU passavano. Le coordinate ce le abbiamo per tutti.
+    AREE = {
+     'GDL': {'n':'Guadalajara','k':'MX','la':20.5218,'lo':-103.3111},
+     'MEX': {'n':'Città del Messico','k':'MX','la':19.4363,'lo':-99.0721},
+     'NLU': {'n':'Santa Lucia','k':'MX','la':19.7364,'lo':-99.0269},   # 33 km da MEX
+     'FCO': {'n':'Roma','k':'IT','la':41.8003,'lo':12.2389},
+     'MXP': {'n':'Milano','k':'IT','la':45.6306,'lo':8.7281},
+     'BGY': {'n':'Bergamo','k':'IT','la':45.6739,'lo':9.7042},          # 76 km da MXP
+     'LHR': {'n':'Londra','k':'GB','la':51.4700,'lo':-0.4543},
+     'LGW': {'n':'Londra','k':'GB','la':51.1537,'lo':-0.1821},
+     'JFK': {'n':'New York','k':'US','la':40.6413,'lo':-73.7781},
+     'EWR': {'n':'New York','k':'US','la':40.6895,'lo':-74.1745},
+     'LGA': {'n':'New York','k':'US','la':40.7769,'lo':-73.8740},
+     'HND': {'n':'Tokyo','k':'JP','la':35.5494,'lo':139.7798},
+     'NRT': {'n':'Tokyo','k':'JP','la':35.7647,'lo':140.3864},
+     'ICN': {'n':'Seul','k':'KR','la':37.4602,'lo':126.4407},
+    }
+
+    def coppia(self, origine, a, b, dc_a, dc_b, **extra):
+        base = dict(o=origine, p=58, dep='2026-10-10', ret='2026-10-14',
+                    dur=190, n=4, obs='2026-09-14', km=900)
+        base.update(extra)
+        return [dict(base, d=a, direct_check=dc_a, endpoint='dates' if dc_a == 'both_legs' else 'latest'),
+                dict(base, d=b, direct_check=dc_b, endpoint='dates' if dc_b == 'both_legs' else 'latest')]
+
+    def test_two_verified_airports_of_one_city_both_survive(self):
+        # MEX e NLU sono due aeroporti veri: se il fornitore verifica entrambi
+        # tratta per tratta, non sta a noi cancellarne uno.
+        for a, b, o in (('MEX','NLU','GDL'), ('MXP','BGY','FCO'), ('LHR','LGW','FCO'),
+                        ('HND','NRT','ICN')):
+            tenute = collapse_city_twins(self.coppia(o, a, b, 'both_legs', 'both_legs'), self.AREE)
+            self.assertEqual({r['d'] for r in tenute}, {a, b}, f'{a}/{b} da {o}')
+
+    def test_three_verified_airports_of_one_city_all_survive(self):
+        righe = self.coppia('FCO', 'JFK', 'EWR', 'both_legs', 'both_legs')
+        righe.append(dict(righe[0], d='LGA'))
+        self.assertEqual({r['d'] for r in collapse_city_twins(righe, self.AREE)},
+                         {'JFK', 'EWR', 'LGA'})
+
+    def test_verified_row_beats_the_provider_aggregate_twin(self):
+        # Il caso dei sette doppioni di Citta' del Messico del 14 settembre.
+        tenute = collapse_city_twins(self.coppia('GDL', 'MEX', 'NLU',
+                                                 'provider_aggregate', 'both_legs'), self.AREE)
+        self.assertEqual([r['d'] for r in tenute], ['NLU'])
+
+    def test_two_unverified_twins_collapse_to_one_row(self):
+        # Nessuno dei due e' verificato a livello di aeroporto: e' la stessa
+        # corsa raccontata due volte dall'aggregato del fornitore.
+        tenute = collapse_city_twins(self.coppia('GDL', 'MEX', 'NLU',
+                                                 'provider_aggregate', 'provider_aggregate'),
+                                     self.AREE)
+        self.assertEqual(len(tenute), 1)
+
+    def test_dedup_does_not_need_the_manual_city_table(self):
+        # Nessuno di questi codici sta in CITY_TO_COMMERCIAL_AIRPORTS: la
+        # regola deve funzionare lo stesso, perche' guarda le coordinate.
+        from location_authority import CITY_TO_COMMERCIAL_AIRPORTS, AIRPORT_TO_CITY_CODE
+        for code in ('MEX', 'NLU'):
+            self.assertNotIn(code, CITY_TO_COMMERCIAL_AIRPORTS)
+            self.assertNotIn(code, AIRPORT_TO_CITY_CODE)
+        tenute = collapse_city_twins(self.coppia('GDL', 'MEX', 'NLU',
+                                                 'provider_aggregate', 'both_legs'), self.AREE)
+        self.assertEqual(len(tenute), 1)
 
     def test_weekend_one_night_kept(self):
         self.assertEqual(validate(fare(ret='2026-10-03'),PLACES,TODAY)['n'],1)

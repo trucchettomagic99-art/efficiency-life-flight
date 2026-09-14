@@ -1,100 +1,342 @@
+"""Collaudo SEO per proprieta', non per frasi.
+
+La versione del 14 settembre 2026 confrontava le stringhe esatte: bastava
+cambiare una virgola nel titolo della home perche' la pipeline si fermasse, e
+il numero di indirizzi in sitemap era inchiodato a 1354 — cioe' aggiungere un
+aeroporto rompeva il collaudo di una cosa che stava funzionando.
+
+Qui si verifica invece cosa deve essere sempre vero, qualunque parola si
+scelga: un solo H1, un canonical che punta all'indirizzo giusto, hreflang
+reciproci, nessun noindex dove serve indicizzare, l'intento di ricerca
+presente nella lingua della pagina, nessun nome ripetuto come
+"Abakan Airport, Abakan Airport", e una sitemap che elenca esattamente le
+pagine generate — ne' una di piu' ne' una di meno.
+"""
 import json
 import re
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 SRC = ROOT / "src"
-SCRIPTS = ROOT / "scripts"
 
-import sys
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, str(ROOT))
-import scripts.build as B
-import scripts.build_pages as BP
+import scripts.build as B          # noqa: E402
+import scripts.build_pages as BP   # noqa: E402
+
+SITE = "https://efficiency-life.com"
+INTENTO = {'it': ('voli', 'volo'), 'en': ('flight', 'flights')}
 
 
-class EditorialSeoTests(unittest.TestCase):
-    def test_prose_validation(self):
-        """Verify that prose_data() validates cleanly with title, h1, description for all 36 locales."""
-        data = B.prose_data()
-        locales = data["locales"]
+def testo(p: Path) -> str:
+    return p.read_text(encoding="utf-8")
+
+
+def uno(pattern: str, html: str, nome: str, test):
+    trovati = re.findall(pattern, html, re.S)
+    test.assertEqual(len(trovati), 1, f"{nome}: attesi 1, trovati {len(trovati)}")
+    return trovati[0]
+
+
+def titolo(html): return re.search(r'<title>(.*?)</title>', html, re.S).group(1)
+def descrizione(html): return re.search(r'<meta name="description" content="(.*?)">', html, re.S).group(1)
+def canonical(html): return re.search(r'<link rel="canonical" href="(.*?)">', html).group(1)
+
+
+class ProprietaComuni:
+    """Le regole che devono valere su ogni pagina indicizzabile."""
+
+    def controlla_pagina(self, path: Path, url: str, lang: str):
+        html = testo(path)
+        con = f"{path.relative_to(DIST)}"
+
+        # un solo H1, non vuoto
+        h1 = uno(r'<h1[^>]*>(.*?)</h1>', html, f"{con}: H1", self)
+        self.assertTrue(h1.strip(), f"{con}: H1 vuoto")
+
+        # title e description presenti e sensati
+        self.assertTrue(10 < len(titolo(html)) < 140, f"{con}: title fuori misura")
+        self.assertTrue(50 < len(descrizione(html)) < 340, f"{con}: description fuori misura")
+
+        # canonical esatto, e uno solo
+        uno(r'<link rel="canonical"[^>]*>', html, f"{con}: canonical", self)
+        self.assertEqual(canonical(html), url, f"{con}: canonical sbagliato")
+
+        # niente noindex, niente keywords, lingua dichiarata
+        self.assertNotIn('noindex', html, f"{con}: la pagina si esclude da sola")
+        self.assertNotIn('<meta name="keywords"', html, f"{con}: meta keywords")
+        self.assertIn(f'<html lang="{lang}"', html, f"{con}: lingua non dichiarata")
+
+        # niente doppia escape di entita'
+        self.assertNotIn('&amp;amp;', html, f"{con}: doppia escape")
+        return html
+
+
+class PagineAeroporto(ProprietaComuni, unittest.TestCase):
+    CAMPIONE = ('fco', 'cia', 'lhr', 'edi', 'jfk', 'mxp', 'bgy', 'cpt')
+
+    def pagine(self, quante=None):
+        for lang, cartella in (('it', 'da'), ('en', 'from')):
+            trovate = sorted((DIST / cartella).glob('*/index.html'))
+            for p in (trovate[:quante] if quante else trovate):
+                yield lang, cartella, p.parent.name, p
+
+    def test_ogni_pagina_aeroporto_rispetta_le_regole(self):
+        for lang, cartella, iata, p in self.pagine():
+            with self.subTest(pagina=f'{cartella}/{iata}'):
+                self.controlla_pagina(p, f'{SITE}/{cartella}/{iata}/', lang)
+
+    def test_hreflang_reciproco_fra_le_due_lingue(self):
+        for lang, cartella, iata, p in self.pagine():
+            html = testo(p)
+            altra = 'from' if cartella == 'da' else 'da'
+            with self.subTest(pagina=f'{cartella}/{iata}'):
+                self.assertIn(f'<link rel="alternate" hreflang="{lang}" href="{SITE}/{cartella}/{iata}/">', html)
+                altro_lang = 'en' if lang == 'it' else 'it'
+                self.assertIn(f'<link rel="alternate" hreflang="{altro_lang}" href="{SITE}/{altra}/{iata}/">', html)
+                self.assertIn('hreflang="x-default"', html)
+
+    def test_intento_di_ricerca_presente_nella_lingua_giusta(self):
+        """Le uniche query che portano visite sono "voli <citta>" e
+        "cheap flights from <citta>": la parola deve esserci, nel titolo."""
+        for lang, cartella, iata, p in self.pagine():
+            t = titolo(testo(p)).casefold()
+            with self.subTest(pagina=f'{cartella}/{iata}'):
+                self.assertTrue(any(w in t for w in INTENTO[lang]),
+                                f'{cartella}/{iata}: titolo senza intento: {t}')
+        # e l'intento economico, nella forma che la gente scrive
+        self.assertIn('voli economici', titolo(testo(DIST/'da'/'fco'/'index.html')).casefold())
+        self.assertIn('cheap flights', titolo(testo(DIST/'from'/'fco'/'index.html')).casefold())
+
+    def test_il_nome_dello_scalo_non_si_ripete(self):
+        """"Abakan Airport, Abakan Airport" non deve poter succedere.
+
+        Si collauda l'etichetta da sola e non l'H1 intero, perche' li' la
+        preposizione italiana confonde ("da Da Nang" non e' un doppione).
+        Il controllo gira su tutto il catalogo, non sulle sole pagine uscite.
+        """
+        catalogo = json.loads((ROOT / 'data' / 'catalog.json').read_text(encoding='utf-8'))
+        etichette = BP.etichette_scali(catalogo)
+        self.assertGreater(len(etichette), 1000)
+        generiche = re.compile(r'\b(airports?|aeroporto|aeroport|intl|international)\b', re.I)
+        sorgente = {a['i']: f"{a.get('c','')} | {a.get('n','')}".casefold()
+                    for a in catalogo['airports']}
+        for iata, e in etichette.items():
+            with self.subTest(scalo=iata):
+                parole = re.sub(r'[(),]', ' ', e).split()
+                for a, b in zip(parole, parole[1:]):
+                    if a.casefold() == b.casefold():
+                        # "Pago Pago" e' un nome vero; il doppione che cerchiamo
+                        # e' quello che nasce incollando citta' e aeroporto.
+                        self.assertIn(f'{a} {b}'.casefold(), sorgente[iata],
+                                      f'{iata}: "{e}" ripete una parola')
+                self.assertNotIn(',', e, f'{iata}: "{e}" incollato con la virgola')
+                self.assertIsNone(generiche.search(e), f'{iata}: "{e}" contiene una parola generica')
+                self.assertTrue(e.strip(), f'{iata}: etichetta vuota')
+                self.assertLessEqual(len(e.split()), 6, f'{iata}: "{e}" e una targa, non un nome')
+
+    def test_le_etichette_non_si_ripetono_fra_scali(self):
+        catalogo = json.loads((ROOT / 'data' / 'catalog.json').read_text(encoding='utf-8'))
+        etichette = BP.etichette_scali(catalogo)
+        paese = {a['i']: a.get('k') for a in catalogo['airports']}
+        visti = {}
+        for iata, e in etichette.items():
+            chiave = (e.casefold(), paese.get(iata))
+            self.assertNotIn(chiave, visti, f'{iata} e {visti.get(chiave)}: stessa etichetta "{e}"')
+            visti[chiave] = iata
+
+    def test_titoli_e_h1_distinti_fra_pagine(self):
+        for lang, cartella in (('it', 'da'), ('en', 'from')):
+            visti = {}
+            for p in sorted((DIST / cartella).glob('*/index.html')):
+                t = titolo(testo(p))
+                self.assertNotIn(t, visti, f'{cartella}: titolo uguale a {visti.get(t)}: {t}')
+                visti[t] = p.parent.name
+
+    def test_citta_nella_lingua_della_pagina(self):
+        self.assertIn('Roma Fiumicino', titolo(testo(DIST/'da'/'fco'/'index.html')))
+        self.assertIn('Rome Fiumicino', titolo(testo(DIST/'from'/'fco'/'index.html')))
+        self.assertIn('Londra Heathrow', titolo(testo(DIST/'da'/'lhr'/'index.html')))
+        self.assertIn('London Heathrow', titolo(testo(DIST/'from'/'lhr'/'index.html')))
+
+    def test_la_pagina_dice_cosa_significa_il_valore(self):
+        """"Rapporto qualita'-prezzo" non deve far pensare al comfort a bordo."""
+        for f, parole in ((DIST/'da'/'fco'/'index.html', ('Efficiency Score', 'chilometri per euro', 'storico')),
+                          (DIST/'from'/'fco'/'index.html', ('Efficiency Score', 'kilometres per', 'route history'))):
+            html = testo(f)
+            for w in parole:
+                self.assertIn(w, html, f'{f.parent.name}: manca "{w}"')
+
+    def test_breadcrumb_strutturato_valido(self):
+        for lang, cartella, iata, p in self.pagine(quante=40):
+            html = testo(p)
+            blocchi = re.findall(r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.S)
+            with self.subTest(pagina=f'{cartella}/{iata}'):
+                tipi = {}
+                for b in blocchi:
+                    dato = json.loads(b)          # JSON non valido -> il test fallisce qui
+                    tipi[dato['@type']] = dato
+                self.assertIn('ItemList', tipi, 'ItemList sparito')
+                self.assertIn('BreadcrumbList', tipi, 'BreadcrumbList mancante')
+                passi = tipi['BreadcrumbList']['itemListElement']
+                self.assertEqual([x['position'] for x in passi], list(range(1, len(passi) + 1)))
+                self.assertEqual(passi[0]['item'], f'{SITE}/')
+                self.assertEqual(passi[-1]['item'], f'{SITE}/{cartella}/{iata}/')
+                for x in passi:
+                    self.assertTrue(x['name'].strip())
+                    self.assertTrue(x['item'].startswith(SITE))
+
+
+class PagineDirectory(ProprietaComuni, unittest.TestCase):
+    def test_directory_e_continenti(self):
+        for lang, radice in (('it', 'aeroporti'), ('en', 'airports')):
+            self.controlla_pagina(DIST / radice / 'index.html', f'{SITE}/{radice}/', lang)
+            for sub in sorted((DIST / radice).glob('*/index.html')):
+                self.controlla_pagina(sub, f'{SITE}/{radice}/{sub.parent.name}/', lang)
+
+    def test_breadcrumb_strutturato_sui_continenti(self):
+        for lang, radice in (('it', 'aeroporti'), ('en', 'airports')):
+            for sub in sorted((DIST / radice).glob('*/index.html')):
+                html = testo(sub)
+                dati = [json.loads(b) for b in
+                        re.findall(r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.S)]
+                bc = [d for d in dati if d.get('@type') == 'BreadcrumbList']
+                self.assertEqual(len(bc), 1, f'{radice}/{sub.parent.name}: BreadcrumbList')
+                self.assertEqual(bc[0]['itemListElement'][-1]['item'],
+                                 f'{SITE}/{radice}/{sub.parent.name}/')
+
+
+class LandingPerLingua(ProprietaComuni, unittest.TestCase):
+    def test_trentasei_landing_coerenti_con_prose(self):
+        prose = json.loads((SRC / "prose.json").read_text(encoding="utf-8"))['locales']
+        self.assertEqual(len(prose), 36)
+        for code, loc in prose.items():
+            path = loc["path"]
+            p = DIST / "lang" / path / "index.html"
+            with self.subTest(lingua=code):
+                self.assertTrue(p.is_file(), f'manca la landing {code}')
+                # la lingua dichiarata e' l'hreflang, non la chiave interna:
+                # il filippino sta sotto "tl" in prose.json ma esce come "fil"
+                html = self.controlla_pagina(p, f'{SITE}/lang/{path}/', loc['hreflang'])
+                # il testo viene da prose.json e da nessun'altra parte
+                self.assertIn(BP.esc(loc['seo']['title']), html)
+                self.assertIn(BP.esc(loc['seo']['h1']), html)
+                self.assertIn(BP.esc(loc['seo']['description']), html)
+
+    def test_prose_ha_titolo_h1_e_descrizione_in_tutte_le_lingue(self):
+        locales = B.prose_data()["locales"]
         self.assertEqual(len(locales), 36)
         for code, loc in locales.items():
             seo = loc["seo"]
-            self.assertIn("title", seo)
-            self.assertIn("description", seo)
-            self.assertIn("h1", seo)
-            self.assertTrue(len(seo["title"]) > 10, f"Title too short for {code}")
-            self.assertTrue(len(seo["description"]) > 20, f"Description too short for {code}")
-            self.assertTrue(len(seo["h1"]) > 5, f"H1 too short for {code}")
+            self.assertTrue(len(seo.get("title", "")) > 10, code)
+            self.assertTrue(len(seo.get("description", "")) > 20, code)
+            self.assertTrue(len(seo.get("h1", "")) > 5, code)
 
-    def test_home_page_seo(self):
-        """Verify Home page title, h1, tagline, description, and canonical."""
-        home_html = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("<title>Migliori voli qualità-prezzo | Efficiency Life</title>", home_html)
-        self.assertIn('content="Trova i voli con il miglior rapporto qualità-prezzo. Efficiency Life confronta migliaia di voli diretti andata e ritorno e li ordina per valore reale: scopri dove il tuo budget ti porta più lontano."', home_html)
-        self.assertIn('<h1 class="h1">Trova i voli con il miglior rapporto qualità-prezzo</h1>', home_html)
-        self.assertIn('Quanto ottieni,', home_html)
-        self.assertIn('diviso quanto spendi.', home_html)
-        self.assertIn('<link rel="canonical" href="https://efficiency-life.com/">', home_html)
-        self.assertNotIn('<meta name="keywords"', home_html)
 
-    def test_flight_page_seo(self):
-        """Verify /flight/ page title, description, and canonical."""
-        flight_html = (DIST / "flight" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("<title>Trova voli diretti per budget e km/€ | Efficiency Life Flight</title>", flight_html)
-        self.assertIn('content="Trova voli diretti per budget e km/€ con Efficiency Life Flight: imposta l\'aeroporto di partenza e scopri le migliori offerte ordinate per valore reale."', flight_html)
-        self.assertIn('<link rel="canonical" href="https://efficiency-life.com/flight/">', flight_html)
-        self.assertNotIn('<meta name="keywords"', flight_html)
+class HomeEMotore(unittest.TestCase):
+    def test_home_e_motore_hanno_titoli_e_canonical_propri(self):
+        home = testo(DIST / "index.html")
+        flight = testo(DIST / "flight" / "index.html")
+        self.assertEqual(canonical(home), f'{SITE}/')
+        self.assertEqual(canonical(flight), f'{SITE}/flight/')
+        # due pagine, due descrizioni: se coincidono Google ne scarta una
+        self.assertNotEqual(titolo(home), titolo(flight))
+        self.assertNotEqual(descrizione(home), descrizione(flight))
+        for html in (home, flight):
+            self.assertNotIn('<meta name="keywords"', html)
+            self.assertNotIn('noindex', html)
+            self.assertTrue(10 < len(titolo(html)) < 140)
 
-    def test_all_36_language_landings_seo(self):
-        """Verify all 36 language landings have matching title, h1, meta description, and valid canonical."""
-        prose = json.loads((SRC / "prose.json").read_text(encoding="utf-8"))
-        for code, loc in prose["locales"].items():
-            path = loc["path"]
-            page_file = DIST / "lang" / path / "index.html"
-            self.assertTrue(page_file.is_file(), f"Missing landing for {code}: {page_file}")
-            content = page_file.read_text(encoding="utf-8")
+    def test_h1_della_home_e_traducibile(self):
+        """Deve avere l'ancora che applyLang() riscrive: senza, resta italiano
+        anche per chi legge in tedesco."""
+        home = testo(DIST / "index.html")
+        h1 = uno(r'<h1[^>]*>(.*?)</h1>', home, 'home: H1', self)
+        self.assertIn('id="homeH1"', home)
+        prose = json.loads((SRC / "prose.json").read_text(encoding="utf-8"))['locales']
+        self.assertEqual(h1, prose['it']['seo']['h1'],
+                         "l'H1 scritto nell'HTML deve essere lo stesso di prose.json['it']")
+        sorgente = testo(SRC / 'home.html')
+        self.assertIn("$('#homeH1').textContent = p.seo.h1", sorgente)
 
-            expected_title = loc["seo"]["title"]
-            expected_h1 = loc["seo"]["h1"]
-            expected_desc = loc["seo"]["description"]
-            expected_canonical = f"https://efficiency-life.com/lang/{path}/"
+    def test_cluster_hreflang_completo_sulla_home(self):
+        home = testo(DIST / "index.html")
+        prose = json.loads((SRC / "prose.json").read_text(encoding="utf-8"))['locales']
+        for loc in prose.values():
+            self.assertIn(f'hreflang="{loc["hreflang"]}" href="{SITE}/lang/{loc["path"]}/"', home)
+        self.assertIn('hreflang="x-default"', home)
 
-            self.assertIn(f"<title>{BP.esc(expected_title)}</title>", content, f"Title mismatch in {code}")
-            self.assertIn(f"<h1>{BP.esc(expected_h1)}</h1>", content, f"H1 mismatch in {code}")
-            self.assertIn(f'content="{BP.esc(expected_desc)}"', content, f"Meta description mismatch in {code}")
-            self.assertIn(f'<link rel="canonical" href="{expected_canonical}">', content, f"Canonical mismatch in {code}")
-            self.assertNotIn('<meta name="keywords"', content)
 
-    def test_airport_pages_italian_and_english(self):
-        """Verify /da/{iata}/ and /from/{iata}/ titles, h1s, and descriptions."""
-        # FCO
-        fco_it = (DIST / "da" / "fco" / "index.html").read_text(encoding="utf-8")
-        fco_en = (DIST / "from" / "fco" / "index.html").read_text(encoding="utf-8")
+class Sitemap(unittest.TestCase):
+    def indirizzi(self):
+        xml = testo(DIST / "sitemap.xml")
+        return re.findall(r'<loc>(.*?)</loc>', xml)
 
-        self.assertIn("Migliori voli da Fiumicino, Roma per rapporto qualità-prezzo | FCO", fco_it)
-        self.assertIn("<h1>I voli da Fiumicino, Roma con il miglior rapporto qualità-prezzo</h1>", fco_it)
-        self.assertRegex(fco_it, r'<meta name="description" content="Le \d+ migliori destinazioni da Fiumicino, Roma: voli diretti ordinati per rapporto qualità-prezzo e chilometri per euro, non solo per prezzo\. Tariffe reali rilevate il \d{4}-\d{2}-\d{2}\.">')
+    def pagine_generate(self):
+        """Ogni index.html pubblicabile, dedotto da dist/ e non da un numero
+        scritto a mano: aggiungere un aeroporto non deve rompere il collaudo."""
+        attese = {f'{SITE}/', f'{SITE}/flight/'}
+        for cartella in ('da', 'from', 'aeroporti', 'airports'):
+            base = DIST / cartella
+            if (base / 'index.html').is_file():
+                attese.add(f'{SITE}/{cartella}/')
+            for p in base.glob('*/index.html'):
+                attese.add(f'{SITE}/{cartella}/{p.parent.name}/')
+        for p in (DIST / 'lang').glob('*/index.html'):
+            attese.add(f'{SITE}/lang/{p.parent.name}/')
+        return attese
 
-        self.assertIn("Best-value flights from Fiumicino", fco_en)
-        self.assertIn("FCO", fco_en)
-        self.assertIn("<h1>Best-value flights from Fiumicino", fco_en)
-        self.assertRegex(fco_en, r'<meta name="description" content="The \d+ best destinations from Fiumicino[^:]*: non-stop return flights ranked by real value and kilometres per euro, not just lowest price\. Real fares observed on \d{4}-\d{2}-\d{2}\.">')
+    def test_sitemap_elenca_esattamente_le_pagine_generate(self):
+        elencati, attesi = set(self.indirizzi()), self.pagine_generate()
+        self.assertEqual(elencati - attesi, set(), 'in sitemap ma non generate')
+        self.assertEqual(attesi - elencati, set(), 'generate ma fuori dalla sitemap')
 
-        # No double escaping in airport pages
-        self.assertNotIn("&amp;amp;", fco_it)
-        self.assertNotIn("&amp;amp;", fco_en)
-        self.assertNotIn('<meta name="keywords"', fco_it)
-        self.assertNotIn('<meta name="keywords"', fco_en)
+    def test_nessun_indirizzo_ripetuto(self):
+        indirizzi = self.indirizzi()
+        self.assertEqual(len(indirizzi), len(set(indirizzi)))
 
-    def test_sitemap_url_count(self):
-        """Verify sitemap count remains exactly 1354 URLs."""
-        sitemap = (DIST / "sitemap.xml").read_text(encoding="utf-8")
-        urls = re.findall(r'<loc>(.*?)</loc>', sitemap)
-        self.assertEqual(len(urls), 1354, f"Expected 1354 URLs, found {len(urls)}")
+    def test_la_404_resta_fuori_dalla_sitemap_e_si_esclude(self):
+        self.assertTrue((DIST / '404.html').is_file())
+        self.assertIn('noindex', testo(DIST / '404.html'))
+        self.assertNotIn(f'{SITE}/404.html', self.indirizzi())
+
+    def test_ogni_lastmod_e_una_data_valida(self):
+        import datetime
+        for d in re.findall(r'<lastmod>(.*?)</lastmod>', testo(DIST / 'sitemap.xml')):
+            datetime.date.fromisoformat(d)
+
+    def test_la_soglia_delle_pagine_aeroporto_resta_sei(self):
+        """MIN_ROUTES e' un patto con Google: sotto sei rotte la pagina e'
+        povera e non va pubblicata. Se cambia, deve essere una decisione."""
+        self.assertEqual(BP.MIN_ROUTES_FOR_SEO_PAGE, 6)
+        self.assertEqual(BP.MIN_ROUTES, 6)
+
+
+class Robots(unittest.TestCase):
+    def test_gli_scomparti_dati_sono_fuori_dalla_scansione(self):
+        r = testo(DIST / 'robots.txt')
+        self.assertIn('Disallow: /data/', r)
+        self.assertIn(f'Sitemap: {SITE}/sitemap.xml', r)
+
+    def test_non_si_bloccano_risorse_che_servono_a_disegnare_la_pagina(self):
+        r = testo(DIST / 'robots.txt')
+        righe = [x.strip() for x in r.splitlines()
+                 if x.strip().lower().startswith('disallow:')]
+        self.assertEqual(righe, ['Disallow: /data/'])
+
+    def test_le_pagine_non_prendono_contenuto_da_data(self):
+        """Le pagine statiche non devono nemmeno provarci: se una di loro
+        scaricasse /data/ per mostrare la classifica, bloccarlo la
+        svuoterebbe."""
+        for p in (DIST/'da'/'fco'/'index.html', DIST/'from'/'fco'/'index.html',
+                  DIST/'lang'/'en'/'index.html', DIST/'aeroporti'/'index.html',
+                  DIST/'index.html'):
+            html = testo(p)
+            self.assertNotIn('/data/', html, f'{p.name} dipende da /data/')
+            self.assertNotIn('fetch(', html, f'{p.name} scarica qualcosa')
 
 
 if __name__ == '__main__':
