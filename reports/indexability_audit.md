@@ -1,6 +1,6 @@
 # Audit Tecnico Indexability, Crawling & Search Console
 
-Data esecuzione: `2026-09-14 15:22:27`
+Data esecuzione: `2026-09-14 21:09:36`
 Dominio: `https://efficiency-life.com`
 
 ## 1. Nuova Diagnosi Search Console (Analisi Export Reale 406 URL)
@@ -61,7 +61,7 @@ Dominio: `https://efficiency-life.com`
 - **Browser/Googlebot mismatches:** `0`
 - **Verifica Cloaking & WAF:** Nessuna discrepanza rilevata. Cloudflare Edge tratta Googlebot e Browser in modo identico e trasparente: status code identici, catene redirect identiche, canonical tag identici, meta robots identici e content-length identici.
 - **Conteggio codici Browser:** `200 OK`: 34 | `3xx`: 0 | `404`: 0 | `429`: 0 | `5xx`: 0 | `Errori`: 0
-- **Tempo medio TTFB:** Browser `184.9 ms` · Googlebot `174.3 ms` (Eccellente, < 200 ms)
+- **Tempo medio TTFB:** Browser `175.8 ms` · Googlebot `164.9 ms` (Eccellente, < 200 ms)
 - **Compressione:** `gzip` attiva su tutte le risposte
 - **Cloudflare Edge Cache:** `cf-cache-status: HIT` o `REVALIDATED` / `DYNAMIC`
 - **Tasso di errore 5xx / 429:** `0.0%`

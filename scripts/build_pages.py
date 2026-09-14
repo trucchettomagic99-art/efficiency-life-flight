@@ -47,10 +47,10 @@ L = {
  'it': {
   'dir': 'da',
   'dir_root': 'aeroporti',
-  'title': 'Voli economici da {city} ({iata}) — le destinazioni col miglior rapporto km/€',
-  'desc': 'Le {n} migliori destinazioni in partenza da {airport}: voli diretti andata e '
-          'ritorno ordinati per chilometri per euro, non per prezzo. Tariffe reali rilevate il {obs}.',
-  'h1': 'Voli economici da {city}',
+  'title': 'Migliori voli da {airport} per rapporto qualità-prezzo | {iata}',
+  'desc': 'Le {n} migliori destinazioni da {airport}: voli diretti ordinati per rapporto qualità-prezzo e '
+          'chilometri per euro, non solo per prezzo. Tariffe reali rilevate il {obs}.',
+  'h1': 'I voli da {airport} con il miglior rapporto qualità-prezzo',
   'kicker': '{iata} · {airport}',
   'intro': "Da <b>{airport}</b> l'indice contiene <b>{n} destinazioni</b> raggiungibili con un volo "
            "diretto andata e ritorno, in <b>{k} paesi</b>. Qui sotto non sono ordinate per prezzo, ma per "
@@ -74,10 +74,10 @@ L = {
  'en': {
   'dir': 'from',
   'dir_root': 'airports',
-  'title': 'Cheap flights from {city} ({iata}) — best destinations by km per euro',
-  'desc': 'The {n} best destinations departing from {airport}: non-stop return flights ranked by '
-          'kilometres per euro, not by price. Real fares observed on {obs}.',
-  'h1': 'Cheap flights from {city}',
+  'title': 'Best-value flights from {airport} | {iata}',
+  'desc': 'The {n} best destinations from {airport}: non-stop return flights ranked by real value '
+          'and kilometres per euro, not just lowest price. Real fares observed on {obs}.',
+  'h1': 'Best-value flights from {airport}',
   'kicker': '{iata} · {airport}',
   'intro': 'From <b>{airport}</b> the index holds <b>{n} destinations</b> reachable on a non-stop '
            'return flight, across <b>{k} countries</b>. Below they are not ranked by price but by '
@@ -378,8 +378,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
     ncountry = len({places[r['d']]['k'] for r in rows})
     best = rows[0]
     CN = COUNTRY if lang == 'it' else COUNTRY_EN
-    fmt = dict(city=esc(city), iata=iata, airport=esc(f"{ap['n']}, {city}"),
-               n=len(rows), k=ncountry, obs=obs)
+    raw_fmt = dict(city=city, iata=iata, airport=f"{ap['n']}, {city}",
+                   n=len(rows), k=ncountry, obs=obs)
+    fmt = {k: esc(v) if isinstance(v, str) else v for k, v in raw_fmt.items()}
 
     def date(s):
         d = datetime.date.fromisoformat(s)
@@ -388,8 +389,9 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
             return d.strftime('%d/%m/%Y') if d.year != now_year else d.strftime('%d/%m')
         return d.strftime('%d %b %Y') if d.year != now_year else d.strftime('%d %b')
 
-    title = t['title'].format(**fmt)
-    desc = t['desc'].format(**fmt)
+    title = t['title'].format(**raw_fmt)
+    desc = t['desc'].format(**raw_fmt)
+    h1 = t['h1'].format(**raw_fmt)
     url = f"{SITE}/{t['dir']}/{iata.lower()}/"
     alt = f"{SITE}/{L[other]['dir']}/{iata.lower()}/"
 
@@ -486,7 +488,7 @@ def page(lang: str, ap: dict, rows: list, places: dict, obs: str, others: list, 
 <header><div class="wrap">
   {breadcrumb}
   <p class="lbl sig">{esc(t['kicker'].format(**fmt))}</p>
-  <h1>{esc(t['h1'].format(**fmt))}</h1>
+  <h1>{esc(h1)}</h1>
   <p class="intro">{t['intro'].format(**fmt)}</p>
   <p class="best">{best_line}</p>
 </div></header>
@@ -710,6 +712,7 @@ def locale_page(code: str, rows: list, places: dict, airports: dict, obs: str,
                 tot_deals: int, tot_origins: int, tot_dests: int) -> str:
     meta = PROSE[code]
     title = meta['seo']['title']
+    h1 = meta['seo'].get('h1') or title
     desc = meta['seo']['description']
     url = f"{SITE}/lang/{meta['path']}/"
     values = dict(
@@ -786,7 +789,7 @@ def locale_page(code: str, rows: list, places: dict, airports: dict, obs: str,
 </div></div>
 <header><div class="wrap">
   <p class="lbl sig">EFFICIENCY LIFE · FLIGHT</p>
-  <h1>{esc(title)}</h1>
+  <h1>{esc(h1)}</h1>
   <p class="intro">{esc(desc)}</p>
   <p class="best">{summary}</p>
 </div></header>

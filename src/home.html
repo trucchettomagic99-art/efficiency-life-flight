@@ -26,6 +26,7 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 /* Niente padding in piu' qui: .hero-in ne ha gia' il suo, e sommarli
    lasciava trecento pixel di vuoto sopra il titolo. */
 .home-hero .h1{max-width:16ch}
+.home-hero .tagline{font-family:Archivo,sans-serif;font-weight:600;font-size:18px;color:var(--ink-2);margin:10px 0 16px;letter-spacing:-.01em;border:0;padding:0;text-transform:none;display:block}
 @media(max-width:860px){ .cta-home{padding:13px 20px;font-size:14px} }
 </style>
 
@@ -72,12 +73,12 @@ a.mod:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 <header class="hero home-hero">
   <div class="wrap hero-in">
     <div>
-      <div class="lbl lbl-sig" id="heroEyebrow"></div>
-      <h1 class="h1"><span data-k="plat_h1a">Quanto ottieni,</span> <span data-k="plat_h1b">diviso quanto spendi.</span></h1>
-      <p class="lede" id="lede"></p>
+      <div class="lbl lbl-sig" id="heroEyebrow">EFFICIENCY LIFE · FLIGHT</div>
+      <h1 class="h1">Trova i voli con il miglior rapporto qualità-prezzo</h1>
+      <p class="tagline"><span data-k="plat_h1a">Quanto ottieni,</span> <span data-k="plat_h1b">diviso quanto spendi.</span></p>
+      <p class="lede" id="lede">Efficiency Life confronta migliaia di voli diretti andata e ritorno e li ordina per valore, non soltanto per prezzo. Scopri dove il tuo budget ti porta più lontano confrontando prezzo, distanza, storico e Efficiency Score.</p>
       <a class="cta-home" href="/flight/">Flight<s>&#9654;</s></a>
     </div>
-</div>
   </div>
 </header>
 
@@ -242,7 +243,7 @@ function applyLang(){
      capire in una riga di cosa si occupa il gruppo, non quanti scali ha il
      primo modulo. I numeri sono scesi accanto ai servizi, dove significano
      qualcosa. */
-  $('#heroEyebrow').textContent = T('about_t');
+  $('#heroEyebrow').textContent = 'EFFICIENCY LIFE · FLIGHT';
 
   const p = P();
   const vars = { fxDate:FX_DATE, observed:OBSERVED, fareCount:'__ST_FARE__', originCount:'__ST_AIR__',

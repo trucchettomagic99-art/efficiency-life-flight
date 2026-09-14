@@ -80,12 +80,11 @@ ADS_SLOT   = ''
 # La radice non descrive piu' il motore ma la piattaforma: se le due pagine
 # avessero la stessa descrizione Google ne sceglierebbe una e scarterebbe
 # l'altra come doppione.
-DESC_HOME = ("Trova voli diretti economici al miglior rapporto chilometri per euro. "
-             "Efficiency Life misura il valore effettivo di migliaia di tariffe aeree reali: "
-             "imposta il budget, il motore trova fin dove puoi volare.")
-DESC = ("Efficiency Life Flight ordina migliaia di offerte di volo diretto per chilometri "
-        "per euro invece che per prezzo: scegli l'aeroporto di partenza, la destinazione "
-        "la trova il motore.")
+DESC_HOME = ("Trova i voli con il miglior rapporto qualità-prezzo. "
+             "Efficiency Life confronta migliaia di voli diretti andata e ritorno e li ordina "
+             "per valore reale: scopri dove il tuo budget ti porta più lontano.")
+DESC = ("Trova voli diretti per budget e km/€ con Efficiency Life Flight: "
+        "imposta l'aeroporto di partenza e scopri le migliori offerte ordinate per valore reale.")
 # L'icona: solo file veri in public/, nessun data: URI.
 #
 # Qui c'era anche un'eta disegnata in SVG dentro un data: URI, come ultima
@@ -161,7 +160,7 @@ def prose_data() -> dict:
             sys.exit(f'prose.json: struttura non valida per {code}')
         if set(row['consent']) != {'accept','decline','preferences','body'}:
             sys.exit(f'prose.json: consenso incompleto per {code}')
-        if set(row['seo']) != {'title','description'}:
+        if set(row['seo']) not in ({'title','description'}, {'title','description','h1'}):
             sys.exit(f'prose.json: SEO incompleta per {code}')
         if row['path'] in paths or row['hreflang'] in hreflangs:
             sys.exit(f'prose.json: percorso o hreflang duplicato per {code}')
@@ -169,7 +168,7 @@ def prose_data() -> dict:
         found_index_vars = set(re.findall(r'\{([a-zA-Z]+)\}', row['indexNote']))
         if found_index_vars != index_vars:
             sys.exit(f'prose.json: segnaposto indice non validi per {code}: {sorted(found_index_vars)}')
-        texts = [row['consent']['body'], row['seo']['title'], row['seo']['description']]
+        texts = [row['consent']['body'], row['seo']['title'], row['seo']['description']] + ([row['seo']['h1']] if 'h1' in row['seo'] else [])
         texts += [text for group in ('method','privacy') for cell in row[group] for text in cell]
         found_vars = set().union(*(set(re.findall(r'\{([a-zA-Z]+)\}', text)) for text in texts))
         if not found_vars <= allowed_vars:
@@ -600,7 +599,7 @@ def main() -> int:
                  f'"operatingSystem":"Any","url":"{SITE}/flight/","description":"{DESC}",'
                  f'"offers":{{"@type":"Offer","price":"0","priceCurrency":"EUR"}},'
                  f'"isPartOf":{{"@type":"WebSite","name":"Efficiency Life","url":"{SITE}/"}}}}')
-    motore = pagina(testa('Efficiency Life Flight — Voli Diretti al Miglior Rapporto Km/€', DESC, '/flight/', alternates, ld_flight), body)
+    motore = pagina(testa('Trova voli diretti per budget e km/€ | Efficiency Life Flight', DESC, '/flight/', alternates, ld_flight), body)
     (DIST / 'flight').mkdir(exist_ok=True)
     flight_target = DIST / 'flight' / 'index.html'
     if flight_target.is_file():
@@ -635,7 +634,7 @@ def main() -> int:
             sys.exit(f'segnaposto {ph} non sostituito in home.html.')
     ld_home = (f'{{"@context":"https://schema.org","@type":"WebSite",'
                f'"name":"Efficiency Life","url":"{SITE}/","description":"{DESC_HOME}"}}')
-    home = pagina(testa('Efficiency Life — Voli Economici Diretti e Migliori Offerte Volo', DESC_HOME, '/', alternates, ld_home), hm)
+    home = pagina(testa('Migliori voli qualità-prezzo | Efficiency Life', DESC_HOME, '/', alternates, ld_home), hm)
     home_target = DIST / 'index.html'
     if home_target.is_file():
         (DIST / '.prev_home.html').write_text(home_target.read_text(encoding='utf-8'), encoding='utf-8')
