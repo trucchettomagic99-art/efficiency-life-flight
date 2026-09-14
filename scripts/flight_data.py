@@ -291,7 +291,7 @@ def collapse_city_twins(rows, places):
 
 def public_rows(rows):
     # Keep every distinct valid date pair, except quarantined observations.
-    return [{k: r[k] for k in ('o','d','p','dep','ret','dur','km','n','obs','s','x','sc') if k in r}
+    return [{k: r[k] for k in ('o','d','p','dep','ret','dur','km','n','obs','s','x','sc','hb') if k in r}
             for r in publishable(rows)]
 
 def migrate(data, today):

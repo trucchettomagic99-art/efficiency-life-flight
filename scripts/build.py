@@ -196,7 +196,59 @@ def prose_data() -> dict:
 # punteggio a ogni ricerca.
 
 STAY = [(800, 3, 4), (2000, 5, 7), (4000, 8, 10), (7000, 12, 14), (10**9, 15, 21)]
-PESI = {'kmpe': 32, 'deal': 30, 'price': 15, 'minpe': 13, 'itin': 5, 'rel': 5}
+
+# ── L'EFFICIENCY SCORE, rifatto il 14 settembre ────────────────────────────
+#
+# Prima erano sei componenti: kmpe 32, deal 30, price 15, minpe 13, itin 5,
+# rel 5. Misurate sui dati veri, quattro di quelle sei dicevano quasi la
+# stessa cosa:
+#
+#   kmpe  vs  minpe   +0,95      (i chilometri e i minuti di volo: +0,99)
+#   kmpe  vs  deal    +0,94
+#   kmpe  vs  price   +0,34      deal vs price  +0,52
+#
+# Il motivo e' strutturale, non un caso: kmpe = 2km/p, deal = a*km^0,69/p,
+# minpe = durata/p. Hanno tutte il prezzo al denominatore, e nell'archivio il
+# prezzo varia molto piu' della distanza. Cosi' settantacinque punti su cento
+# rispondevano tre volte alla domanda "quanto costa poco", con esponenti della
+# distanza leggermente diversi. Un punteggio "composito" che di fatto ne
+# guardava uno.
+#
+# Nel frattempo la cosa piu' preziosa che il sito possiede — lo storico dei
+# prezzi, 20.500 rotte con almeno cinque rilevazioni, l'80% della classifica —
+# entrava nel voto come un interruttore da 0,8 o 1,0 che valeva cinque punti,
+# con deviazione standard 0,08: praticamente una costante.
+#
+# Adesso le domande sono quattro, e sono davvero diverse (correlazione fra
+# loro sotto 0,05, tranne la coppia kmpe/convenienza che resta legata dal
+# prezzo comune e che per questo non pesa piu' di un terzo):
+#
+#   kmpe      35   quanto lontano ti porta ogni euro — la metrica del marchio
+#   conven    40   quanto costa meno del normale. Se la rotta ha uno storico,
+#                  il confronto e' col SUO passato: mediana e decimo
+#                  percentile degli ultimi 90 giorni. Se non ce l'ha ancora,
+#                  si ripiega sulla curva prezzo-distanza. Il passaggio fra i
+#                  due e' graduale, pesato su quante notti l'abbiamo vista.
+#   itin      15   la durata del viaggio e' adatta alla distanza
+#   rel       10   quanto siamo sicuri: cresce col numero di rilevazioni
+#                  invece di essere si'/no
+#
+# E' anche la parte non copiabile: chiunque puo' dividere chilometri per euro,
+# nessuno puo' sapere che quella rotta, a settembre, di solito costa 40 euro —
+# senza averla guardata ogni notte per tre mesi.
+PESI = {'kmpe': 35, 'conven': 40, 'itin': 15, 'rel': 10}
+
+# Le fasce servono a normalizzare lo scarto dalla curva CONFRONTANDO tariffe
+# di distanza paragonabile: un volo da 400 km non compete con un
+# intercontinentale per il titolo di "sotto il prezzo atteso".
+BANDE_KM = (500, 1000, 1800, 3000, 5000, 8000, 12000, 10**9)
+
+
+def banda_km(km: float) -> int:
+    for i, limite in enumerate(BANDE_KM):
+        if km <= limite:
+            return i
+    return len(BANDE_KM) - 1
 
 
 def _mediana(v: list) -> float:
@@ -244,17 +296,21 @@ def modello(deals: list, hist: dict) -> dict:
     """Curva, scale e pesi: tutto quello che serve per dare un voto."""
     c = curva(deals)
     a, b = c if c else (0.0, 0.0)
-    kmpe, minpe, price, deal = [], [], [], []
+    kmpe = []
+    per_banda: dict[int, list] = {}
     for r in deals:
         if not r.get('p'):
             continue
         atteso = math.exp(a + b * math.log(r['km'])) if c and r['km'] > 0 else 0
-        kmpe.append(r['km'] * 2 / r['p']); minpe.append(r['dur'] / r['p'])
-        price.append(r['p']); deal.append(atteso / r['p'] if atteso else 1)
+        kmpe.append(r['km'] * 2 / r['p'])
+        per_banda.setdefault(banda_km(r['km']), []).append(atteso / r['p'] if atteso else 1)
     banda = lambda v: [_q(v, .02), _q(v, .98)] if v else [0, 1]
+    # una scala per fascia di distanza, non una sola per tutto l'archivio
+    scala_conven = {str(i): ([_q(v, .05), _q(v, .95)] if len(v) > 20 else [0.5, 2.0])
+                    for i, v in per_banda.items()}
     return {'a': a, 'b': b, 'curva': bool(c), 'pesi': PESI,
-            'scale': {'kmpe': banda(kmpe), 'minpe': banda(minpe),
-                      'price': banda(price), 'deal': banda(deal)}}
+            'bande': list(BANDE_KM),
+            'scale': {'kmpe': banda(kmpe)}, 'conven': scala_conven}
 
 
 def valuta(deals: list, m: dict, hist: dict) -> None:
@@ -277,13 +333,34 @@ def valuta(deals: list, m: dict, hist: dict) -> None:
             if r['km'] <= limite:
                 break
         fuori = s1 - r['n'] if r['n'] < s1 else r['n'] - s2 if r['n'] > s2 else 0
+
+        # convenienza: prima lo scarto dalla curva, nella scala della sua fascia
+        dalla_curva = nz(atteso / p if atteso else 1,
+                         m['conven'].get(str(banda_km(r['km'])), [0.5, 2.0]))
+        # poi, se la rotta ha un passato, il confronto col passato stesso:
+        # alla mediana vale 0, al decimo percentile o sotto vale 1
         h = hist.get(f"{r['o']}-{r['d']}")
+        r.pop('hb', None)
+        if h and h[0] >= 5:
+            n_oss, p10, mediana = h
+            dal_passato = .5 if mediana <= p10 else max(0.0, min(1.0, (mediana - p) / (mediana - p10)))
+            fiducia = min(1.0, (n_oss - 4) / 16)      # a venti rilevazioni ci si fida del tutto
+            conven = fiducia * dal_passato + (1 - fiducia) * dalla_curva
+            rel = min(1.0, .5 + n_oss / 20)
+            # La targhetta "nel 10% piu' basso" si decide QUI, non nel browser.
+            # Prima la pagina si portava dietro tutto lo storico — 20.500 rotte,
+            # mezzo megabyte — solo per poterla disegnare, e quel peso cresceva
+            # ogni notte insieme all'archivio. Il verdetto sta in due numeri.
+            livello = 2 if p <= p10 else 1 if p < mediana else 0
+            if livello:
+                r['hb'] = [livello, n_oss]
+        else:
+            conven, rel = dalla_curva, .5
+
         parti = {'kmpe': nz(r['km'] * 2 / p, sc['kmpe']),
-                 'minpe': nz(r['dur'] / p, sc['minpe']),
-                 'price': 1 - nz(p, sc['price']),
-                 'deal': nz(atteso / p if atteso else 1, sc['deal']),
+                 'conven': conven,
                  'itin': max(0.0, 1 - fuori / 7),
-                 'rel': 1.0 if h and h[0] >= 5 else .8}
+                 'rel': rel}
         r['sc'] = round(100 * sum(pesi[k] * v for k, v in parti.items()) / tot)
 
 
@@ -442,7 +519,6 @@ def main() -> int:
 
     body = (tpl.replace('__CATALOG__', cat).replace('__DEALS__', idx)
                .replace('__WORLD__', wld).replace('__I18N__', i18).replace('__PROSE__', prose_motore)
-               .replace('__HIST__', hist)
                .replace('__TP_MARKER__', TP_MARKER).replace('__TP_LINK__', TP_LINK)
                .replace('__TP_TRS__', TP_TRS).replace('__TP_CAMPAIGN__', TP_CAMPAIGN)
                .replace('__TP_P_FLIGHT__', TP_P_FLIGHT).replace('__TP_P_HOTEL__', TP_P_HOTEL)
@@ -451,7 +527,7 @@ def main() -> int:
                .replace('__TP_ACT_URL__', TP_ACT_URL)
                .replace('__TP_DRIVE_URL__', TP_DRIVE_URL)
                .replace('__ADS_CLIENT__', ADS_CLIENT).replace('__ADS_SLOT__', ADS_SLOT))
-    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__', '__PROSE__', '__HIST__',
+    for ph in ('__CATALOG__', '__DEALS__', '__WORLD__', '__I18N__', '__PROSE__',
                '__TP_MARKER__', '__TP_LINK__', '__TP_TRS__', '__TP_CAMPAIGN__',
                '__TP_P_FLIGHT__', '__TP_P_HOTEL__', '__TP_HOTEL_URL__',
                '__TP_P_ACT__', '__TP_C_ACT__', '__TP_ACT_URL__',
