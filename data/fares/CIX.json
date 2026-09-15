@@ -1,0 +1,1 @@
+{"schema":2,"origin":"CIX","deals":[{"o":"CIX","d":"LIM","p":84.0,"dep":"2027-01-27","ret":"2027-02-03","dur":170,"km":654,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-15","s":"tp","endpoint":"dates","n":7}]}

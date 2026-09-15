@@ -1,1 +1,1 @@
-{"schema":2,"origin":"MYD","deals":[{"o":"MYD","d":"NBO","p":138.0,"dep":"2027-01-13","ret":"2027-01-29","dur":150,"km":412,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-14","s":"tp","endpoint":"dates","n":16}]}
+{"schema":2,"origin":"MYD","deals":[{"o":"MYD","d":"NBO","p":138.0,"dep":"2027-01-13","ret":"2027-01-29","dur":150,"km":412,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-15","s":"tp","endpoint":"dates","n":16}]}

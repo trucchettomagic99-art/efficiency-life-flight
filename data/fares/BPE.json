@@ -1,1 +1,1 @@
-{"schema":2,"origin":"BPE","deals":[{"o":"BPE","d":"XIY","p":247.0,"dep":"2026-09-18","ret":"2026-09-21","dur":250,"km":1694,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-14","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"BPE","deals":[{"o":"BPE","d":"XIY","p":338.0,"dep":"2026-09-18","ret":"2026-09-21","dur":250,"km":1694,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-15","s":"tp","endpoint":"dates","n":3}]}

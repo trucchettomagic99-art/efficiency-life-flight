@@ -1,1 +1,1 @@
-{"schema":2,"origin":"SIS","deals":[{"o":"SIS","d":"JNB","p":312.0,"dep":"2026-09-22","ret":"2026-09-25","dur":150,"km":557,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-14","s":"tp","endpoint":"dates","n":3}]}
+{"schema":2,"origin":"SIS","deals":[{"o":"SIS","d":"JNB","p":312.0,"dep":"2026-09-22","ret":"2026-09-25","dur":150,"km":557,"distance_source":"great_circle","direct_check":"both_legs","obs":"2026-09-15","s":"tp","endpoint":"dates","n":3}]}
