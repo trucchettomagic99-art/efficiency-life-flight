@@ -95,12 +95,18 @@ jobs:
       # L'archivio permanente, su Cloudflare R2. E' l'unico passo che conserva
       # qualcosa per sempre: tutto il resto viene riscritto o scade.
       #
-      # `continue-on-error` non e' pigrizia. Se R2 non risponde o le chiavi
-      # scadono, il sito deve uscire lo stesso — e non si perde niente, perche'
-      # `data/fares/` tiene sette giorni e lo script confronta la finestra con
-      # l'archivio: il giorno mancante viene ripreso da solo la notte dopo.
-      # Una settimana di margine su un guasto che va solo guardato, non corso.
+      # `continue-on-error` qui NON vuol dire "poco importa". Vuol dire: il
+      # sito esce comunque. Il verdetto arriva in fondo, nel passo "Esito
+      # dell'archivio", che fa diventare rosso il flusso — perche' un archivio
+      # rotto che nessuno guarda e' peggio di un archivio che non c'e'.
+      #
+      # Le versioni sono fissate apposta. Un archivio immutabile scritto ogni
+      # notte da una libreria che si aggiorna da sola non e' immutabile: basta
+      # una release di pyarrow che cambia la codifica e i file di settembre
+      # smettono di somigliare a quelli di ottobre. Si alza quando lo
+      # decidiamo noi, e la versione finisce nel manifesto di ogni giornata.
       - name: Archivia le osservazioni su R2
+        id: archivio
         continue-on-error: true
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -108,8 +114,21 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
         run: |
-          pip install --quiet pyarrow boto3
+          pip install --quiet 'pyarrow==25.0.1' 'boto3~=1.43'
           python scripts/archivio.py
+
+      # Se R2 non risponde, questa e' l'unica copia della giornata che non
+      # muore col runner. Senza, l'alternativa sarebbe ricostruirla da una
+      # finestra `data/fares/` che nel frattempo si e' impoverita — cioe'
+      # archiviare per sempre una versione peggiore.
+      - name: Conserva il Parquet della giornata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archivio-giornata
+          path: .cache/archivio/
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Ridisegna l'anteprima social
         continue-on-error: true
@@ -148,3 +167,19 @@ jobs:
             git push
             echo "Indice aggiornato e pubblicato."
           fi
+
+      # Ultimo passo, apposta: il sito e' gia' uscito e l'indice e' gia' stato
+      # pubblicato. Qui si decide solo di che colore e' la notte.
+      #
+      # Senza questo, `continue-on-error` sull'archivio darebbe un flusso verde
+      # anche con R2 spento: il guasto si scoprirebbe guardando i registri, che
+      # nessuno guarda quando sono verdi. La finestra tiene sette giorni, quindi
+      # c'e' tempo per accorgersene — ma bisogna potersene accorgere.
+      - name: Esito dell'archivio
+        if: always()
+        run: |
+          if [ "${{ steps.archivio.outcome }}" != "success" ]; then
+            echo "::error title=Archivio permanente::La giornata non e' stata archiviata su R2. Il sito e' comunque aggiornato. Il Parquet e' fra gli artifact di questa esecuzione; il riepilogo dice a quale passo si e' fermato."
+            exit 1
+          fi
+          echo "Archivio aggiornato."
