@@ -63,8 +63,12 @@ Le regole, in ordine di importanza
    la prima non tocca la completezza, la seconda la nega.
 
 1-bis. **Una giornata archiviata e' una coppia**: il Parquet e il suo
-   manifesto. Se esiste solo il primo, la notte dopo il manifesto viene
-   ricreato; se si contraddicono, non si tocca niente.
+   manifesto. Se si contraddicono, non si tocca niente. Se esiste solo il
+   Parquet, il manifesto **puo'** essere ricreato — ma da un intervento di
+   recupero, finche' sono ancora disponibili gli stessi dati di quella
+   raccolta, **non** dalla notte successiva: il flusso notturno mira sempre al
+   giorno appena raccolto e non torna mai su quello di prima. E' il flusso
+   rosso a far scattare l'intervento. Vedi `pubblica()`.
 
 2. **Un giorno vecchio mancante non si ricostruisce dalla finestra.**
    `data/fares/` e' una finestra mobile e `clean_rows()` tiene, per ogni
@@ -1000,6 +1004,25 @@ def pubblica(s3, secchio, giorno, parquet, m, cartella, completa, sostituzione, 
     successiva avrebbe piu' avuto motivo di guardarlo. Ora si guardano tutti e
     due, e un manifesto mancante si ricrea — ma solo se il Parquet su R2 e'
     dimostrabilmente la stessa giornata che abbiamo qui.
+
+    Quando si ricrea, e quando no
+    -----------------------------
+    Il bersaglio di questa funzione e' sempre **un solo giorno**: quello che
+    `main()` ha appena ricostruito. Il flusso notturno gli passa il giorno
+    appena raccolto, quindi la notte dopo il bersaglio e' un altro e un
+    manifesto mancante di ieri non viene nemmeno guardato.
+
+    Il recupero c'e' ma va avviato, rilanciando il flusso **prima della
+    raccolta successiva**: dopo, `clean_rows()` avra' impoverito le righe di
+    quel giorno dentro la finestra, la giornata ricostruita sara' diversa e
+    l'impronta non coincidera' piu' con quella su R2 — a quel punto non e' piu'
+    riparabile da qui. E' per questo che il flusso diventa rosso: senza quello
+    nessuno saprebbe di dover intervenire.
+
+    (Una via piu' solida esiste ed e' un lavoro da fare: il Parquet e il
+    manifesto originali restano fra gli artifact del flusso per trenta giorni,
+    quindi si potrebbe caricare il manifesto vero di quella esecuzione invece
+    di ricostruirlo. Non dipenderebbe ne' dalla finestra ne' dal giorno.)
     """
     from botocore.exceptions import ClientError
     finale = chiave(giorno)
