@@ -24,11 +24,47 @@ Un file al giorno, **creato una volta e mai sovrascritto** — non per disciplin
 ma per costruzione: la scrittura usa `If-None-Match: *`, che R2 supporta, e
 quindi fallisce se l'oggetto esiste gia'.
 
+Che cosa contiene, esattamente
+------------------------------
+**Osservazioni canoniche giornaliere, non risposte grezze del fornitore.** La
+distinzione conta, perche' chi userra' questo archivio fra due anni deve sapere
+che cosa sta contando.
+
+Ogni riga ha gia' attraversato `normalize()`, `validate()` e `clean_rows()`:
+e' un volo diretto di andata e ritorno verificato, con aeroporti riconosciuti,
+prezzo positivo, partenza dentro l'orizzonte e soggiorno fra 1 e 60 notti. E
+soprattutto e' gia' **deduplicata**: `clean_rows()` tiene, per ogni
+(o, d, dep, ret), la sola osservazione piu' recente. I doppioni che il
+fornitore restituisce — 331.187 la notte del 15 settembre — non sono qui.
+
+E' deliberato: questo dataset serve a calcolare statistiche tariffarie,
+anticipo di prenotazione, stagionalita', Expected Fare ed Efficiency Score, e
+per tutte quelle domande la riga canonica e' l'unita' giusta. Un archivio
+davvero grezzo delle risposte del fornitore sarebbe un'altra cosa, utile per
+altre domande (ricostruire la pulizia, misurarne gli effetti), e non esiste.
+Se servira', sara' un progetto separato con un suo prefisso: non si ottiene
+allargando questo.
+
+I due campi temporali, per non confonderli mai:
+
+    obs       giorno UTC della NOSTRA raccolta. E' una data, non un istante:
+              `fetch_prices.py` scrive `now(utc).date()`, quindi l'ora non
+              esiste e non viene inventata.
+    found_at  istante UTC in cui il FORNITORE dice di aver visto quella
+              tariffa. Presente sullo 0,82% delle righe, dove lo dichiara.
+
 Le regole, in ordine di importanza
 ----------------------------------
 1. **Si finalizza solo il giorno appena raccolto, e solo se la raccolta e'
    completa.** La completezza non e' una soglia inventata: viene dal rapporto
    che `fetch_prices.py` scrive nella stessa esecuzione. Vedi `completezza()`.
+   In particolare si distingue il tetto delle pagine — un limite deliberato su
+   undici origini, ogni notte — da una raccolta troncata dal budget di tempo:
+   la prima non tocca la completezza, la seconda la nega.
+
+1-bis. **Una giornata archiviata e' una coppia**: il Parquet e il suo
+   manifesto. Se esiste solo il primo, la notte dopo il manifesto viene
+   ricreato; se si contraddicono, non si tocca niente.
 
 2. **Un giorno vecchio mancante non si ricostruisce dalla finestra.**
    `data/fares/` e' una finestra mobile e `clean_rows()` tiene, per ogni
@@ -464,7 +500,10 @@ def completezza(rapporto, giorno: dt.date, righe: int, anomalie) -> tuple[bool, 
       page_cap_origins  undici origini raggiungono ogni notte il tetto delle
                         pagine (DME, SVO, IST...). E' un limite strutturale
                         noto, non un guasto: alzarlo a regola farebbe fallire
-                        ogni notte.
+                        ogni notte. Misurato sul rapporto del 15 settembre:
+                        11 partial, 11 page_cap, 0 repeated_page, 0 ValueError
+                        con righe — quindi tutti e undici i partial sono il
+                        tetto delle pagine, e nessuno e' una raccolta troncata.
       rejections        sono le righe scartate dai filtri, cioe' il lavoro che
                         il collettore deve fare.
       metadata_errors   degradano i nomi, non le tariffe.
@@ -481,6 +520,22 @@ def completezza(rapporto, giorno: dt.date, righe: int, anomalie) -> tuple[bool, 
     if rapporto.get('published') is not True:
         motivi.append(f'published={rapporto.get("published")!r}: la raccolta non ha '
                       'superato i propri controlli di salute')
+
+    # Il segnale piu' importante, e quello che per un giorno non abbiamo avuto.
+    # `status='partial'` da solo non dice niente: significa tanto "ho smesso di
+    # leggere questa origine perche' ha piu' pagine di quante ne voglio" quanto
+    # "e' finito il tempo a meta' raccolta". La prima e' una giornata buona, la
+    # seconda e' una giornata monca. Da qui in avanti la causa ha un nome.
+    if 'budget_expired_origins' not in rapporto:
+        motivi.append('il rapporto non dichiara le origini interrotte dal budget: '
+                      'e\' stato prodotto da una versione precedente del collettore, '
+                      'e non si puo\' sapere se la raccolta sia stata troncata')
+    else:
+        bruciate = rapporto.get('budget_expired_origins') or []
+        if bruciate:
+            motivi.append(f'{len(bruciate)} origini interrotte dal budget '
+                          f'({", ".join(bruciate[:8])}{"…" if len(bruciate) > 8 else ""}): '
+                          'la raccolta e\' stata troncata, non e\' finita')
 
     punti = rapporto.get('endpoints') or {}
     rinviate = sum(v for k, v in punti.items() if k.endswith(':deferred'))
@@ -508,7 +563,11 @@ def sotto_la_norma(righe: int, storici: list[int]) -> tuple[bool, str]:
     Il rapporto dice se la raccolta ha finito il suo lavoro. Questo dice se il
     lavoro ha prodotto qualcosa di plausibile. Sono domande diverse e servono
     tutte e due; questa da sola non basterebbe, perche' un volume normale non
-    dimostra che non manchi mezza Europa.
+    dimostra che non manchi mezza Europa — ed e' per questo che resta la
+    seconda linea, non un sostituto di `completezza()`.
+
+    `storici` sono numeri di righe **veri**, letti dai metadati delle giornate
+    gia' archiviate: vedi `volumi_recenti()`.
     """
     storici = [n for n in storici if n > 0]
     if len(storici) < 3:
@@ -516,9 +575,10 @@ def sotto_la_norma(righe: int, storici: list[int]) -> tuple[bool, str]:
     mediana = sorted(storici)[len(storici) // 2]
     soglia = int(FRAZIONE_MINIMA * mediana)
     if righe < soglia:
-        return True, (f'{righe:,} righe contro una mediana di {mediana:,} '
+        return True, (f'{righe:,} righe contro una mediana di {mediana:,} righe vere '
                       f'({100*righe/mediana:.0f}%, minimo {int(FRAZIONE_MINIMA*100)}%)')
-    return False, f'{righe:,} righe, mediana {mediana:,} ({100*righe/mediana:.0f}%)'
+    return False, (f'{righe:,} righe, mediana {mediana:,} su {len(storici)} giorni '
+                   f'({100*righe/mediana:.0f}%)')
 
 
 # ── R2 ───────────────────────────────────────────────────────────────────────
@@ -562,6 +622,22 @@ def descrizione(s3, secchio, chiave_oggetto):
         if e.response.get('Error', {}).get('Code') in ('404', 'NoSuchKey', 'NotFound'):
             return None
         raise
+
+
+def coerente(testa, m) -> list[str]:
+    """In che cosa un oggetto gia' su R2 differisce dalla giornata che abbiamo qui.
+
+    Lista vuota significa: e' lo stesso dato. Sono i quattro campi che
+    identificano una giornata — l'impronta del contenuto, quante righe, quale
+    schema, quale giorno — e vengono scritti e riletti a ogni caricamento.
+    """
+    r = {k.lower(): v for k, v in (testa.get('Metadata') or {}).items()}
+    return [f'{etichetta}: {r.get(etichetta)!r} invece di {atteso!r}'
+            for etichetta, atteso in (('logical-hash', m['impronta_logica']),
+                                      ('rows', str(m['righe'])),
+                                      ('schema', SCHEMA),
+                                      ('day', m['giorno']))
+            if r.get(etichetta) != atteso]
 
 
 def etichette(m: dict) -> dict:
@@ -608,11 +684,9 @@ def carica(s3, secchio, percorso, destinazione, m, solo_se_assente=True):
     atteso = percorso.stat().st_size
     if testa.get('ContentLength') != atteso:
         return False, f'dimensione diversa: {testa.get("ContentLength")} invece di {atteso}'
-    remoti = {k.lower(): v for k, v in (testa.get('Metadata') or {}).items()}
-    if remoti.get('logical-hash') != m['impronta_logica']:
-        return False, 'impronta logica diversa nei metadati dell\'oggetto'
-    if remoti.get('rows') != str(m['righe']):
-        return False, 'numero di righe diverso nei metadati dell\'oggetto'
+    problemi = coerente(testa, m)
+    if problemi:
+        return False, 'metadati diversi dopo la scrittura — ' + '; '.join(problemi)
     # L'ETag di R2, per un caricamento in un pezzo solo, e' l'MD5 del
     # contenuto. Non e' garantito in generale (i multipart hanno un'altra
     # forma), quindi si confronta solo quando ha la forma giusta.
@@ -625,6 +699,81 @@ def carica(s3, secchio, percorso, destinazione, m, solo_se_assente=True):
         if md5.hexdigest() != etag.lower():
             return False, 'ETag diverso dall\'MD5 del file caricato'
     return True, 'verificato'
+
+
+def carica_manifesto(s3, secchio, percorso, destinazione, m, solo_se_assente=True):
+    """Il manifesto, con la stessa verifica che riceve il Parquet.
+
+    Prima si caricava e basta. Ma il manifesto e' l'unica cosa che dice *da
+    quale raccolta* viene una giornata: se sparisce non si puo' ricostruire da
+    nessun'altra parte, e un caricamento che non solleva eccezioni non dimostra
+    che sia arrivato.
+    """
+    from botocore.exceptions import ClientError
+    condizione = {'IfNoneMatch': '*'} if solo_se_assente else {}
+    with open(percorso, 'rb') as f:
+        try:
+            s3.put_object(Bucket=secchio, Key=destinazione, Body=f,
+                          ContentType='application/json',
+                          Metadata=etichette(m), **condizione)
+        except ClientError as e:
+            codice = e.response.get('Error', {}).get('Code', '')
+            stato = e.response.get('ResponseMetadata', {}).get('HTTPStatusCode')
+            if solo_se_assente and (codice in ('PreconditionFailed', 'ConditionalRequestConflict')
+                                    or stato in (412, 409)):
+                return False, 'esisteva gia\' (creazione condizionale rifiutata)'
+            raise
+
+    testa = descrizione(s3, secchio, destinazione)
+    if testa is None:
+        return False, 'manifesto caricato ma non rileggibile'
+    if not testa.get('ContentLength'):
+        return False, 'manifesto vuoto su R2'
+    problemi = coerente(testa, m)
+    if problemi:
+        return False, 'manifesto con metadati diversi — ' + '; '.join(problemi)
+    remoti = {k.lower(): v for k, v in (testa.get('Metadata') or {}).items()}
+    atteso = 'true' if m['completa'] else 'false'
+    if remoti.get('complete') != atteso:
+        return False, f'manifesto con complete={remoti.get("complete")!r} invece di {atteso!r}'
+    return True, 'verificato'
+
+
+def volumi_recenti(s3, secchio, escludi: dt.date, quanti: int = 14) -> list[int]:
+    """Il numero VERO di righe delle ultime giornate definitive.
+
+    Sta nei metadati di ogni oggetto (`rows=`), scritto e riletto quando quella
+    giornata fu archiviata. Prima si stimava dividendo il peso del file per 5,4
+    byte: una stima che scambia il volume per la comprimibilita'. Una notte con
+    molte rotte ripetute comprime meglio e sarebbe sembrata piu' piccola di
+    quanto fosse, cioe' avrebbe fatto scattare un allarme falso proprio quando
+    i dati erano buoni.
+
+    Si guardano solo i definitivi: staging e superati stanno sotto altri
+    prefissi, e le giornate incomplete non arrivano mai qui — ma il controllo
+    su `complete` e `schema` resta, perche' questa e' la misura che decide se
+    fidarsi di una giornata nuova.
+    """
+    chiavi = sorted(k for k in elenco(s3, secchio)
+                    if k.endswith('.parquet') and not k.endswith(f'{escludi}.parquet'))
+    righe = []
+    for k in chiavi[-quanti:]:
+        try:
+            testa = descrizione(s3, secchio, k)
+        except Exception:
+            continue
+        if testa is None:
+            continue
+        meta = {a.lower(): b for a, b in (testa.get('Metadata') or {}).items()}
+        if meta.get('complete') != 'true' or meta.get('schema') != SCHEMA:
+            continue
+        try:
+            n = int(meta.get('rows', ''))
+        except (TypeError, ValueError):
+            continue
+        if n > 0:
+            righe.append(n)
+    return righe
 
 
 # ── manifesto ────────────────────────────────────────────────────────────────
@@ -773,15 +922,7 @@ def main(argv=None) -> int:
     # Seconda linea: il volume, confrontato con i giorni gia' archiviati. La
     # mediana non va tenuta da nessuna parte — e' nei manifesti che abbiamo
     # gia' su R2, e l'elenco lo facciamo comunque.
-    storici = []
-    if s3:
-        presenti = elenco(s3, secchio)
-        for k, peso in presenti.items():
-            if k.endswith('.parquet') and not k.endswith(f'{giorno}.parquet'):
-                storici.append(peso)
-        # Il peso e' un buon sostituto del numero di righe: 5,4 byte a riga,
-        # stabile, e non richiede di scaricare tutti i manifesti.
-        storici = [int(p / 5.4) for p in storici]
+    storici = volumi_recenti(s3, secchio, giorno) if s3 else []
     anomalo, nota_volume = sotto_la_norma(len(righe), storici)
     if anomalo:
         completa = False
@@ -833,80 +974,137 @@ def main(argv=None) -> int:
 
 
 def pubblica(s3, secchio, giorno, parquet, m, cartella, completa, sostituzione, motivo):
-    """Il passaggio da file locale a oggetto definitivo, con le sue regole."""
+    """Il passaggio da file locale a oggetto definitivo, con le sue regole.
+
+    Una giornata archiviata e' **una coppia**: il Parquet e il suo manifesto.
+    Il Parquet e' il dato, il manifesto e' l'unica cosa che dice da quale
+    raccolta viene, con quali anomalie e da quale esecuzione. Separati valgono
+    meno della meta'.
+
+    Prima erano due scritture indipendenti, e questo apriva un buco: se il
+    Parquet passava e il manifesto no, la notte dopo il codice trovava il
+    Parquet, vedeva l'impronta uguale, diceva "gia' archiviato" e se ne andava.
+    Il manifesto restava mancante **per sempre**, perche' nessuna esecuzione
+    successiva avrebbe piu' avuto motivo di guardarlo. Ora si guardano tutti e
+    due, e un manifesto mancante si ricrea — ma solo se il Parquet su R2 e'
+    dimostrabilmente la stessa giornata che abbiamo qui.
+    """
     from botocore.exceptions import ClientError
     finale = chiave(giorno)
     manifesto_finale = chiave_manifesto(giorno)
     locale_manifesto = cartella / f'{giorno}.manifest.json'
 
-    def metti_manifesto(destinazione, condizionale):
-        with open(locale_manifesto, 'rb') as f:
-            extra = {'IfNoneMatch': '*'} if condizionale else {}
-            try:
-                s3.put_object(Bucket=secchio, Key=destinazione, Body=f,
-                              ContentType='application/json', Metadata=etichette(m), **extra)
-            except ClientError as e:
-                if not condizionale:
-                    raise
-                codice = e.response.get('Error', {}).get('Code', '')
-                stato = e.response.get('ResponseMetadata', {}).get('HTTPStatusCode')
-                if codice not in ('PreconditionFailed', 'ConditionalRequestConflict') \
-                        and stato not in (412, 409):
-                    raise
+    def riscrivi_manifesto():
+        locale_manifesto.write_text(
+            json.dumps({k: v for k, v in m.items() if k in _CHIAVI_MANIFESTO},
+                       indent=2, ensure_ascii=False, sort_keys=True) + '\n', encoding='utf-8')
 
     try:
-        esistente = descrizione(s3, secchio, finale)
+        testa_parquet = descrizione(s3, secchio, finale)
+        testa_manifesto = descrizione(s3, secchio, manifesto_finale)
     except ClientError as e:
         return 'ARCHIVIO FALLITO', f'R2 non risponde: {e.response.get("Error", {}).get("Code")}'
 
     # ── riparazione esplicita ────────────────────────────────────────────────
     if sostituzione:
-        if not esistente:
+        if not testa_parquet:
             return 'ARCHIVIO FALLITO', (f'{finale} non esiste: non c\'e\' niente da '
                                         'sostituire. Senza --sostituisci-giorno sarebbe '
                                         'una creazione normale.')
-        vecchia = (esistente.get('Metadata') or {}).get('logical-hash', '?')
+        vecchia = (testa_parquet.get('Metadata') or {}).get('logical-hash', '?')
         marca = dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         riparo = f'{SUPERATI}/{giorno}/{marca}.parquet'
+        riparo_manifesto = f'{SUPERATI}/{giorno}/{marca}.manifest.json'
         s3.copy_object(Bucket=secchio, Key=riparo,
                        CopySource={'Bucket': secchio, 'Key': finale},
                        MetadataDirective='COPY')
         print(f'  versione precedente messa da parte: {riparo}')
-        m['note'] = (f'sostituisce la versione con impronta {vecchia}; '
-                     f'copia conservata in {riparo}; motivo: {motivo}')
-        locale_manifesto.write_text(
-            json.dumps({k: v for k, v in m.items() if k in _CHIAVI_MANIFESTO},
-                       indent=2, ensure_ascii=False, sort_keys=True) + '\n', encoding='utf-8')
+        # Anche il manifesto vecchio: dice da quale raccolta veniva la versione
+        # che stiamo superando, e una riparazione non deve cancellare la storia
+        # di cosa c'era prima.
+        conservato = [riparo]
+        if testa_manifesto:
+            s3.copy_object(Bucket=secchio, Key=riparo_manifesto,
+                           CopySource={'Bucket': secchio, 'Key': manifesto_finale},
+                           MetadataDirective='COPY')
+            conservato.append(riparo_manifesto)
+            print(f'  manifesto precedente messo da parte: {riparo_manifesto}')
+        m['note'] = (f'sostituzione esplicita del {marca}. '
+                     f'impronta superata: {vecchia}. '
+                     f'impronta nuova: {m["impronta_logica"]}. '
+                     f'motivo: {motivo}. '
+                     f'copia della versione precedente: {", ".join(conservato)}.')
+        riscrivi_manifesto()
         ok, dett = carica(s3, secchio, parquet, finale, m, solo_se_assente=False)
         if not ok:
             return 'ARCHIVIO FALLITO', f'sostituzione non riuscita: {dett}'
-        metti_manifesto(manifesto_finale, condizionale=False)
+        ok, dett = carica_manifesto(s3, secchio, locale_manifesto, manifesto_finale, m,
+                                    solo_se_assente=False)
+        if not ok:
+            return 'ARCHIVIO FALLITO', (f'Parquet sostituito ma manifesto no: {dett}. '
+                                        'La coppia e\' incoerente: intervieni a mano.')
         return 'ARCHIVIO OK', (f'giorno sostituito su richiesta esplicita. '
                                f'vecchia impronta {vecchia[:16]}…, '
-                               f'nuova {m["impronta_logica"][:16]}…')
+                               f'nuova {m["impronta_logica"][:16]}…, '
+                               f'{len(conservato)} oggetti conservati in superati/')
 
     # ── giornata incompleta: mai definitiva ──────────────────────────────────
     if not completa:
         chiave_staging = f'{STAGING}/{giorno}.parquet'
         try:
             carica(s3, secchio, parquet, chiave_staging, m, solo_se_assente=False)
-            metti_manifesto(f'{STAGING}/{giorno}.manifest.json', condizionale=False)
+            carica_manifesto(s3, secchio, locale_manifesto,
+                             f'{STAGING}/{giorno}.manifest.json', m, solo_se_assente=False)
             dove = f'messa al sicuro in {chiave_staging}'
         except ClientError as e:
             dove = f'NON salvata nemmeno in staging ({e.response.get("Error", {}).get("Code")})'
         return 'ARCHIVIO FALLITO', (f'raccolta incompleta: niente definitivo. {dove}. '
                                     'Il Parquet e\' anche fra gli artifact del flusso.')
 
-    # ── il definitivo esiste gia' ────────────────────────────────────────────
-    if esistente:
-        gia = (esistente.get('Metadata') or {}).get('logical-hash')
-        if gia == m['impronta_logica']:
-            return 'ARCHIVIO OK', 'gia\' archiviato, contenuto identico: niente da fare'
+    # ── il Parquet definitivo c'e' gia' ──────────────────────────────────────
+    if testa_parquet:
+        problemi = coerente(testa_parquet, m)
+        if problemi:
+            gia = (testa_parquet.get('Metadata') or {}).get('logical-hash')
+            return 'ARCHIVIO FALLITO', (
+                f'{finale} esiste gia\' con un contenuto DIVERSO '
+                f'(archiviata {str(gia)[:16]}…, ora {m["impronta_logica"][:16]}…; '
+                f'{"; ".join(problemi)}). Non lo sovrascrivo. Se la versione nuova e\' '
+                f'davvero migliore: python scripts/archivio.py '
+                f'--sostituisci-giorno {giorno} --motivo "..."')
+
+        # Il Parquet su R2 e' dimostrabilmente questa giornata. Manca il
+        # manifesto? Si ricrea: i dati locali sono gli stessi che l'hanno
+        # prodotto, e l'impronta appena confrontata lo dimostra.
+        if not testa_manifesto:
+            m['note'] = (f'manifesto ricreato il '
+                         f'{dt.datetime.now(dt.timezone.utc):%Y-%m-%dT%H:%M:%SZ} per una '
+                         f'giornata gia\' archiviata: il Parquet su R2 porta impronta '
+                         f'{m["impronta_logica"]} e {m["righe"]} righe, identiche a quelle '
+                         f'ricostruite qui. Il caricamento precedente aveva scritto il '
+                         f'Parquet e non il manifesto.')
+            riscrivi_manifesto()
+            ok, dett = carica_manifesto(s3, secchio, locale_manifesto, manifesto_finale, m,
+                                        solo_se_assente=True)
+            if not ok:
+                return 'ARCHIVIO FALLITO', f'manifesto mancante, e non si e\' potuto ricreare: {dett}'
+            return 'ARCHIVIO OK', ('Parquet gia\' archiviato; mancava il manifesto, '
+                                   f'ricreato e {dett}')
+
+        problemi = coerente(testa_manifesto, m)
+        if problemi:
+            return 'ARCHIVIO FALLITO', (
+                f'il Parquet di {giorno} e\' quello giusto ma il suo manifesto dice '
+                f'altro ({"; ".join(problemi)}). Non tocco niente: due oggetti che si '
+                'contraddicono vanno guardati, non sistemati al buio.')
+        return 'ARCHIVIO OK', 'gia\' archiviato, Parquet e manifesto coerenti: niente da fare'
+
+    # ── c'e' il manifesto ma non il Parquet ──────────────────────────────────
+    if testa_manifesto:
         return 'ARCHIVIO FALLITO', (
-            f'{finale} esiste gia\' con un contenuto DIVERSO '
-            f'(archiviata {str(gia)[:16]}…, ora {m["impronta_logica"][:16]}…). '
-            'Non lo sovrascrivo. Se la versione nuova e\' davvero migliore: '
-            f'python scripts/archivio.py --sostituisci-giorno {giorno} --motivo "..."')
+            f'stato incoerente: esiste {manifesto_finale} ma non il Parquet a cui si '
+            'riferisce. Non scrivo il Parquet sotto un manifesto che non l\'ha mai '
+            'descritto, e non cancello il manifesto. Va guardato a mano.')
 
     # ── creazione, atomica ───────────────────────────────────────────────────
     try:
@@ -915,7 +1113,13 @@ def pubblica(s3, secchio, giorno, parquet, m, cartella, completa, sostituzione, 
         return 'ARCHIVIO FALLITO', f'caricamento rifiutato: {e.response.get("Error", {}).get("Code")}'
     if not ok:
         return 'ARCHIVIO FALLITO', f'creazione non riuscita: {dett}'
-    metti_manifesto(manifesto_finale, condizionale=True)
+    ok, dett_m = carica_manifesto(s3, secchio, locale_manifesto, manifesto_finale, m,
+                                  solo_se_assente=True)
+    if not ok:
+        # Il Parquet c'e', il manifesto no. Non e' una perdita: la prossima
+        # esecuzione riconosce il Parquet come proprio e ricrea il manifesto.
+        return 'ARCHIVIO FALLITO', (f'Parquet creato, manifesto no: {dett_m}. '
+                                    'La prossima esecuzione lo ricrea da sola.')
     return 'ARCHIVIO OK', f'giorno creato e {dett}'
 
 
