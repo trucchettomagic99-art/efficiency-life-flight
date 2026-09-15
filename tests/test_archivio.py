@@ -14,6 +14,7 @@ produzione senza sporcare l'archivio.
 import datetime as dt
 import importlib.util
 import json
+import os
 import pathlib
 import sys
 import tempfile
@@ -34,6 +35,15 @@ try:
 except ImportError:
     C_E_PYARROW = False
 
+# Il collaudo che precede la scrittura su R2 non puo' accontentarsi di prove
+# saltate: sono proprio quelle che toccano Parquet e caricamento, cioe' tutto
+# quello che rende un oggetto immutabile. Con questa variabile a 1 l'assenza di
+# pyarrow diventa un errore rumoroso invece di tredici righe con la "s".
+if os.environ.get('ARCHIVIO_RICHIEDE_PYARROW') == '1' and not C_E_PYARROW:
+    raise RuntimeError(
+        'ARCHIVIO_RICHIEDE_PYARROW=1 ma pyarrow non e\' installato: questo collaudo '
+        'deve girare per intero prima di scrivere su R2, non saltare.')
+
 G = lambda s: dt.date.fromisoformat(s)
 
 
@@ -46,10 +56,20 @@ def osservazione(**kw):
 
 
 def rapporto(**kw):
-    """Un collection-report sano."""
+    """Un collection-report sano: quello vero del 15 settembre 2026.
+
+    Gli undici `dates:partial` sono gli undici `page_cap_origins`, e si
+    dimostra per sottrazione: 11 partial − 11 page_cap − 0 repeated_page − 0
+    ValueError con righe = 0 interruzioni da budget. I due `:error` sono i due
+    upstream_http_400, che non avevano prodotto righe.
+    """
     return dict({'date': '2026-09-15', 'published': True,
                  'endpoints': {'latest:ok': 1539, 'dates:ok': 1528,
                                'dates:partial': 11, 'latest:error': 1, 'dates:error': 1},
+                 'page_cap_origins': ['DME', 'GYD', 'IKT', 'IST', 'LED', 'OVB',
+                                      'SVO', 'SVX', 'TAS', 'VKO', 'VVO'],
+                 'budget_expired_origins': [],
+                 'rejections': {'page_cap': 11, 'upstream_http_400': 2},
                  'queried_origins': 1540, 'covered_origins': 1410}, **kw)
 
 
@@ -318,6 +338,85 @@ class QuandoLaRaccoltaECompleta(unittest.TestCase):
         self.assertFalse(ok)
 
 
+class TettoDellePagineControBudgetFinito(unittest.TestCase):
+    """Due cause che si chiamavano tutte e due `partial`, e sono opposte.
+
+    Il tetto delle pagine e' un limite che ci diamo noi: undici origini
+    (DME, SVO, IST…) hanno piu' offerte di quante ne vogliamo leggere, e ogni
+    notte ci fermiamo. Il budget finito e' una raccolta troncata a meta'.
+    Finche' si guardava solo lo status, una notte troncata poteva essere
+    archiviata per sempre come definitiva.
+    """
+
+    GIORNO = G('2026-09-15')
+
+    def esito(self, rap, righe=362089):
+        return A.completezza(rap, self.GIORNO, righe, Counter())
+
+    def test_1_partial_da_tetto_pagine_resta_una_giornata_completa(self):
+        ok, motivi = self.esito(rapporto())
+        self.assertTrue(ok, motivi)
+
+    def test_2_budget_finito_dopo_aver_raccolto_righe_rende_incompleta(self):
+        # Il caso pericoloso: status 'partial' identico al tetto delle pagine,
+        # ma la raccolta e' stata interrotta.
+        ok, motivi = self.esito(rapporto(
+            endpoints={'dates:ok': 900, 'dates:partial': 12, 'latest:ok': 1539},
+            page_cap_origins=['DME', 'SVO', 'IST'],
+            budget_expired_origins=['ZAG'],
+            rejections={'page_cap': 11, 'budget_expired': 1}))
+        self.assertFalse(ok)
+        self.assertTrue(any('budget' in m for m in motivi), motivi)
+
+    def test_3_budget_finito_prima_di_avere_righe_rende_incompleta(self):
+        # Qui lo status e' 'deferred': lo prendevano gia' i controlli vecchi,
+        # ma ora lo dichiara anche la causa esplicita.
+        ok, motivi = self.esito(rapporto(
+            endpoints={'dates:ok': 900, 'dates:deferred': 640},
+            budget_expired_origins=['AAA', 'BBB', 'CCC']))
+        self.assertFalse(ok)
+        self.assertEqual(sum('budget' in m or 'rinviate' in m for m in motivi), 2, motivi)
+
+    def test_4_tetto_pagine_senza_budget_non_fa_fallire(self):
+        ok, motivi = self.esito(rapporto(
+            page_cap_origins=['DME'] * 11, budget_expired_origins=[]))
+        self.assertTrue(ok, motivi)
+
+    def test_5_tetto_pagine_piu_budget_finito_rende_incompleta(self):
+        ok, motivi = self.esito(rapporto(
+            page_cap_origins=['DME', 'SVO'], budget_expired_origins=['ZAG', 'ZRH']))
+        self.assertFalse(ok)
+        self.assertTrue(any('ZAG' in m for m in motivi), motivi)
+
+    def test_6_un_rapporto_vecchio_senza_la_causa_non_si_finalizza(self):
+        # Prima del 15 settembre il campo non esisteva: se manca, non si puo'
+        # sapere se la notte sia stata troncata, e nel dubbio non si archivia.
+        vecchio = rapporto()
+        del vecchio['budget_expired_origins']
+        ok, motivi = self.esito(vecchio)
+        self.assertFalse(ok)
+        self.assertTrue(any('versione precedente' in m for m in motivi), motivi)
+
+    def test_7_il_rapporto_vero_del_15_settembre_e_completo(self):
+        vero = pathlib.Path(__file__).resolve().parents[1] / 'data' / 'collection-report.json'
+        if not vero.exists():
+            self.skipTest('collection-report non presente')
+        r = dict(json.loads(vero.read_text(encoding='utf-8')))
+        e = r['endpoints']
+        partial = sum(v for k, v in e.items() if k.endswith(':partial'))
+        errori = sum(v for k, v in e.items() if k.endswith(':error'))
+        rej = r.get('rejections', {})
+        # La prova per sottrazione: ogni partial deve avere una causa nota.
+        valueerror_con_righe = max(0, rej.get('upstream_http_400', 0) - errori)
+        residuo = (partial - rej.get('page_cap', 0) - rej.get('repeated_page', 0)
+                   - valueerror_con_righe)
+        self.assertEqual(residuo, 0,
+                         f'{residuo} partial senza causa nota: potrebbero essere budget finito')
+        r.setdefault('budget_expired_origins', [])
+        ok, motivi = A.completezza(r, G(r['date']), 362089, Counter())
+        self.assertTrue(ok, motivi)
+
+
 class SecondaLineaSulVolume(unittest.TestCase):
     def test_senza_storia_non_si_giudica(self):
         anomalo, _ = A.sotto_la_norma(362089, [])
@@ -333,6 +432,65 @@ class SecondaLineaSulVolume(unittest.TestCase):
         anomalo, nota = A.sotto_la_norma(40000, [300000, 310000, 320000, 330000])
         self.assertTrue(anomalo)
         self.assertIn('mediana', nota)
+
+
+class VolumiVeriNonStimati(unittest.TestCase):
+    """Il numero di righe si legge, non si deduce dal peso del file.
+
+    Prima si stimava `peso / 5,4 byte`. Ma 5,4 byte a riga e' la
+    comprimibilita' di *una* notte: una notte con molte rotte ripetute
+    comprime meglio, e sarebbe sembrata piu' piccola di quanto fosse — cioe'
+    avrebbe fatto scattare l'allarme proprio quando i dati erano buoni.
+    """
+
+    def secchio(self, giornate):
+        s3 = R2Finto()
+        for giorno, righe, peso, extra in giornate:
+            s3.oggetti[A.chiave(G(giorno))] = {
+                'ContentLength': peso,
+                'Metadata': dict({'rows': str(righe), 'complete': 'true',
+                                  'schema': 'v1', 'day': giorno}, **extra)}
+        return s3
+
+    def test_13_si_usano_i_row_count_dei_metadati(self):
+        s3 = self.secchio([('2026-09-10', 300000, 1_600_000, {}),
+                           ('2026-09-11', 310000, 1_650_000, {}),
+                           ('2026-09-12', 320000, 1_700_000, {})])
+        self.assertEqual(A.volumi_recenti(s3, 'b', G('2026-09-15')),
+                         [300000, 310000, 320000])
+
+    def test_14_la_comprimibilita_non_cambia_il_conteggio(self):
+        # Stesse righe, pesi molto diversi: il volume dichiarato non si muove.
+        magro = self.secchio([('2026-09-10', 300000, 400_000, {}),
+                              ('2026-09-11', 300000, 4_000_000, {}),
+                              ('2026-09-12', 300000, 1_700_000, {})])
+        self.assertEqual(A.volumi_recenti(magro, 'b', G('2026-09-15')),
+                         [300000, 300000, 300000])
+
+    def test_si_ignora_il_giorno_che_stiamo_archiviando(self):
+        s3 = self.secchio([('2026-09-14', 300000, 1_600_000, {}),
+                           ('2026-09-15', 999999, 1_900_000, {})])
+        self.assertEqual(A.volumi_recenti(s3, 'b', G('2026-09-15')), [300000])
+
+    def test_si_ignorano_le_giornate_incomplete_o_di_altro_schema(self):
+        s3 = self.secchio([('2026-09-10', 300000, 1_600_000, {}),
+                           ('2026-09-11', 11, 9_000, {'complete': 'false'}),
+                           ('2026-09-12', 22, 9_000, {'schema': 'v2'}),
+                           ('2026-09-13', 310000, 1_650_000, {})])
+        self.assertEqual(A.volumi_recenti(s3, 'b', G('2026-09-15')), [300000, 310000])
+
+    def test_una_riga_di_metadati_rotta_si_salta_senza_fermare_tutto(self):
+        s3 = self.secchio([('2026-09-10', 300000, 1_600_000, {}),
+                           ('2026-09-13', 310000, 1_650_000, {})])
+        s3.oggetti[A.chiave(G('2026-09-11'))] = {'ContentLength': 5, 'Metadata': {'rows': 'boh'}}
+        self.assertEqual(A.volumi_recenti(s3, 'b', G('2026-09-15')), [300000, 310000])
+
+    def test_15_meno_di_tre_storici_resta_prudente(self):
+        s3 = self.secchio([('2026-09-13', 310000, 1_650_000, {})])
+        storici = A.volumi_recenti(s3, 'b', G('2026-09-15'))
+        anomalo, nota = A.sotto_la_norma(42, storici)
+        self.assertFalse(anomalo, 'senza storia non si giudica')
+        self.assertIn('nessun confronto', nota)
 
 
 # ══ la finestra: quale giorno si archivia ═══════════════════════════════════
@@ -430,15 +588,34 @@ class R2Finto:
 
 @unittest.skipUnless(C_E_PYARROW, 'pyarrow non installato')
 class CaricamentoSuR2(unittest.TestCase):
+    """La macchina a stati: quando si scrive, quando no, e cosa si ripara.
+
+    Una giornata archiviata e' una COPPIA — Parquet e manifesto. Il buco che
+    queste prove chiudono: se il Parquet passava e il manifesto no, la notte
+    dopo il codice vedeva l'impronta uguale, diceva "gia' archiviato" e se ne
+    andava. Il manifesto restava mancante per sempre, perche' nessuna
+    esecuzione successiva avrebbe piu' avuto motivo di guardarlo.
+    """
+
     GIORNO = G('2026-09-15')
 
     def prepara(self, cartella, righe_grezze=None, completa=True):
-        righe, anomalie = A.normalizza(righe_grezze or [osservazione(), osservazione(d='LHR', p=67)])
+        righe, anomalie = A.normalizza(righe_grezze or [osservazione(),
+                                                        osservazione(d='LHR', p=67)])
         return A._scheletro(self.GIORNO, righe, anomalie, Counter({self.GIORNO: len(righe)}),
                             completa, [] if completa else ['finta incompletezza'],
                             pathlib.Path(cartella), rapporto())
 
-    def test_giornata_completa_crea_il_definitivo_e_il_manifesto(self):
+    def etichette_giuste(self, m, **cambia):
+        return dict({'logical-hash': m['impronta_logica'], 'rows': str(m['righe']),
+                     'schema': 'v1', 'day': m['giorno'], 'complete': 'true'}, **cambia)
+
+    def oggetto(self, m, **cambia):
+        return {'ContentLength': 1234, 'Metadata': self.etichette_giuste(m, **cambia),
+                'Corpo': b'{}'}
+
+    # ── creazione ───────────────────────────────────────────────────────────
+    def test_giornata_completa_crea_la_coppia(self):
         with tempfile.TemporaryDirectory() as tmp:
             parquet, m = self.prepara(tmp)
             s3 = R2Finto()
@@ -447,38 +624,83 @@ class CaricamentoSuR2(unittest.TestCase):
             self.assertEqual(esito, 'ARCHIVIO OK', dett)
             self.assertIn(A.chiave(self.GIORNO), s3.oggetti)
             self.assertIn(A.chiave_manifesto(self.GIORNO), s3.oggetti)
-            etichette = s3.oggetti[A.chiave(self.GIORNO)]['Metadata']
-            self.assertEqual(etichette['logical-hash'], m['impronta_logica'])
-            self.assertEqual(etichette['rows'], str(m['righe']))
-            self.assertEqual(etichette['currency'], 'EUR')
-            self.assertEqual(etichette['schema'], 'v1')
+            e = s3.oggetti[A.chiave(self.GIORNO)]['Metadata']
+            self.assertEqual(e['logical-hash'], m['impronta_logica'])
+            self.assertEqual(e['rows'], str(m['righe']))
+            self.assertEqual((e['currency'], e['schema']), ('EUR', 'v1'))
 
-    def test_giornata_incompleta_non_crea_il_definitivo(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            parquet, m = self.prepara(tmp, completa=False)
-            s3 = R2Finto()
-            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
-                                     pathlib.Path(tmp), False, None, None)
-            self.assertEqual(esito, 'ARCHIVIO FALLITO')
-            self.assertNotIn(A.chiave(self.GIORNO), s3.oggetti)
-            self.assertIn(f'{A.STAGING}/{self.GIORNO}.parquet', s3.oggetti,
-                          'ma i dati non si buttano: vanno in staging')
-
-    def test_stesso_contenuto_gia_presente_e_un_no_op(self):
+    def test_9_il_manifesto_appena_caricato_viene_verificato(self):
+        # Se R2 accetta il PUT ma restituisce altro alla rilettura, il passo
+        # deve fallire invece di dichiarare l'archivio a posto.
         with tempfile.TemporaryDirectory() as tmp:
             parquet, m = self.prepara(tmp)
-            s3 = R2Finto({A.chiave(self.GIORNO): {
-                'ContentLength': 1, 'Metadata': {'logical-hash': m['impronta_logica']}}})
+            s3 = R2Finto()
+            vero_put = s3.put_object
+
+            def put_bugiardo(Bucket, Key, Body, Metadata=None, **kw):
+                if Key.endswith('.manifest.json'):
+                    Metadata = dict(Metadata or {}, rows='1')      # mente sul conteggio
+                return vero_put(Bucket=Bucket, Key=Key, Body=Body, Metadata=Metadata, **kw)
+            s3.put_object = put_bugiardo
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), True, None, None)
+            self.assertEqual(esito, 'ARCHIVIO FALLITO')
+            self.assertIn('rows', dett)
+
+    # ── la coppia ───────────────────────────────────────────────────────────
+    def test_4_coppia_presente_e_coerente_e_un_no_op(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp)
+            s3 = R2Finto({A.chiave(self.GIORNO): self.oggetto(m),
+                          A.chiave_manifesto(self.GIORNO): self.oggetto(m)})
             esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
                                      pathlib.Path(tmp), True, None, None)
             self.assertEqual(esito, 'ARCHIVIO OK')
-            self.assertIn('identico', dett)
+            self.assertIn('coerenti', dett)
             self.assertEqual(s3.scritture, [], 'niente da riscrivere')
 
-    def test_contenuto_diverso_gia_presente_e_un_errore_senza_sovrascrittura(self):
+    def test_5_parquet_presente_e_manifesto_mancante_lo_ricrea(self):
+        # E' il buco vero: prima qui si usciva con OK e il manifesto non
+        # sarebbe piu' tornato.
         with tempfile.TemporaryDirectory() as tmp:
             parquet, m = self.prepara(tmp)
-            prima = {'ContentLength': 1, 'Metadata': {'logical-hash': 'a' * 64}}
+            s3 = R2Finto({A.chiave(self.GIORNO): self.oggetto(m)})
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), True, None, None)
+            self.assertEqual(esito, 'ARCHIVIO OK', dett)
+            self.assertIn(A.chiave_manifesto(self.GIORNO), s3.oggetti)
+            self.assertEqual(s3.scritture, [A.chiave_manifesto(self.GIORNO)],
+                             'si scrive SOLO il manifesto, il Parquet non si tocca')
+            scritto = json.loads(s3.oggetti[A.chiave_manifesto(self.GIORNO)]['Corpo'])
+            self.assertIn('ricreato', scritto['note'])
+            self.assertEqual(scritto['logical_content_hash'], m['impronta_logica'])
+
+    def test_6_manifesto_presente_ma_incoerente_e_un_errore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp)
+            sbagliato = self.oggetto(m, rows='7')
+            s3 = R2Finto({A.chiave(self.GIORNO): self.oggetto(m),
+                          A.chiave_manifesto(self.GIORNO): sbagliato})
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), True, None, None)
+            self.assertEqual(esito, 'ARCHIVIO FALLITO')
+            self.assertEqual(s3.scritture, [], 'non si sistema al buio')
+            self.assertEqual(s3.oggetti[A.chiave_manifesto(self.GIORNO)], sbagliato)
+
+    def test_7_manifesto_senza_parquet_e_uno_stato_incoerente(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp)
+            s3 = R2Finto({A.chiave_manifesto(self.GIORNO): self.oggetto(m)})
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), True, None, None)
+            self.assertEqual(esito, 'ARCHIVIO FALLITO')
+            self.assertEqual(s3.scritture, [], 'ne scrivo ne cancello')
+            self.assertIn('incoerente', dett)
+
+    def test_8_e_17_contenuto_diverso_gia_presente_non_si_sovrascrive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp)
+            prima = self.oggetto(m, **{'logical-hash': 'a' * 64})
             s3 = R2Finto({A.chiave(self.GIORNO): prima})
             esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
                                      pathlib.Path(tmp), True, None, None)
@@ -487,9 +709,42 @@ class CaricamentoSuR2(unittest.TestCase):
             self.assertEqual(s3.oggetti[A.chiave(self.GIORNO)], prima, 'intatto')
             self.assertIn('--sostituisci-giorno', dett, 'e si dice come si ripara')
 
-    def test_la_precondizione_regge_anche_se_qualcuno_scrive_nel_frattempo(self):
-        # head dice "non c'e'", ma fra head e put un'altra esecuzione crea
-        # l'oggetto: If-None-Match lo rifiuta lato server.
+    def test_parquet_creato_e_manifesto_fallito_non_e_un_successo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp)
+            s3 = R2Finto()
+            vero_put = s3.put_object
+
+            def put_che_rifiuta_il_manifesto(Bucket, Key, Body, Metadata=None, **kw):
+                if Key.endswith('.manifest.json'):
+                    raise s3._errore('InternalError', 500)
+                return vero_put(Bucket=Bucket, Key=Key, Body=Body, Metadata=Metadata, **kw)
+            s3.put_object = put_che_rifiuta_il_manifesto
+            with self.assertRaises(Exception):
+                A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                           pathlib.Path(tmp), True, None, None)
+            # e la volta dopo, con R2 sano, il manifesto si ricrea da solo
+            s3.put_object = vero_put
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), True, None, None)
+            self.assertEqual(esito, 'ARCHIVIO OK', dett)
+            self.assertIn(A.chiave_manifesto(self.GIORNO), s3.oggetti)
+
+    # ── incompleta ──────────────────────────────────────────────────────────
+    def test_giornata_incompleta_non_crea_il_definitivo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parquet, m = self.prepara(tmp, completa=False)
+            s3 = R2Finto()
+            esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
+                                     pathlib.Path(tmp), False, None, None)
+            self.assertEqual(esito, 'ARCHIVIO FALLITO')
+            self.assertNotIn(A.chiave(self.GIORNO), s3.oggetti)
+            self.assertNotIn(A.chiave_manifesto(self.GIORNO), s3.oggetti)
+            self.assertIn(f'{A.STAGING}/{self.GIORNO}.parquet', s3.oggetti,
+                          'ma i dati non si buttano: vanno in staging')
+
+    # ── concorrenza ─────────────────────────────────────────────────────────
+    def test_18_la_precondizione_regge_se_qualcuno_scrive_nel_frattempo(self):
         with tempfile.TemporaryDirectory() as tmp:
             parquet, m = self.prepara(tmp)
             s3 = R2Finto()
@@ -500,7 +755,7 @@ class CaricamentoSuR2(unittest.TestCase):
                     return originale(Bucket=Bucket, Key=Key, **kw)
                 finally:
                     if Key == A.chiave(self.GIORNO) and Key not in s3.oggetti:
-                        s3.oggetti[Key] = {'ContentLength': 9, 'Metadata': {'logical-hash': 'z' * 64}}
+                        s3.oggetti[Key] = self.oggetto(m, **{'logical-hash': 'z' * 64})
             s3.head_object = head_poi_crea
             esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m,
                                      pathlib.Path(tmp), True, None, None)
@@ -508,22 +763,35 @@ class CaricamentoSuR2(unittest.TestCase):
             self.assertEqual(s3.oggetti[A.chiave(self.GIORNO)]['Metadata']['logical-hash'],
                              'z' * 64, 'l\'oggetto dell\'altro non e\' stato toccato')
 
-    def test_la_sostituzione_mette_da_parte_la_versione_precedente(self):
+    # ── riparazione ─────────────────────────────────────────────────────────
+    def test_10_11_12_la_sostituzione_conserva_tutto_e_lascia_traccia(self):
         with tempfile.TemporaryDirectory() as tmp:
             parquet, m = self.prepara(tmp)
-            s3 = R2Finto({A.chiave(self.GIORNO): {
-                'ContentLength': 9, 'Metadata': {'logical-hash': 'a' * 64}, 'Corpo': b'vecchio'}})
+            vecchio_p = self.oggetto(m, **{'logical-hash': 'a' * 64})
+            vecchio_p['Corpo'] = b'parquet vecchio'
+            vecchio_m = self.oggetto(m, **{'logical-hash': 'a' * 64})
+            vecchio_m['Corpo'] = b'{"vecchio": true}'
+            s3 = R2Finto({A.chiave(self.GIORNO): vecchio_p,
+                          A.chiave_manifesto(self.GIORNO): vecchio_m})
             esito, dett = A.pubblica(s3, 'b', self.GIORNO, parquet, m, pathlib.Path(tmp),
                                      True, str(self.GIORNO), 'recuperato dalla storia di git')
             self.assertEqual(esito, 'ARCHIVIO OK', dett)
-            messi_da_parte = [k for k in s3.oggetti if k.startswith(A.SUPERATI)]
-            self.assertEqual(len(messi_da_parte), 1, 'la vecchia versione e conservata')
-            self.assertEqual(s3.oggetti[messi_da_parte[0]]['Metadata']['logical-hash'], 'a' * 64)
+
+            messi_da_parte = sorted(k for k in s3.oggetti if k.startswith(A.SUPERATI))
+            self.assertEqual(len(messi_da_parte), 2,
+                             'si conservano sia il Parquet sia il manifesto precedenti')
+            self.assertTrue(any(k.endswith('.parquet') for k in messi_da_parte))
+            self.assertTrue(any(k.endswith('.manifest.json') for k in messi_da_parte))
+            self.assertEqual(s3.oggetti[messi_da_parte[1]]['Corpo'], b'parquet vecchio')
+
             self.assertEqual(s3.oggetti[A.chiave(self.GIORNO)]['Metadata']['logical-hash'],
                              m['impronta_logica'])
-            manifesto = json.loads(s3.oggetti[A.chiave_manifesto(self.GIORNO)]['Corpo'])
-            self.assertIn('recuperato dalla storia di git', manifesto['note'])
-            self.assertIn('a' * 64, manifesto['note'], 'e si scrive quale impronta e stata superata')
+            nota = json.loads(s3.oggetti[A.chiave_manifesto(self.GIORNO)]['Corpo'])['note']
+            self.assertIn('a' * 64, nota, 'impronta superata')
+            self.assertIn(m['impronta_logica'], nota, 'impronta nuova')
+            self.assertIn('recuperato dalla storia di git', nota, 'motivo')
+            self.assertIn(A.SUPERATI, nota, 'dove sta la copia precedente')
+            self.assertRegex(nota, r'\d{8}T\d{6}Z', 'quando')
 
     def test_la_sostituzione_di_un_giorno_inesistente_non_si_fa(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -638,6 +906,41 @@ class GiroCompletoSuParquet(unittest.TestCase):
             self.assertEqual(scritto['anomalies']['dur_zero_letto_come_ignoto'], 1)
             self.assertEqual(scritto['file_sha256'], A.sha_file(parquet))
             self.assertEqual(scritto['pyarrow_version'], pyarrow.__version__)
+
+
+class IlFlussoCollaudaPrimaDiScrivere(unittest.TestCase):
+    """Test 16: il cancello prima di R2 esiste, e non si puo' saltare.
+
+    Questa e' una prova sul flusso, non sul codice, e serve per una ragione
+    precisa: l'ordine dei passi in nightly.yml e' una garanzia, e le garanzie
+    che vivono solo in un file YAML si perdono al primo riordino distratto.
+    Una volta e' gia' successo — i test completi stavano dopo l'archiviazione.
+    """
+
+    NOTTURNO = (ROOT / '.github' / 'workflows' / 'nightly.yml').read_text(encoding='utf-8')
+    CI = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text(encoding='utf-8')
+
+    def test_il_collaudo_dell_archivio_precede_la_scrittura(self):
+        collaudo = self.NOTTURNO.index("-p 'test_archivio.py'")
+        scrittura = self.NOTTURNO.index('python scripts/archivio.py')
+        self.assertLess(collaudo, scrittura,
+                        'i test dell\'archivio devono stare PRIMA di archivio.py')
+
+    def test_il_collaudo_pretende_pyarrow_invece_di_saltare(self):
+        prima = self.NOTTURNO[:self.NOTTURNO.index('python scripts/archivio.py')]
+        self.assertIn("ARCHIVIO_RICHIEDE_PYARROW: '1'", prima)
+        self.assertIn("ARCHIVIO_RICHIEDE_PYARROW: '1'", self.CI)
+
+    def test_le_librerie_sono_fissate_e_uguali_nei_due_flussi(self):
+        blocco = "pip install --quiet 'pyarrow==25.0.1' 'boto3~=1.43'"
+        self.assertIn(blocco, self.NOTTURNO)
+        self.assertIn(blocco, self.CI)
+
+    def test_l_esito_dell_archivio_rende_rosso_il_flusso(self):
+        self.assertIn("steps.archivio.outcome", self.NOTTURNO)
+        esito = self.NOTTURNO.index('Esito dell\'archivio')
+        commit = self.NOTTURNO.index('Committa se qualcosa e\' cambiato')
+        self.assertLess(commit, esito, 'il sito si pubblica prima di diventare rossi')
 
 
 if __name__ == '__main__':
