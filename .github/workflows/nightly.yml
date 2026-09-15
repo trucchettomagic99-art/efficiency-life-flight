@@ -105,6 +105,24 @@ jobs:
       # una release di pyarrow che cambia la codifica e i file di settembre
       # smettono di somigliare a quelli di ottobre. Si alza quando lo
       # decidiamo noi, e la versione finisce nel manifesto di ogni giornata.
+      # Le librerie si installano PRIMA di collaudare, e il collaudo viene
+      # PRIMA di scrivere. Sembra ovvio, e per una notte non lo e' stato: i
+      # test completi stavano piu' in basso, dopo `build_pages.py`, cioe' dopo
+      # che archivio.py aveva gia' potuto creare un oggetto che nessuno puo'
+      # piu' correggere. Per tutto il resto della catena un test dopo va bene,
+      # perche' il passo successivo riscrive; qui no.
+      - name: Prepara le librerie dell'archivio
+        run: pip install --quiet 'pyarrow==25.0.1' 'boto3~=1.43'
+
+      # `ARCHIVIO_RICHIEDE_PYARROW=1` fa fallire il collaudo se pyarrow manca,
+      # invece di lasciar passare tredici prove saltate: sono proprio quelle
+      # che toccano Parquet e caricamento. Un "OK (skipped=13)" subito prima di
+      # scrivere su R2 non e' un via libera, e' un abbaglio.
+      - name: Collaudo dell'archivio, prima di scrivere qualcosa di definitivo
+        env:
+          ARCHIVIO_RICHIEDE_PYARROW: '1'
+        run: python -m unittest discover -s tests -p 'test_archivio.py' -v
+
       - name: Archivia le osservazioni su R2
         id: archivio
         continue-on-error: true
@@ -113,9 +131,7 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
-        run: |
-          pip install --quiet 'pyarrow==25.0.1' 'boto3~=1.43'
-          python scripts/archivio.py
+        run: python scripts/archivio.py
 
       # Se R2 non risponde, questa e' l'unica copia della giornata che non
       # muore col runner. Senza, l'alternativa sarebbe ricostruirla da una

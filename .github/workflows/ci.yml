@@ -72,7 +72,21 @@ jobs:
           python scripts/build.py
           python scripts/build_pages.py
 
+      # pyarrow e boto3 si installano sempre, anche sui commit che non toccano
+      # l'archivio. Si potevano installare solo quando cambiano archivio.py o
+      # i suoi test, risparmiando una decina di secondi — ma un filtro sui
+      # percorsi e' una regola in piu' che puo' sbagliarsi in silenzio, e il
+      # modo in cui sbaglia e' saltare proprio le prove che servivano. Dieci
+      # secondi contro un collaudo che si crede completo e non lo e'.
+      #
+      # Le versioni sono le stesse del flusso notturno: collaudare con una
+      # libreria e scrivere con un'altra e' un collaudo di qualcos'altro.
+      - name: Prepara le librerie dell'archivio
+        run: pip install --quiet 'pyarrow==25.0.1' 'boto3~=1.43'
+
       - name: Test
+        env:
+          ARCHIVIO_RICHIEDE_PYARROW: '1'
         run: |
           python -m unittest discover -s tests -v
           node tests/test_browser_data.cjs
