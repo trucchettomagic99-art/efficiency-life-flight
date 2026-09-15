@@ -250,6 +250,36 @@ class FlightDataTests(unittest.TestCase):
             self.assertEqual(len(client.calls),1)
             self.assertEqual(client.calls[0]['page'],1)
 
+    def test_budget_expiry_is_named_not_just_partial(self):
+        # Il tetto delle pagine e il budget scaduto producevano lo stesso
+        # status, 'partial'. Ma il primo e' un limite che ci diamo noi su
+        # undici origini ogni notte, il secondo e' una raccolta troncata a
+        # meta': l'archivio permanente deve poterli distinguere, altrimenti
+        # archivia per sempre una notte monca credendola normale.
+        from fetch_prices import BudgetExpired
+        with tempfile.TemporaryDirectory() as d:
+            client=FakeClient([[raw()]*1000, BudgetExpired()])
+            result=collect(client,'FCO','dates',PLACES,TODAY,Path(d),3)
+            self.assertEqual(result['status'],'partial')
+            self.assertEqual(result['issues']['budget_expired'],1)
+            self.assertNotIn('page_cap',result['issues'])
+
+    def test_budget_expiry_without_rows_is_still_named(self):
+        from fetch_prices import BudgetExpired
+        with tempfile.TemporaryDirectory() as d:
+            result=collect(FakeClient([BudgetExpired()]),'FCO','dates',PLACES,TODAY,Path(d),3)
+            self.assertEqual(result['status'],'deferred')
+            self.assertEqual(result['issues']['budget_expired'],1)
+
+    def test_page_cap_is_not_a_budget_expiry(self):
+        with tempfile.TemporaryDirectory() as d:
+            client=FakeClient([[raw(departure_at=f'2026-10-0{n}T16:00:00+02:00')]*1000
+                               for n in range(1,4)])
+            result=collect(client,'FCO','dates',PLACES,TODAY,Path(d),3)
+            self.assertEqual(result['status'],'partial')
+            self.assertEqual(result['issues']['page_cap'],1)
+            self.assertNotIn('budget_expired',result['issues'])
+
     def test_repeated_page_does_not_loop(self):
         with tempfile.TemporaryDirectory() as d:
             client=FakeClient([[raw()]*1000,[raw()]*1000])

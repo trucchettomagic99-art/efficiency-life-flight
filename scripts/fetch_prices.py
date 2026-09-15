@@ -161,6 +161,16 @@ def collect(client, origin, endpoint, places, today, checkpoint, max_pages):
         issues['page_cap'] += 1
         status = 'partial'
     except BudgetExpired:
+        # Il budget dei 1.080 secondi e' finito mentre stavamo ancora
+        # raccogliendo. Senza questa riga il risultato si chiamava 'partial'
+        # esattamente come il tetto delle pagine — e le due cose sono opposte:
+        # il tetto e' un limite deliberato su origini che hanno piu' offerte di
+        # quante ne vogliamo, questa e' una raccolta troncata a meta'.
+        # L'archivio permanente decide se una giornata e' completa leggendo
+        # questo rapporto: due cause diverse non possono avere lo stesso nome.
+        # Nota: non finisce nel checkpoint, perche' il dump avviene solo dopo
+        # una pagina riuscita. Descrive questa esecuzione, non le successive.
+        issues['budget_expired'] += 1
         status = 'partial' if rows else 'deferred'
     except FatalAPIError:
         raise
@@ -315,14 +325,27 @@ def main():
     for path in (data/'fares').glob('*.json'):
         archived.extend(read(path,{}).get('deals',[]))
     page_cap_origins = sorted({r['origin'] for r in results if r.get('issues', {}).get('page_cap')})
+    # Simmetrico a page_cap_origins, e per la ragione opposta: quelle sono le
+    # origini che abbiamo smesso di leggere per scelta, queste quelle che non
+    # abbiamo finito di leggere perche' e' finito il tempo. Comprende sia le
+    # origini che avevano gia' righe (status 'partial') sia quelle a cui non
+    # siamo proprio arrivati ('deferred'): per la completezza della giornata
+    # contano allo stesso modo.
+    budget_expired_origins = sorted({r['origin'] for r in results
+                                     if r.get('issues', {}).get('budget_expired')})
     report = {'date':today.isoformat(),'schema':SCHEMA,'configured_origins':len(configured),
               'queried_origins':len(origins),'requests':dict(client.stats),
               'catalog_issues':dict(catalog_issues),'metadata_errors':metadata_errors,
               'page_cap_origins':page_cap_origins,
+              'budget_expired_origins':budget_expired_origins,
               'endpoints':dict(Counter(r['endpoint']+':'+r['status'] for r in results)),
               'rejections':dict(sum((Counter(r['issues']) for r in results),Counter()))}
     if page_cap_origins:
         print(f"[PAGE_CAP] Pagination cap reached for {len(page_cap_origins)} origins: {', '.join(page_cap_origins[:20])}", flush=True)
+    if budget_expired_origins:
+        print(f"[BUDGET] Time budget exhausted on {len(budget_expired_origins)} origins: "
+              f"{', '.join(budget_expired_origins[:20])} — questa raccolta e' troncata, "
+              f"la giornata non verra' archiviata come definitiva", flush=True)
     try:
         index, rows, issues = make_snapshot(old, archived, results, places, today)
     except ValueError as e:
