@@ -903,6 +903,18 @@ def main(argv=None) -> int:
     print(f'  {sum(conteggi.values()):,} osservazioni su {len(conteggi)} giorni '
           f'({min(conteggi)} → {max(conteggi)})')
     print(f'  giorno da archiviare: {giorno} — {len(grezze):,} osservazioni')
+    if conteggi and giorno != max(conteggi):
+        # Un giorno che non e' il piu' fresco della finestra e' gia' stato
+        # impoverito da `clean_rows()`: le sue righe sono state superate da
+        # osservazioni piu' recenti. Quello che si ricostruisce qui NON e'
+        # quello che fu raccolto quel giorno, e la sua impronta non coincidera'
+        # con quella eventualmente gia' archiviata. Non e' un file da
+        # finalizzare: se un giorno vecchio manca davvero, si recupera dalla
+        # storia di git, dove esiste ancora intero.
+        print(f'  ATTENZIONE: {giorno} non e\' il giorno piu\' fresco '
+              f'({max(conteggi)}). Nella finestra e\' rimasto con '
+              f'{len(grezze):,} righe su {conteggi[max(conteggi)]:,} del giorno fresco: '
+              'e\' una versione impoverita, non quella raccolta allora.')
 
     righe, anomalie = normalizza(grezze)
     grezze.clear()          # le righe grezze non servono piu': libera prima di Arrow
@@ -1116,10 +1128,17 @@ def pubblica(s3, secchio, giorno, parquet, m, cartella, completa, sostituzione, 
     ok, dett_m = carica_manifesto(s3, secchio, locale_manifesto, manifesto_finale, m,
                                   solo_se_assente=True)
     if not ok:
-        # Il Parquet c'e', il manifesto no. Non e' una perdita: la prossima
-        # esecuzione riconosce il Parquet come proprio e ricrea il manifesto.
-        return 'ARCHIVIO FALLITO', (f'Parquet creato, manifesto no: {dett_m}. '
-                                    'La prossima esecuzione lo ricrea da sola.')
+        # Il Parquet c'e', il manifesto no. Si recupera, ma NON da solo la notte
+        # dopo: la notte dopo il bersaglio e' un altro giorno, e questo non
+        # verrebbe mai riguardato. Serve rilanciare il flusso mentre la finestra
+        # e' ancora quella — cioe' prima della raccolta successiva, che
+        # impoverisce le righe di oggi e fa cambiare l'impronta.
+        return 'ARCHIVIO FALLITO', (
+            f'Parquet creato, manifesto no: {dett_m}. '
+            f'RILANCIA questo flusso prima della prossima raccolta '
+            f'(Actions → Aggiornamento indice → Run workflow): il Parquet di {giorno} '
+            'viene riconosciuto e il manifesto ricreato. Dopo la raccolta successiva '
+            'la finestra sara\' impoverita e l\'impronta non tornera\' piu\'.')
     return 'ARCHIVIO OK', f'giorno creato e {dett}'
 
 
