@@ -92,6 +92,25 @@ jobs:
       # numeri fermi a mesi addietro. Cosi' non puo' invecchiare. Se il browser
       # non parte si tiene l'immagine di ieri e l'indice esce lo stesso: un
       # guaio molto piu' piccolo di un indice fermo.
+      # L'archivio permanente, su Cloudflare R2. E' l'unico passo che conserva
+      # qualcosa per sempre: tutto il resto viene riscritto o scade.
+      #
+      # `continue-on-error` non e' pigrizia. Se R2 non risponde o le chiavi
+      # scadono, il sito deve uscire lo stesso — e non si perde niente, perche'
+      # `data/fares/` tiene sette giorni e lo script confronta la finestra con
+      # l'archivio: il giorno mancante viene ripreso da solo la notte dopo.
+      # Una settimana di margine su un guasto che va solo guardato, non corso.
+      - name: Archivia le osservazioni su R2
+        continue-on-error: true
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          pip install --quiet pyarrow boto3
+          python scripts/archivio.py
+
       - name: Ridisegna l'anteprima social
         continue-on-error: true
         run: |
